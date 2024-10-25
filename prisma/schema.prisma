@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  firstName String     @db.VarChar(50)
+  lastName  String     @db.VarChar(50)
+  email     String     @db.VarChar(50)
+  password  String     @db.VarChar(255)
+  isActive  Boolean    @default(true)
+  createdAt DateTime?  @default(now())
+  updatedAt DateTime?  @updatedAt
+  UserRole  UserRole[]
+}
+
+model Role {
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(50)
+  title       String     @db.VarChar(50)
+  description String     @db.VarChar(255)
+  createdAt   DateTime?  @default(now())
+  updatedAt   DateTime?  @updatedAt
+  UserRole    UserRole[]
+}
+
+model UserRole {
+  userId    Int
+  roleId    Int
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Module {
+  id        Int         @id @default(autoincrement())
+  name      String      @db.VarChar(50)
+  isActive  Boolean     @default(true)
+  order     Int
+  slug      String      @default("") @db.VarChar(50)
+  createdAt DateTime?   @default(now())
+  updatedAt DateTime?   @updatedAt
+  Submodule Submodule[]
+}
+
+model Submodule {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(50)
+  isActive  Boolean   @default(true)
+  order     Int
+  slug      String    @default("") @db.VarChar(50)
+  moduleId  Int
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
+  module Module @relation(fields: [moduleId], references: [id])
+}
+
+model Master {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(50)
+  createdAt    DateTime?      @default(now())
+  updatedAt    DateTime?      @updatedAt
+  isActive     Boolean        @default(true)
+  MasterOption MasterOption[]
+}
+
+model MasterOption {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(50)
+  slug      String    @db.VarChar(50)
+  masterId  Int
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  isActive  Boolean   @default(true)
+
+  master Master @relation(fields: [masterId], references: [id])
+}
