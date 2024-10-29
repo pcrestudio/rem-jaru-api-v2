@@ -62,7 +62,8 @@ model Submodule {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 
-  module Module @relation(fields: [moduleId], references: [id])
+  module          Module            @relation(fields: [moduleId], references: [id])
+  JudicialProcess JudicialProcess[]
 }
 
 model Master {
@@ -84,4 +85,18 @@ model MasterOption {
   isActive  Boolean   @default(true)
 
   master Master @relation(fields: [masterId], references: [id])
+}
+
+model JudicialProcess {
+  id          Int       @id @default(autoincrement())
+  fileCode    String    @db.VarChar(50)
+  demanded    String    @db.VarChar(50)
+  plaintiff   String    @db.VarChar(50)
+  coDefendant String    @db.VarChar(50)
+  submoduleId Int
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  isActive    Boolean   @default(true)
+
+  submodule Submodule @relation(fields: [submoduleId], references: [id])
 }

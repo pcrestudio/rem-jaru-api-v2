@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuthModule } from "src/modules/auth/auth.module";
 import { PrismaModule } from "src/core/database/prisma.module";
 import { APP_FILTER } from "@nestjs/core";
@@ -14,6 +14,8 @@ import { HttpExceptionFilters } from "./core/exception-filters/http-exception.fi
 import { RolesModule } from "src/modules/roles/roles.module";
 import { AuthMiddleware } from "./common/middleware/auth.middleware";
 import { ModuleModule } from "./modules/module/module.module";
+import { JudicialProcessModule } from "./modules/judicial_process/judicial-process.module";
+import { ElasticsearchModule } from "@nestjs/elasticsearch";
 
 @Module({
   imports: [
@@ -23,7 +25,16 @@ import { ModuleModule } from "./modules/module/module.module";
     AuthModule,
     RolesModule,
     ModuleModule,
+    JudicialProcessModule,
     PrismaModule,
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => ({
+        node: configService.get("ELASTICSEARCH_NODE"),
+        maxRetries: configService.get("ELASTICSEARCH_MAX_RETRIES"),
+        requestTimeout: configService.get("ELASTICSEARCH_REQ_TIMEOUT"),
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AppController],
   providers: [
