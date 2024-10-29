@@ -16,6 +16,7 @@ import { AuthMiddleware } from "./common/middleware/auth.middleware";
 import { ModuleModule } from "./modules/module/module.module";
 import { JudicialProcessModule } from "./modules/judicial_process/judicial-process.module";
 import { ElasticsearchModule } from "@nestjs/elasticsearch";
+import { MasterModule } from "./modules/master/master.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ElasticsearchModule } from "@nestjs/elasticsearch";
     ModuleModule,
     JudicialProcessModule,
     PrismaModule,
+    MasterModule,
     ElasticsearchModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
         node: configService.get("ELASTICSEARCH_NODE"),
