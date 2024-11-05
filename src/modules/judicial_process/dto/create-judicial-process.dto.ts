@@ -1,4 +1,4 @@
-import { IsString } from "class-validator";
+import { IsNumber, IsString } from "class-validator";
 
 export class CreateJudicialProcessDto {
   @IsString()
@@ -12,4 +12,7 @@ export class CreateJudicialProcessDto {
 
   @IsString()
   coDefendant: string;
+
+  @IsNumber()
+  cargoStudioId: number;
 }

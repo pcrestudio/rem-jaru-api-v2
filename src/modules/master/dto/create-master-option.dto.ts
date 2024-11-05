@@ -1,6 +1,6 @@
 import { IsNumber, IsString } from "class-validator";
 
-export class CreateMasterDto {
+export class CreateMasterOptionDto {
   @IsString()
   name: string;
 
@@ -8,5 +8,5 @@ export class CreateMasterDto {
   slug: string;
 
   @IsNumber()
-  moduleId: number;
+  masterId: number;
 }
