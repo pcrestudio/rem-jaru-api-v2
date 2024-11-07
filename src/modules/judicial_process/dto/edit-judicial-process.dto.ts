@@ -14,6 +14,9 @@ export class EditJudicialProcessDto {
   demanded: string;
 
   @IsString()
+  controversialMatter: string;
+
+  @IsString()
   plaintiff: string;
 
   @IsString()
