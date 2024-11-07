@@ -15,4 +15,7 @@ export class CreateJudicialProcessDto {
 
   @IsNumber()
   cargoStudioId: number;
+
+  @IsNumber()
+  projectId: number;
 }

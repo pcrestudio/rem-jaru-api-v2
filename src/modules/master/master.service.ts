@@ -3,6 +3,7 @@ import { PrismaService } from "src/core/database/prisma.service";
 import { CreateMasterDto } from "./dto/create-master.dto";
 import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
+import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
 
 @Injectable()
 export class MasterService {
@@ -19,16 +20,26 @@ export class MasterService {
     });
   }
 
-  async getMasterOptions(id: string) {
-    const master = await this.prisma.master.findUnique({
-      where: {
-        id: Number(id),
-      },
-    });
-
+  async getMasterOptions(id: number) {
     return this.prisma.masterOption.findMany({
       where: {
-        masterId: master.id,
+        masterId: id,
+      },
+    });
+  }
+
+  async getOptionsForAutocompletes() {
+    return this.prisma.master.findMany({
+      where: {
+        isActive: true,
+      },
+      select: {
+        slug: true,
+        masterOption: {
+          where: {
+            isActive: true,
+          },
+        },
       },
     });
   }
@@ -66,11 +77,23 @@ export class MasterService {
 
     return this.prisma.masterOption.update({
       data: {
-        ...masterOption,
+        name: masterOption.name,
+        slug: masterOption.slug,
         masterId: master.id,
       },
       where: {
-        id: masterOption.masterId,
+        id: masterOption.id,
+      },
+    });
+  }
+
+  async toggleMasterOption(masterOption: ToggleMasterOptionDto) {
+    return this.prisma.masterOption.update({
+      data: {
+        isActive: !masterOption.isActive,
+      },
+      where: {
+        id: masterOption.id,
       },
     });
   }

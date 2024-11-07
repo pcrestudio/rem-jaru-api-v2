@@ -4,6 +4,12 @@ export class EditJudicialProcessDto {
   @IsString()
   fileCode: string;
 
+  @IsNumber()
+  projectId: number;
+
+  @IsNumber()
+  cargoStudioId: number;
+
   @IsString()
   demanded: string;
 

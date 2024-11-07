@@ -3,6 +3,7 @@ import { MasterService } from "./master.service";
 import { CreateMasterDto } from "./dto/create-master.dto";
 import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
+import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
 
 @Controller("masters")
 export class MasterController {
@@ -15,7 +16,12 @@ export class MasterController {
 
   @Get("options")
   async getMasterOptions(@Query("id") id: string) {
-    return this.masterService.getMasterOptions(id);
+    return this.masterService.getMasterOptions(Number(id));
+  }
+
+  @Get("options/autocomplete")
+  async getOptionsForAutocompletes() {
+    return this.masterService.getOptionsForAutocompletes();
   }
 
   @Post("create")
@@ -31,5 +37,10 @@ export class MasterController {
   @Patch("edit/option")
   async editMasterOption(@Body() masterOption: EditMasterOptionDto) {
     return this.masterService.editMasterOption(masterOption);
+  }
+
+  @Patch("toggle/option")
+  async toggleMasterOption(@Body() masterOption: ToggleMasterOptionDto) {
+    return this.masterService.toggleMasterOption(masterOption);
   }
 }

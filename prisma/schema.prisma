@@ -78,7 +78,7 @@ model Master {
   updatedAt    DateTime?      @updatedAt
   isActive     Boolean        @default(true)
   moduleId     Int
-  MasterOption MasterOption[]
+  masterOption MasterOption[]
 
   module Module @relation(fields: [moduleId], references: [id])
 }
