@@ -7,6 +7,7 @@ import {
 } from "./dto/create-section-attribute.dto";
 import { CreateSectionAttributeOptionDto } from "./dto/create-section-attribute-option.dto";
 import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-option.dto";
+import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 
 @Injectable()
 export class AttributeValuesService {
@@ -30,8 +31,22 @@ export class AttributeValuesService {
     return this.prisma.sectionAttribute.create({
       data: {
         ...sectionAttribute,
+        dataType: sectionAttribute.dataType
+          ? sectionAttribute.dataType
+          : DataType.TEXT,
         moduleId: section.moduleId ?? undefined,
         submoduleId: section.submoduleId ?? undefined,
+      },
+    });
+  }
+
+  async editSectionAttribute(sectionAttribute: EditSectionAttributeDto) {
+    return this.prisma.sectionAttribute.update({
+      data: {
+        ...sectionAttribute,
+      },
+      where: {
+        sectionAttributeId: sectionAttribute.sectionAttributeId,
       },
     });
   }

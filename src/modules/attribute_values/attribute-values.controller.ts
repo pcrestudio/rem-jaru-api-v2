@@ -4,6 +4,7 @@ import { CreateSectionDto } from "./dto/create-section.dto";
 import { CreateSectionAttributeDto } from "./dto/create-section-attribute.dto";
 import { CreateSectionAttributeOptionDto } from "./dto/create-section-attribute-option.dto";
 import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-option.dto";
+import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 
 interface SectionQuery {
   moduleId: string;
@@ -24,6 +25,13 @@ export class AttributeValuesController {
     @Body() sectionAttribute: CreateSectionAttributeDto,
   ) {
     return this.attributeValuesService.createSectionAttribute(sectionAttribute);
+  }
+
+  @Patch("section/attribute")
+  async editSectionAttribute(
+    @Body() sectionAttribute: EditSectionAttributeDto,
+  ) {
+    return this.attributeValuesService.editSectionAttribute(sectionAttribute);
   }
 
   @Post("section/attribute/option")
