@@ -1,9 +1,4 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -17,6 +12,7 @@ import { ModuleModule } from "./modules/module/module.module";
 import { JudicialProcessModule } from "./modules/judicial_process/judicial-process.module";
 import { ElasticsearchModule } from "@nestjs/elasticsearch";
 import { MasterModule } from "./modules/master/master.module";
+import { AttributeValuesModule } from "./modules/attribute_values/attribute-values.module";
 
 @Module({
   imports: [
@@ -27,6 +23,7 @@ import { MasterModule } from "./modules/master/master.module";
     RolesModule,
     ModuleModule,
     JudicialProcessModule,
+    AttributeValuesModule,
     PrismaModule,
     MasterModule,
     ElasticsearchModule.registerAsync({

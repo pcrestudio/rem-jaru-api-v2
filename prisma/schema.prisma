@@ -7,6 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum DataType {
+  TEXT
+  TEXTAREA
+  INTEGER
+  FLOAT
+  DATE
+  LIST
+  FILE
+  EMAIL
+  BOOLEAN
+}
+
 model User {
   id        Int        @id @default(autoincrement())
   firstName String     @db.VarChar(50)
@@ -45,15 +57,17 @@ model UserRole {
 }
 
 model Module {
-  id        Int         @id @default(autoincrement())
-  name      String      @db.VarChar(50)
-  isActive  Boolean     @default(true)
-  order     Int
-  slug      String      @default("") @db.VarChar(50)
-  createdAt DateTime?   @default(now())
-  updatedAt DateTime?   @updatedAt
-  Submodule Submodule[]
-  Master    Master[]
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(50)
+  isActive         Boolean            @default(true)
+  order            Int
+  slug             String             @default("") @db.VarChar(50)
+  createdAt        DateTime?          @default(now())
+  updatedAt        DateTime?          @updatedAt
+  Submodule        Submodule[]
+  Master           Master[]
+  SectionAttribute SectionAttribute[]
+  Section          Section[]
 }
 
 model Submodule {
@@ -66,8 +80,10 @@ model Submodule {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 
-  module          Module            @relation(fields: [moduleId], references: [id])
-  JudicialProcess JudicialProcess[]
+  module           Module             @relation(fields: [moduleId], references: [id])
+  JudicialProcess  JudicialProcess[]
+  SectionAttribute SectionAttribute[]
+  Section          Section[]
 }
 
 model Master {
@@ -119,4 +135,90 @@ model JudicialProcess {
   studio               MasterOption? @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
   responsible          User?         @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
   secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
+}
+
+model Section {
+  sectionId   Int                @id @default(autoincrement())
+  label       String
+  order       Int
+  collapsable Boolean
+  isActive    Boolean?           @default(true)
+  moduleId    Int?
+  submoduleId Int?
+  module      Module?            @relation(fields: [moduleId], references: [id])
+  submodule   Submodule?         @relation(fields: [submoduleId], references: [id])
+  attributes  SectionAttribute[]
+}
+
+model SectionAttribute {
+  sectionAttributeId Int      @id @default(autoincrement())
+  slug               String   @unique
+  label              String
+  sectionId          Int
+  moduleId           Int?
+  submoduleId        Int?
+  order              Int
+  dataType           DataType @default(TEXT)
+  rowLayout          String
+  isActive           Boolean? @default(true)
+
+  section   Section                  @relation(fields: [sectionId], references: [sectionId])
+  module    Module?                  @relation(fields: [moduleId], references: [id])
+  submodule Submodule?               @relation(fields: [submoduleId], references: [id])
+  options   SectionAttributeOption[]
+  values    SectionAttributeValue[]
+}
+
+model SectionAttributeOption {
+  sectionAttributeOptionId Int              @id @default(autoincrement())
+  attributeId              Int
+  optionLabel              String
+  optionValue              String
+  isActive                 Boolean          @default(true)
+  attribute                SectionAttribute @relation(fields: [attributeId], references: [sectionAttributeId])
+}
+
+model SectionAttributeValue {
+  sectionAttributeId Int
+  value              String
+  createdAt          DateTime         @default(now())
+  modifiedAt         DateTime         @updatedAt
+  createdBy          String
+  modifiedBy         String
+  attribute          SectionAttribute @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+
+  @@id([sectionAttributeId, value])
+}
+
+model GlobalAttribute {
+  globalAttributeId Int                     @id @default(autoincrement())
+  slug              String                  @unique
+  label             String
+  dataType          DataType                @default(TEXT)
+  order             Int
+  rowLayout         String
+  isActive          Boolean?                @default(true)
+  options           GlobalAttributeOption[]
+  values            GlobalAttributeValue[]
+}
+
+model GlobalAttributeOption {
+  id                Int             @id @default(autoincrement())
+  globalAttributeId Int
+  optionLabel       String
+  optionValue       String
+  isActive          Boolean?        @default(true)
+  attribute         GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+}
+
+model GlobalAttributeValue {
+  globalAttributeId Int
+  value             String
+  createdAt         DateTime        @default(now())
+  modifiedAt        DateTime        @updatedAt
+  createdBy         String
+  modifiedBy        String
+  attribute         GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+
+  @@id([globalAttributeId, value])
 }
