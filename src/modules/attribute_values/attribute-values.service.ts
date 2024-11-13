@@ -4,10 +4,12 @@ import { CreateSectionDto } from "./dto/create-section.dto";
 import {
   CreateSectionAttributeDto,
   DataType,
+  RowLayout,
 } from "./dto/create-section-attribute.dto";
 import { CreateSectionAttributeOptionDto } from "./dto/create-section-attribute-option.dto";
 import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-option.dto";
 import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
+import { mappingRevertSubmodules } from "../../common/utils/mapping_submodules";
 
 @Injectable()
 export class AttributeValuesService {
@@ -34,6 +36,9 @@ export class AttributeValuesService {
         dataType: sectionAttribute.dataType
           ? sectionAttribute.dataType
           : DataType.TEXT,
+        rowLayout: sectionAttribute.rowLayout
+          ? sectionAttribute.rowLayout
+          : RowLayout.single,
         moduleId: section.moduleId ?? undefined,
         submoduleId: section.submoduleId ?? undefined,
       },
@@ -86,12 +91,12 @@ export class AttributeValuesService {
     });
   }
 
-  async getSections(sectionId?: number, submoduleId?: number) {
+  async getSections(moduleId?: number, submoduleId?: number) {
     return this.prisma.section.findMany({
       where: {
         OR: [
           {
-            moduleId: sectionId,
+            moduleId: moduleId,
           },
           {
             submoduleId: submoduleId,
@@ -102,6 +107,42 @@ export class AttributeValuesService {
         attributes: {
           include: {
             options: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getSectionBySlug(pathname: string) {
+    const slug = pathname.split("/").filter((path) => path !== "");
+
+    const module = await this.prisma.module.findFirst({
+      where: {
+        slug: slug[1],
+      },
+    });
+    const submodule = await this.prisma.submodule.findFirst({
+      where: {
+        slug: mappingRevertSubmodules[slug[2]],
+      },
+    });
+
+    return this.prisma.section.findMany({
+      where: {
+        OR: [
+          {
+            moduleId: module.id,
+          },
+          {
+            submoduleId: submodule.id,
+          },
+        ],
+      },
+      include: {
+        attributes: {
+          include: {
+            options: true,
+            values: true,
           },
         },
       },
