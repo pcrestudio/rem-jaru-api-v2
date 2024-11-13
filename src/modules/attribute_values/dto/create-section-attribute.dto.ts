@@ -19,6 +19,12 @@ export enum DataType {
   BOOLEAN = "BOOLEAN",
 }
 
+export enum RowLayout {
+  single = "single",
+  twoColumns = "twoColumns",
+  threeColumns = "threeColumns",
+}
+
 export class CreateSectionAttributeDto {
   @IsString()
   label: string;
@@ -35,8 +41,8 @@ export class CreateSectionAttributeDto {
   @IsNumber()
   order: number;
 
-  @IsString()
-  rowLayout: string;
+  @IsEnum(RowLayout)
+  rowLayout: RowLayout;
 
   @IsEnum(DataType)
   @Transform(({ value }) => value.toLowerCase())

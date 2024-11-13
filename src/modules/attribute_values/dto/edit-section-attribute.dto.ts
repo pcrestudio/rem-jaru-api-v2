@@ -6,7 +6,7 @@ import {
   IsString,
 } from "class-validator";
 import { Transform } from "class-transformer";
-import { DataType } from "./create-section-attribute.dto";
+import { DataType, RowLayout } from "./create-section-attribute.dto";
 
 export class EditSectionAttributeDto {
   @IsNumber()
@@ -27,8 +27,9 @@ export class EditSectionAttributeDto {
   @IsNumber()
   order: number;
 
-  @IsString()
-  rowLayout: string;
+  @IsEnum(RowLayout)
+  @IsOptional()
+  rowLayout: RowLayout;
 
   @IsEnum(DataType)
   @Transform(({ value }) => value.toLowerCase())

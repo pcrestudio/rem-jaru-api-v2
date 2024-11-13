@@ -57,6 +57,11 @@ export class AttributeValuesController {
     return this.attributeValuesService.getSections(Number(query.moduleId));
   }
 
+  @Get("section/attributes")
+  async getSectionBySlug(@Query("slug") slug: string) {
+    return this.attributeValuesService.getSectionBySlug(slug);
+  }
+
   @Get("options")
   async getSectionAttributeOptions(@Query("attributeId") attributeId: string) {
     return this.attributeValuesService.getSectionAttributeOptions(

@@ -19,6 +19,12 @@ enum DataType {
   BOOLEAN
 }
 
+enum RowLayout {
+  single
+  twoColumns
+  threeColumns
+}
+
 model User {
   id        Int        @id @default(autoincrement())
   firstName String     @db.VarChar(50)
@@ -151,16 +157,17 @@ model Section {
 }
 
 model SectionAttribute {
-  sectionAttributeId Int      @id @default(autoincrement())
-  slug               String   @unique
+  sectionAttributeId Int       @id @default(autoincrement())
+  slug               String    @unique
   label              String
   sectionId          Int
   moduleId           Int?
   submoduleId        Int?
   order              Int
-  dataType           DataType @default(TEXT)
-  rowLayout          String
-  isActive           Boolean? @default(true)
+  dataType           DataType  @default(TEXT)
+  rowLayout          RowLayout
+  isActive           Boolean?  @default(true)
+  isRequired         Boolean?  @default(true)
 
   section   Section                  @relation(fields: [sectionId], references: [sectionId])
   module    Module?                  @relation(fields: [moduleId], references: [id])
@@ -196,7 +203,7 @@ model GlobalAttribute {
   label             String
   dataType          DataType                @default(TEXT)
   order             Int
-  rowLayout         String
+  rowLayout         RowLayout               @default(single)
   isActive          Boolean?                @default(true)
   options           GlobalAttributeOption[]
   values            GlobalAttributeValue[]
