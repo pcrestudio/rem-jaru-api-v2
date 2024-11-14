@@ -20,7 +20,13 @@ export class JudicialProcessService {
 
     return this.prisma.judicialProcess.create({
       data: {
-        ...judicialProcess,
+        fileCode: judicialProcess.fileCode,
+        demanded: judicialProcess.demanded,
+        plaintiff: judicialProcess.plaintiff,
+        coDefendant: judicialProcess.coDefendant,
+        controversialMatter: judicialProcess.controversialMatter,
+        projectId: judicialProcess.projectId,
+        cargoStudioId: judicialProcess.cargoStudioId,
         submoduleId: submodule.id,
       },
     });
@@ -35,7 +41,13 @@ export class JudicialProcessService {
 
     return this.prisma.judicialProcess.update({
       data: {
-        ...judicialProcess,
+        fileCode: judicialProcess.fileCode,
+        demanded: judicialProcess.demanded,
+        plaintiff: judicialProcess.plaintiff,
+        coDefendant: judicialProcess.coDefendant,
+        controversialMatter: judicialProcess.controversialMatter,
+        projectId: judicialProcess.projectId,
+        cargoStudioId: judicialProcess.cargoStudioId,
       },
       where: {
         id: judicialProcess.id,

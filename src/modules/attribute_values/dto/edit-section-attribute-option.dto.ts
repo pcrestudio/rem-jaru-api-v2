@@ -1,12 +1,4 @@
-import {
-  IsBoolean,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from "class-validator";
-import { Transform } from "class-transformer";
-import { DataType } from "./create-section-attribute.dto";
+import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class EditSectionAttributeOptionDto {
   @IsNumber()
@@ -17,11 +9,6 @@ export class EditSectionAttributeOptionDto {
 
   @IsString()
   optionLabel: string;
-
-  @IsEnum(DataType)
-  @Transform(({ value }) => value.toLowerCase())
-  @IsOptional()
-  dataType: DataType;
 
   @IsString()
   optionValue: string;

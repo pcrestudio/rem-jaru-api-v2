@@ -6,4 +6,7 @@ export class CreateModuleDto {
 
   @IsNumber()
   order: number;
+
+  @IsString()
+  slug: string;
 }

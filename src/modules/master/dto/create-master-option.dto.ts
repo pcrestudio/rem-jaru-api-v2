@@ -8,5 +8,5 @@ export class CreateMasterOptionDto {
   slug: string;
 
   @IsNumber()
-  masterId: number;
+  masterId?: number;
 }

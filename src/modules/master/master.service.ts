@@ -48,6 +48,7 @@ export class MasterService {
     return this.prisma.master.create({
       data: {
         ...master,
+        moduleId: master.moduleId,
       },
     });
   }

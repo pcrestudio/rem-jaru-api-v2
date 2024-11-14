@@ -86,10 +86,11 @@ model Submodule {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 
-  module           Module             @relation(fields: [moduleId], references: [id])
-  JudicialProcess  JudicialProcess[]
-  SectionAttribute SectionAttribute[]
-  Section          Section[]
+  module                Module                  @relation(fields: [moduleId], references: [id])
+  JudicialProcess       JudicialProcess[]
+  SectionAttribute      SectionAttribute[]
+  Section               Section[]
+  SectionAttributeValue SectionAttributeValue[]
 }
 
 model Master {
@@ -186,15 +187,17 @@ model SectionAttributeOption {
 }
 
 model SectionAttributeValue {
-  sectionAttributeId Int
-  value              String
-  createdAt          DateTime         @default(now())
-  modifiedAt         DateTime         @updatedAt
-  createdBy          String
-  modifiedBy         String
-  attribute          SectionAttribute @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  sectionAttributeValueId Int      @id @default(autoincrement())
+  sectionAttributeId      Int
+  value                   String
+  createdAt               DateTime @default(now())
+  modifiedAt              DateTime @updatedAt
+  createdBy               String
+  modifiedBy              String
+  entityReference         Int?
 
-  @@id([sectionAttributeId, value])
+  attribute SectionAttribute @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  submodule Submodule?       @relation(fields: [entityReference], references: [id])
 }
 
 model GlobalAttribute {
@@ -219,13 +222,12 @@ model GlobalAttributeOption {
 }
 
 model GlobalAttributeValue {
-  globalAttributeId Int
-  value             String
-  createdAt         DateTime        @default(now())
-  modifiedAt        DateTime        @updatedAt
-  createdBy         String
-  modifiedBy        String
-  attribute         GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
-
-  @@id([globalAttributeId, value])
+  globalAttributeValueId Int             @id @default(autoincrement())
+  globalAttributeId      Int
+  value                  String
+  createdAt              DateTime        @default(now())
+  modifiedAt             DateTime        @updatedAt
+  createdBy              String
+  modifiedBy             String
+  attribute              GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
 }
