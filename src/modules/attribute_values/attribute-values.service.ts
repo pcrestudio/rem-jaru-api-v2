@@ -17,6 +17,7 @@ import { mappingRevertSubmodules } from "../../common/utils/mapping_submodules";
 import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
 import { Request } from "express";
 import { ZonedDateTime } from "@internationalized/date";
+import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
 
 @Injectable()
 export class AttributeValuesService {
@@ -248,5 +249,59 @@ export class AttributeValuesService {
         attributeId,
       },
     });
+  }
+
+  async getAttributeRules(sectionAttributeId: number) {
+    return this.prisma.attributeRule.findMany({
+      where: {
+        triggerAttributeId: sectionAttributeId,
+      },
+      include: {
+        triggerAttribute: true,
+        targetAttribute: true,
+      },
+    });
+  }
+
+  async getAttributesByModuleOrSubmodule(
+    moduleId?: number,
+    submoduleId?: number,
+  ) {
+    return this.prisma.sectionAttribute.findMany({
+      where: {
+        OR: [
+          {
+            moduleId: moduleId,
+          },
+          {
+            submoduleId: submoduleId,
+          },
+        ],
+      },
+    });
+  }
+
+  async upsertAttributeRule(attributeRule: CreateAttributeRuleDto) {
+    try {
+      await this.prisma.attributeRule.upsert({
+        create: {
+          triggerAttributeId: attributeRule.triggerAttributeId,
+          targetAttributeId: attributeRule.targetAttributeId,
+          targetValue: attributeRule.targetValue,
+        },
+        update: {
+          triggerAttributeId: attributeRule.triggerAttributeId,
+          targetAttributeId: attributeRule.targetAttributeId,
+          targetValue: attributeRule.targetValue,
+        },
+        where: {
+          id: attributeRule.id ? attributeRule.id : "",
+        },
+      });
+
+      return "upsert rule";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

@@ -7,6 +7,7 @@ import { CreateSectionAttributeOptionDto } from "./dto/create-section-attribute-
 import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-option.dto";
 import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
+import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
 
 interface SectionQuery {
   moduleId: string;
@@ -83,5 +84,30 @@ export class AttributeValuesController {
     return this.attributeValuesService.getSectionAttributeOptions(
       Number(attributeId),
     );
+  }
+
+  @Get("attribute/rules")
+  async getAttributeRules(
+    @Query("sectionAttributeId") sectionAttributeId: string,
+  ) {
+    return this.attributeValuesService.getAttributeRules(
+      Number(sectionAttributeId),
+    );
+  }
+
+  @Get("attributes/module")
+  async getAttributesByModuleOrSubmodule(
+    @Query("moduleId") moduleId: string,
+    @Query("submoduleId") submoduleId?: string,
+  ) {
+    return this.attributeValuesService.getAttributesByModuleOrSubmodule(
+      Number(moduleId),
+      Number(submoduleId),
+    );
+  }
+
+  @Post("attribute/rule")
+  async upsertAttributeRule(@Body() attributeRule: CreateAttributeRuleDto) {
+    return this.attributeValuesService.upsertAttributeRule(attributeRule);
   }
 }

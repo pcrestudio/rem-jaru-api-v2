@@ -170,11 +170,14 @@ model SectionAttribute {
   isActive           Boolean?  @default(true)
   isRequired         Boolean?  @default(true)
 
-  section   Section                  @relation(fields: [sectionId], references: [sectionId])
-  module    Module?                  @relation(fields: [moduleId], references: [id])
-  submodule Submodule?               @relation(fields: [submoduleId], references: [id])
-  options   SectionAttributeOption[]
-  values    SectionAttributeValue[]
+  section      Section                  @relation(fields: [sectionId], references: [sectionId])
+  module       Module?                  @relation(fields: [moduleId], references: [id])
+  submodule    Submodule?               @relation(fields: [submoduleId], references: [id])
+  options      SectionAttributeOption[]
+  values       SectionAttributeValue[]
+  triggerRules AttributeRule[]          @relation("Trigger")
+  targetRules  AttributeRule[]          @relation("Target")
+  Condition    Condition[]
 }
 
 model SectionAttributeOption {
@@ -230,4 +233,27 @@ model GlobalAttributeValue {
   createdBy              String
   modifiedBy             String
   attribute              GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+}
+
+model AttributeRule {
+  id                 String @id @default(uuid())
+  triggerAttributeId Int
+  targetAttributeId  Int
+  targetValue        String
+
+  triggerAttribute SectionAttribute @relation("Trigger", fields: [triggerAttributeId], references: [sectionAttributeId])
+  targetAttribute  SectionAttribute @relation("Target", fields: [targetAttributeId], references: [sectionAttributeId])
+  conditions       Condition[]
+}
+
+model Condition {
+  id              String @id @default(uuid())
+  attributeRuleId String
+  attributeId     Int
+  operator        String
+  value           String
+  logicalOperator String
+
+  attributeRule AttributeRule    @relation(fields: [attributeRuleId], references: [id])
+  attribute     SectionAttribute @relation(fields: [attributeId], references: [sectionAttributeId])
 }
