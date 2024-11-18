@@ -86,10 +86,11 @@ model Submodule {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 
-  module           Module             @relation(fields: [moduleId], references: [id])
-  JudicialProcess  JudicialProcess[]
-  SectionAttribute SectionAttribute[]
-  Section          Section[]
+  module                Module                  @relation(fields: [moduleId], references: [id])
+  JudicialProcess       JudicialProcess[]
+  SectionAttribute      SectionAttribute[]
+  Section               Section[]
+  SectionAttributeValue SectionAttributeValue[]
 }
 
 model Master {
@@ -169,11 +170,14 @@ model SectionAttribute {
   isActive           Boolean?  @default(true)
   isRequired         Boolean?  @default(true)
 
-  section   Section                  @relation(fields: [sectionId], references: [sectionId])
-  module    Module?                  @relation(fields: [moduleId], references: [id])
-  submodule Submodule?               @relation(fields: [submoduleId], references: [id])
-  options   SectionAttributeOption[]
-  values    SectionAttributeValue[]
+  section      Section                  @relation(fields: [sectionId], references: [sectionId])
+  module       Module?                  @relation(fields: [moduleId], references: [id])
+  submodule    Submodule?               @relation(fields: [submoduleId], references: [id])
+  options      SectionAttributeOption[]
+  values       SectionAttributeValue[]
+  triggerRules AttributeRule[]          @relation("Trigger")
+  targetRules  AttributeRule[]          @relation("Target")
+  Condition    Condition[]
 }
 
 model SectionAttributeOption {
@@ -186,15 +190,17 @@ model SectionAttributeOption {
 }
 
 model SectionAttributeValue {
-  sectionAttributeId Int
-  value              String
-  createdAt          DateTime         @default(now())
-  modifiedAt         DateTime         @updatedAt
-  createdBy          String
-  modifiedBy         String
-  attribute          SectionAttribute @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  sectionAttributeValueId Int      @id @default(autoincrement())
+  sectionAttributeId      Int
+  value                   String
+  createdAt               DateTime @default(now())
+  modifiedAt              DateTime @updatedAt
+  createdBy               String
+  modifiedBy              String
+  entityReference         Int?
 
-  @@id([sectionAttributeId, value])
+  attribute SectionAttribute @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  submodule Submodule?       @relation(fields: [entityReference], references: [id])
 }
 
 model GlobalAttribute {
@@ -219,13 +225,35 @@ model GlobalAttributeOption {
 }
 
 model GlobalAttributeValue {
-  globalAttributeId Int
-  value             String
-  createdAt         DateTime        @default(now())
-  modifiedAt        DateTime        @updatedAt
-  createdBy         String
-  modifiedBy        String
-  attribute         GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+  globalAttributeValueId Int             @id @default(autoincrement())
+  globalAttributeId      Int
+  value                  String
+  createdAt              DateTime        @default(now())
+  modifiedAt             DateTime        @updatedAt
+  createdBy              String
+  modifiedBy             String
+  attribute              GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+}
 
-  @@id([globalAttributeId, value])
+model AttributeRule {
+  id                 String @id @default(uuid())
+  triggerAttributeId Int
+  targetAttributeId  Int
+  targetValue        String
+
+  triggerAttribute SectionAttribute @relation("Trigger", fields: [triggerAttributeId], references: [sectionAttributeId])
+  targetAttribute  SectionAttribute @relation("Target", fields: [targetAttributeId], references: [sectionAttributeId])
+  conditions       Condition[]
+}
+
+model Condition {
+  id              String @id @default(uuid())
+  attributeRuleId String
+  attributeId     Int
+  operator        String
+  value           String
+  logicalOperator String
+
+  attributeRule AttributeRule    @relation(fields: [attributeRuleId], references: [id])
+  attribute     SectionAttribute @relation(fields: [attributeId], references: [sectionAttributeId])
 }

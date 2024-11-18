@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { PrismaService } from "src/core/database/prisma.service";
 import { CreateSectionDto } from "./dto/create-section.dto";
 import {
@@ -10,6 +14,10 @@ import { CreateSectionAttributeOptionDto } from "./dto/create-section-attribute-
 import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-option.dto";
 import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 import { mappingRevertSubmodules } from "../../common/utils/mapping_submodules";
+import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
+import { Request } from "express";
+import { ZonedDateTime } from "@internationalized/date";
+import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
 
 @Injectable()
 export class AttributeValuesService {
@@ -78,6 +86,83 @@ export class AttributeValuesService {
     });
   }
 
+  async createSectionAttributeValue(
+    sectionAttributeValue: CreateSectionAttributeValueGroup,
+    req: Request,
+  ) {
+    try {
+      this.prisma.$transaction(async (tx) => {
+        for (const attribute of sectionAttributeValue.attributes) {
+          if (attribute.type === DataType.DATE) {
+            if (attribute.value && typeof attribute.value === "object") {
+              const zonedDateTime = new ZonedDateTime(
+                attribute.value.year,
+                attribute.value.month,
+                attribute.value.day,
+                "America/Lima",
+                0,
+              );
+
+              const dateValue = zonedDateTime.toDate();
+
+              attribute.value = dateValue.toUTCString();
+            } else {
+              attribute.value = null;
+            }
+          }
+
+          const attributeFind = await tx.sectionAttribute.findFirst({
+            where: {
+              slug: attribute.attributeSlug,
+            },
+          });
+
+          const userFind = await tx.user.findFirst({
+            where: {
+              id: Number(req.sub),
+            },
+          });
+
+          const sectionAttributeValueFind =
+            await tx.sectionAttributeValue.findFirst({
+              where: {
+                sectionAttributeId: attributeFind.sectionAttributeId,
+                entityReference: sectionAttributeValue.entityReference,
+              },
+            });
+
+          if (attribute.value === null) continue;
+
+          await tx.sectionAttributeValue.upsert({
+            create: {
+              value: attribute.value,
+              sectionAttributeId: Number(attributeFind.sectionAttributeId),
+              createdBy: `${userFind.firstName} ${userFind.lastName}`,
+              modifiedBy: "",
+              entityReference: sectionAttributeValue.entityReference,
+            },
+            update: {
+              value: attribute.value,
+              createdBy: `${userFind.firstName} ${userFind.lastName}`,
+              modifiedBy: `${userFind.firstName} ${userFind.lastName}`,
+            },
+            where: {
+              sectionAttributeValueId: sectionAttributeValueFind
+                ? sectionAttributeValueFind.sectionAttributeValueId
+                : 0,
+              sectionAttributeId: attributeFind.sectionAttributeId,
+              entityReference: sectionAttributeValue.entityReference,
+            },
+          });
+        }
+      });
+
+      return "created";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   async editSectionAttributeOption(
     attributeOption: EditSectionAttributeOptionDto,
   ) {
@@ -113,7 +198,7 @@ export class AttributeValuesService {
     });
   }
 
-  async getSectionBySlug(pathname: string) {
+  async getSectionBySlug(pathname: string, entityReference: string) {
     const slug = pathname.split("/").filter((path) => path !== "");
 
     const module = await this.prisma.module.findFirst({
@@ -121,6 +206,7 @@ export class AttributeValuesService {
         slug: slug[1],
       },
     });
+
     const submodule = await this.prisma.submodule.findFirst({
       where: {
         slug: mappingRevertSubmodules[slug[2]],
@@ -142,7 +228,15 @@ export class AttributeValuesService {
         attributes: {
           include: {
             options: true,
-            values: true,
+            values: {
+              where: {
+                OR: [
+                  {
+                    entityReference: Number(entityReference),
+                  },
+                ],
+              },
+            },
           },
         },
       },
@@ -155,5 +249,59 @@ export class AttributeValuesService {
         attributeId,
       },
     });
+  }
+
+  async getAttributeRules(sectionAttributeId: number) {
+    return this.prisma.attributeRule.findMany({
+      where: {
+        triggerAttributeId: sectionAttributeId,
+      },
+      include: {
+        triggerAttribute: true,
+        targetAttribute: true,
+      },
+    });
+  }
+
+  async getAttributesByModuleOrSubmodule(
+    moduleId?: number,
+    submoduleId?: number,
+  ) {
+    return this.prisma.sectionAttribute.findMany({
+      where: {
+        OR: [
+          {
+            moduleId: moduleId,
+          },
+          {
+            submoduleId: submoduleId,
+          },
+        ],
+      },
+    });
+  }
+
+  async upsertAttributeRule(attributeRule: CreateAttributeRuleDto) {
+    try {
+      await this.prisma.attributeRule.upsert({
+        create: {
+          triggerAttributeId: attributeRule.triggerAttributeId,
+          targetAttributeId: attributeRule.targetAttributeId,
+          targetValue: attributeRule.targetValue,
+        },
+        update: {
+          triggerAttributeId: attributeRule.triggerAttributeId,
+          targetAttributeId: attributeRule.targetAttributeId,
+          targetValue: attributeRule.targetValue,
+        },
+        where: {
+          id: attributeRule.id ? attributeRule.id : "",
+        },
+      });
+
+      return "upsert rule";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

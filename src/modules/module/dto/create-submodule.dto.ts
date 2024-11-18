@@ -11,5 +11,5 @@ export class CreateSubmoduleDto {
   slug: string;
 
   @IsNumber()
-  moduleId: number;
+  moduleId?: number;
 }

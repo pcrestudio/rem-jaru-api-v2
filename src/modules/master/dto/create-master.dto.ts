@@ -8,5 +8,5 @@ export class CreateMasterDto {
   slug: string;
 
   @IsNumber()
-  moduleId: number;
+  moduleId?: number;
 }

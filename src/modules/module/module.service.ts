@@ -27,6 +27,7 @@ export class ModuleService {
     return this.prisma.submodule.create({
       data: {
         ...submodule,
+        moduleId: submodule.moduleId,
       },
     });
   }
