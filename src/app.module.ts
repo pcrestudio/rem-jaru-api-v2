@@ -13,6 +13,7 @@ import { JudicialProcessModule } from "./modules/judicial_process/judicial-proce
 import { ElasticsearchModule } from "@nestjs/elasticsearch";
 import { MasterModule } from "./modules/master/master.module";
 import { AttributeValuesModule } from "./modules/attribute_values/attribute-values.module";
+import { MulterModule } from "@nestjs/platform-express";
 
 @Module({
   imports: [
@@ -26,6 +27,9 @@ import { AttributeValuesModule } from "./modules/attribute_values/attribute-valu
     AttributeValuesModule,
     PrismaModule,
     MasterModule,
+    MulterModule.register({
+      dest: "./uploads",
+    }),
     ElasticsearchModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
         node: configService.get("ELASTICSEARCH_NODE"),
