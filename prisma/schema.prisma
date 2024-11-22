@@ -25,23 +25,6 @@ enum RowLayout {
   threeColumns
 }
 
-enum ConditionalOperator {
-  GREATER_THAN
-  IS_NOT_NULL
-}
-
-enum LogicalOperator {
-  AND
-  OR
-}
-
-enum OperationType {
-  MULTIPLY
-  ADD
-  SUBTRACT
-  DIVIDE
-}
-
 model User {
   id        Int        @id @default(autoincrement())
   firstName String     @db.VarChar(50)
@@ -187,16 +170,14 @@ model SectionAttribute {
   isActive           Boolean?  @default(true)
   isRequired         Boolean?  @default(true)
 
-  section             Section                  @relation(fields: [sectionId], references: [sectionId])
-  module              Module?                  @relation(fields: [moduleId], references: [id])
-  submodule           Submodule?               @relation(fields: [submoduleId], references: [id])
-  options             SectionAttributeOption[]
-  values              SectionAttributeValue[]
-  triggerRules        AttributeRule[]          @relation("Trigger")
-  targetRules         AttributeRule[]          @relation("Target")
-  Condition           Condition[]
-  AttributeRuleAction AttributeRuleAction[]
-  AttributeRuleAction AttributeRuleAction[]
+  section      Section                  @relation(fields: [sectionId], references: [sectionId])
+  module       Module?                  @relation(fields: [moduleId], references: [id])
+  submodule    Submodule?               @relation(fields: [submoduleId], references: [id])
+  options      SectionAttributeOption[]
+  values       SectionAttributeValue[]
+  triggerRules AttributeRule[]          @relation("Trigger")
+  targetRules  AttributeRule[]          @relation("Target")
+  Condition    Condition[]
 }
 
 model SectionAttributeOption {
@@ -255,37 +236,24 @@ model GlobalAttributeValue {
 }
 
 model AttributeRule {
-  id                 String                @id @default(uuid())
+  id                 String @id @default(uuid())
   triggerAttributeId Int
-  conditions         Condition[]
-  actions            AttributeRuleAction[]
+  targetAttributeId  Int
+  targetValue        String
 
-  triggerAttribute                   SectionAttribute  @relation("Trigger", fields: [triggerAttributeId], references: [sectionAttributeId])
-  SectionAttribute                   SectionAttribute? @relation(fields: [sectionAttributeSectionAttributeId], references: [sectionAttributeId])
-  sectionAttributeSectionAttributeId Int?
+  triggerAttribute SectionAttribute @relation("Trigger", fields: [triggerAttributeId], references: [sectionAttributeId])
+  targetAttribute  SectionAttribute @relation("Target", fields: [targetAttributeId], references: [sectionAttributeId])
+  conditions       Condition[]
 }
 
 model Condition {
-  id              String               @id @default(uuid())
+  id              String @id @default(uuid())
   attributeRuleId String
   attributeId     Int
-  operator        ConditionalOperator?
+  operator        String
   value           String
-  logicalOperator LogicalOperator?
+  logicalOperator String
 
   attributeRule AttributeRule    @relation(fields: [attributeRuleId], references: [id])
   attribute     SectionAttribute @relation(fields: [attributeId], references: [sectionAttributeId])
-}
-
-model AttributeRuleAction {
-  id                 String         @id @default(uuid())
-  attributeRuleId    String
-  targetAttributeId  Int
-  operation          OperationType?
-  value              String?
-  dependsOnAttribute Int?
-
-  attributeRule   AttributeRule     @relation(fields: [attributeRuleId], references: [id])
-  targetAttribute SectionAttribute  @relation(fields: [targetAttributeId], references: [sectionAttributeId])
-  dependsOn       SectionAttribute? @relation("Dependency", fields: [dependsOnAttribute], references: [sectionAttributeId])
 }
