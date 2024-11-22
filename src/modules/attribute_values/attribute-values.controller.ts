@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Patch, Post, Query, Req } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UploadedFile,
+  UseInterceptors,
+} from "@nestjs/common";
 import { Request } from "express";
 import { AttributeValuesService } from "./attribute-values.service";
 import { CreateSectionDto } from "./dto/create-section.dto";
@@ -8,6 +18,7 @@ import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-opti
 import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
 import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 interface SectionQuery {
   moduleId: string;
@@ -31,6 +42,7 @@ export class AttributeValuesController {
   }
 
   @Post("attribute/values")
+  @UseInterceptors(FileInterceptor("file"))
   async createSectionAttributeValue(
     @Body() sectionAttributeValues: CreateSectionAttributeValueGroup,
     @Req() req: Request,

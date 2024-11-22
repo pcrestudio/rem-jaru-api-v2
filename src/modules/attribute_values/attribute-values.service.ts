@@ -18,6 +18,7 @@ import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute
 import { Request } from "express";
 import { ZonedDateTime } from "@internationalized/date";
 import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
+import * as path from "path";
 
 @Injectable()
 export class AttributeValuesService {
@@ -106,6 +107,17 @@ export class AttributeValuesService {
               const dateValue = zonedDateTime.toDate();
 
               attribute.value = dateValue.toUTCString();
+            } else {
+              attribute.value = null;
+            }
+          } else if (attribute.type === DataType.FILE) {
+            const uploadedFile =
+              req.file || req.files?.[attribute.attributeSlug];
+            if (uploadedFile) {
+              attribute.value = path.join(
+                uploadedFile.destination,
+                uploadedFile.filename,
+              );
             } else {
               attribute.value = null;
             }

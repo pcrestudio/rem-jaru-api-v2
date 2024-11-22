@@ -3,7 +3,7 @@ import { hash } from "bcrypt";
 import { CreateModuleDto } from "../src/modules/module/dto/create-module.dto";
 import { CreateSubmoduleDto } from "../src/modules/module/dto/create-submodule.dto";
 import { CreateMasterDto } from "../src/modules/master/dto/create-master.dto";
-import { CreateMasterOptionDto } from "../src/modules/master/dto/create-master-option.dto";
+
 const prisma = new PrismaClient();
 export enum MasterOptionConfig {
   materia = "materia-controvertida",
