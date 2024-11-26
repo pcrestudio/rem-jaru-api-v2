@@ -1,12 +1,12 @@
-import { IsArray, IsNumber, IsString } from "class-validator";
+import { IsArray, IsString } from "class-validator";
 import { DataType } from "./create-section-attribute.dto";
 
 export class CreateSectionAttributeValueGroup {
   @IsArray({ each: true })
   attributes: CreateSectionAttributeValueDto[];
 
-  @IsNumber()
-  entityReference: number;
+  @IsString()
+  entityReference: string;
 }
 
 export class CreateSectionAttributeValueDto {

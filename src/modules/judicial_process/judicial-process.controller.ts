@@ -1,8 +1,18 @@
-import { Body, Controller, Get, Patch, Post, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Res,
+} from "@nestjs/common";
 import { CreateJudicialProcessDto } from "./dto/create-judicial-process.dto";
 import { JudicialProcessService } from "./judicial-process.service";
 import { EditJudicialProcessDto } from "./dto/edit-judicial-process.dto";
 import { ToggleJudicialProcessDto } from "./dto/toggle-judicial-process.dto";
+import { Response } from "express";
 
 @Controller("judicial_processes")
 export class JudicialProcessController {
@@ -34,5 +44,29 @@ export class JudicialProcessController {
   @Get("")
   async getJudicialProcesses(@Query("slug") slug: string) {
     return this.judicialProcessService.getJudicialProcesses(slug);
+  }
+
+  @Get("/:id")
+  async getJudicialProcess(@Param("id") id: string) {
+    return this.judicialProcessService.getJudicialProcess(Number(id));
+  }
+
+  @Get("export/word")
+  async exportWord(
+    @Query("entityReference") entityReference: string,
+    @Res() res: Response,
+  ) {
+    const document = this.judicialProcessService.exportWord(entityReference);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=documento_generado.docx",
+    );
+
+    return res.send(document);
   }
 }

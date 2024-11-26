@@ -1,8 +1,15 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { CreateJudicialProcessDto } from "./dto/create-judicial-process.dto";
 import { EditJudicialProcessDto } from "./dto/edit-judicial-process.dto";
 import { ToggleJudicialProcessDto } from "./dto/toggle-judicial-process.dto";
+import { Document, HeadingLevel, Packer, Paragraph } from "docx";
+import * as fs from "node:fs";
+import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 
 @Injectable()
 export class JudicialProcessService {
@@ -18,7 +25,7 @@ export class JudicialProcessService {
       },
     });
 
-    return this.prisma.judicialProcess.create({
+    return this.prisma.$extended.judicialProcess.create({
       data: {
         fileCode: judicialProcess.fileCode,
         demanded: judicialProcess.demanded,
@@ -84,5 +91,42 @@ export class JudicialProcessService {
         submoduleId: submodule.id,
       },
     });
+  }
+
+  async getJudicialProcess(id: number) {
+    return this.prisma.judicialProcess.findFirst({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async exportWord(entityReference?: string) {
+    try {
+      const bufferLogo = fs.readFileSync(`${process.cwd()}/public/img/rem.png`);
+
+      const doc = new Document({
+        sections: [
+          {
+            headers: {
+              default: angloDocHeader(bufferLogo),
+            },
+            children: [],
+          },
+          {
+            children: [
+              new Paragraph({ text: "Yes", heading: HeadingLevel.HEADING_1 }),
+            ],
+          },
+        ],
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      fs.writeFileSync(`${entityReference}.docx`, buffer);
+
+      return buffer;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }
