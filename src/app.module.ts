@@ -14,6 +14,8 @@ import { ElasticsearchModule } from "@nestjs/elasticsearch";
 import { MasterModule } from "./modules/master/master.module";
 import { AttributeValuesModule } from "./modules/attribute_values/attribute-values.module";
 import { MulterModule } from "@nestjs/platform-express";
+import { TodoModule } from "./modules/todo/todo.module";
+import { InstanceModule } from "./modules/instance/instance.module";
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { MulterModule } from "@nestjs/platform-express";
     AttributeValuesModule,
     PrismaModule,
     MasterModule,
+    TodoModule,
+    InstanceModule,
     MulterModule.register({
       dest: "./uploads",
     }),

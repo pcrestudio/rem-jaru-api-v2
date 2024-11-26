@@ -244,7 +244,7 @@ export class AttributeValuesService {
               where: {
                 OR: [
                   {
-                    entityReference: Number(entityReference),
+                    entityReference,
                   },
                 ],
               },
