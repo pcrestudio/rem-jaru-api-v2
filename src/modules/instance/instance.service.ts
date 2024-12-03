@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PrismaService } from "src/core/database/prisma.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
@@ -47,24 +47,34 @@ export class InstanceService {
   }
 
   async upsertInstanceStepData(instanceStepData: UpsertInstanceStepDataDto) {
-    return this.prisma.$extended.stepData.upsert({
-      create: {
-        comments: instanceStepData.comments,
-        stepId: instanceStepData.stepId,
-        file: "",
-        entityReference: instanceStepData.entityReference,
-        completed: true,
-      },
-      update: {
-        comments: instanceStepData.comments,
-        stepId: instanceStepData.stepId,
-        entityReference: instanceStepData.entityReference,
-        completed: true,
-      },
-      where: {
-        id: instanceStepData.id ?? 0,
-      },
-    });
+    try {
+      for (const stepData of instanceStepData.stepData) {
+        if (stepData.comments === undefined) continue;
+
+        await this.prisma.$extended.stepData.upsert({
+          create: {
+            comments: stepData.comments,
+            stepId: stepData.stepId,
+            file: "",
+            entityReference: stepData.entityReference,
+            completed: true,
+          },
+          update: {
+            comments: stepData.comments,
+            stepId: stepData.stepId,
+            entityReference: stepData.entityReference,
+            completed: true,
+          },
+          where: {
+            id: stepData.id ?? 0,
+          },
+        });
+      }
+
+      return "added";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async getInstanceSteps(entityReference: string) {
@@ -77,6 +87,12 @@ export class InstanceService {
             stepData: {
               where: {
                 entityReference,
+              },
+              select: {
+                comments: true,
+                file: true,
+                completed: true,
+                id: true,
               },
             },
           },
