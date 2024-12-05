@@ -16,6 +16,8 @@ import { AttributeValuesModule } from "./modules/attribute_values/attribute-valu
 import { MulterModule } from "@nestjs/platform-express";
 import { TodoModule } from "./modules/todo/todo.module";
 import { InstanceModule } from "./modules/instance/instance.module";
+import { join } from "path";
+import { diskStorage } from "multer";
 
 @Module({
   imports: [
@@ -32,7 +34,16 @@ import { InstanceModule } from "./modules/instance/instance.module";
     TodoModule,
     InstanceModule,
     MulterModule.register({
-      dest: "./uploads",
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const uploadPath = join(__dirname, "..", "..", "upload");
+          cb(null, uploadPath);
+        },
+        filename: (req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${file.originalname}`;
+          cb(null, uniqueSuffix);
+        },
+      }),
     }),
     ElasticsearchModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
@@ -54,6 +65,10 @@ import { InstanceModule } from "./modules/instance/instance.module";
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).exclude("auth/(.*)").forRoutes("*");
+    consumer
+      .apply(AuthMiddleware)
+      .exclude("auth/token")
+      .exclude("auth/register")
+      .forRoutes("*");
   }
 }

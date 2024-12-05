@@ -6,7 +6,6 @@ import {
   Post,
   Query,
   Req,
-  UploadedFile,
   UseInterceptors,
 } from "@nestjs/common";
 import { Request } from "express";

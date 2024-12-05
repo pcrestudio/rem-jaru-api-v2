@@ -3,10 +3,15 @@ import { PrismaService } from "src/core/database/prisma.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
 import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
+import { TodoService } from "../todo/todo.service";
+import { Request } from "express";
 
 @Injectable()
 export class InstanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private todoService: TodoService,
+  ) {}
 
   async upsertInstance(instance: UpsertInstanceDto) {
     return this.prisma.instance.upsert({
@@ -46,34 +51,53 @@ export class InstanceService {
     });
   }
 
-  async upsertInstanceStepData(instanceStepData: UpsertInstanceStepDataDto) {
+  async upsertInstanceStepData(
+    instanceStepData: UpsertInstanceStepDataDto,
+    files: Express.Multer.File[],
+  ) {
     try {
-      for (const stepData of instanceStepData.stepData) {
-        if (stepData.comments === undefined) continue;
+      const stepDataWithFiles = instanceStepData.stepData.map((step, index) => {
+        const file = files.find(
+          (f) => f.fieldname === `stepData[${index}][file]`,
+        );
+        return { ...step, file: file || null };
+      });
+
+      for (const stepData of stepDataWithFiles) {
+        if (stepData.comments === undefined || stepData.file === undefined)
+          continue;
+
+        if (stepData.todos && stepData.todos.length > 0) {
+          await this.todoService.upsertTodoStep({ todos: stepData.todos });
+        }
 
         await this.prisma.$extended.stepData.upsert({
           create: {
             comments: stepData.comments,
-            stepId: stepData.stepId,
-            file: "",
+            stepId: Number(stepData.stepId),
+            file: stepData.file ? stepData.file.filename : undefined,
             entityReference: stepData.entityReference,
             completed: true,
           },
           update: {
             comments: stepData.comments,
-            stepId: stepData.stepId,
+            stepId: Number(stepData.stepId),
             entityReference: stepData.entityReference,
+            file:
+              stepData.file && stepData.file.filename
+                ? stepData.file.filename
+                : undefined,
             completed: true,
           },
           where: {
-            id: stepData.id ?? 0,
+            id: stepData.id ? Number(stepData.id) : 0,
           },
         });
       }
 
-      return "added";
+      return { message: "Datos procesados correctamente" };
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -93,6 +117,7 @@ export class InstanceService {
                 file: true,
                 completed: true,
                 id: true,
+                entityId: true,
               },
             },
           },

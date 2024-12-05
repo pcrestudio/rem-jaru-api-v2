@@ -63,6 +63,10 @@ export class AuthService {
     }
   }
 
+  async getUsers() {
+    return this.prisma.user.findMany({});
+  }
+
   private _generateUserToken(user: GetUserDto) {
     const user_payload = {
       email: user.email,
