@@ -104,10 +104,10 @@ model Master {
   createdAt    DateTime?      @default(now())
   updatedAt    DateTime?      @updatedAt
   isActive     Boolean        @default(true)
-  moduleId     Int
+  moduleId     Int?
   masterOption MasterOption[]
 
-  module Module @relation(fields: [moduleId], references: [id])
+  module Module? @relation(fields: [moduleId], references: [id])
 }
 
 model MasterOption {
@@ -310,9 +310,9 @@ model Step {
 model StepData {
   id              Int      @id @default(autoincrement())
   comments        String
-  file            String
   stepId          Int
   entityReference String?
+  file            String?
   entityId        String?  @unique
   completed       Boolean? @default(false)
 

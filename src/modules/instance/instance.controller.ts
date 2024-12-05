@@ -1,8 +1,18 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  UploadedFiles,
+  UseInterceptors,
+} from "@nestjs/common";
 import { InstanceService } from "./instance.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
 import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
+import { AnyFilesInterceptor } from "@nestjs/platform-express";
+import { multerConfig } from "../../config/multer.config";
 
 @Controller("instance")
 export class InstanceController {
@@ -19,10 +29,12 @@ export class InstanceController {
   }
 
   @Post("upsert/step/record")
+  @UseInterceptors(AnyFilesInterceptor(multerConfig))
   async upsertInstanceStepData(
     @Body() instanceStepData: UpsertInstanceStepDataDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.instanceService.upsertInstanceStepData(instanceStepData);
+    return this.instanceService.upsertInstanceStepData(instanceStepData, files);
   }
 
   @Get("")
