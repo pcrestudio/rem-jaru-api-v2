@@ -16,4 +16,9 @@ export class TodoController {
   async getTodosByInstance(@Query("entityReference") entityReference: string) {
     return this.todoService.getTodosByInstance(entityReference);
   }
+
+  @Get("")
+  async getTodos() {
+    return this.todoService.getTodos();
+  }
 }

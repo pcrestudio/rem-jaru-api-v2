@@ -4,9 +4,11 @@ import {
   Get,
   Post,
   Query,
+  Req,
   UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
+import { Request } from "express";
 import { InstanceService } from "./instance.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
@@ -33,8 +35,13 @@ export class InstanceController {
   async upsertInstanceStepData(
     @Body() instanceStepData: UpsertInstanceStepDataDto,
     @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: Request,
   ) {
-    return this.instanceService.upsertInstanceStepData(instanceStepData, files);
+    return this.instanceService.upsertInstanceStepData(
+      instanceStepData,
+      files,
+      req,
+    );
   }
 
   @Get("")

@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
 import { Request } from "express";
@@ -17,7 +18,8 @@ import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-opti
 import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
 import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { AnyFilesInterceptor } from "@nestjs/platform-express";
+import { multerConfig } from "../../config/multer.config";
 
 interface SectionQuery {
   moduleId: string;
@@ -41,13 +43,15 @@ export class AttributeValuesController {
   }
 
   @Post("attribute/values")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(AnyFilesInterceptor(multerConfig))
   async createSectionAttributeValue(
     @Body() sectionAttributeValues: CreateSectionAttributeValueGroup,
+    @UploadedFiles() files: Express.Multer.File[],
     @Req() req: Request,
   ) {
     return this.attributeValuesService.createSectionAttributeValue(
       sectionAttributeValues,
+      files,
       req,
     );
   }

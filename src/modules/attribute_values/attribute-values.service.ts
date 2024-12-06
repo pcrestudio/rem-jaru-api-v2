@@ -18,7 +18,6 @@ import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute
 import { Request } from "express";
 import { ZonedDateTime } from "@internationalized/date";
 import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
-import * as path from "path";
 
 @Injectable()
 export class AttributeValuesService {
@@ -89,11 +88,16 @@ export class AttributeValuesService {
 
   async createSectionAttributeValue(
     sectionAttributeValue: CreateSectionAttributeValueGroup,
+    files: Express.Multer.File[],
     req: Request,
   ) {
+    console.log(files);
+
     try {
       this.prisma.$transaction(async (tx) => {
-        for (const attribute of sectionAttributeValue.attributes) {
+        for (const attribute of JSON.parse(
+          sectionAttributeValue.attributes.toString(),
+        )) {
           if (attribute.type === DataType.DATE) {
             if (attribute.value && typeof attribute.value === "object") {
               const zonedDateTime = new ZonedDateTime(
@@ -111,16 +115,12 @@ export class AttributeValuesService {
               attribute.value = null;
             }
           } else if (attribute.type === DataType.FILE) {
-            const uploadedFile =
-              req.file || req.files?.[attribute.attributeSlug];
-            if (uploadedFile) {
-              attribute.value = path.join(
-                uploadedFile.destination,
-                uploadedFile.filename,
-              );
-            } else {
-              attribute.value = null;
-            }
+            const file =
+              files && files.length > 0
+                ? files.find((f) => f.fieldname === attribute.attributeSlug)
+                : null;
+
+            attribute.value = file ? file.filename : undefined;
           }
 
           const attributeFind = await tx.sectionAttribute.findFirst({
