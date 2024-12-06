@@ -63,7 +63,7 @@ export class PrismaService extends PrismaClient {
               },
             });
 
-            return { result };
+            return { result, entityReference };
           },
         },
       },
