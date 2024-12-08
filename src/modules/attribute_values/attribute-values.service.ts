@@ -91,8 +91,6 @@ export class AttributeValuesService {
     files: Express.Multer.File[],
     req: Request,
   ) {
-    console.log(files);
-
     try {
       this.prisma.$transaction(async (tx) => {
         for (const attribute of JSON.parse(
@@ -120,7 +118,7 @@ export class AttributeValuesService {
                 ? files.find((f) => f.fieldname === attribute.attributeSlug)
                 : null;
 
-            attribute.value = file ? file.filename : undefined;
+            attribute.value = file ? file.filename : null;
           }
 
           const attributeFind = await tx.sectionAttribute.findFirst({
