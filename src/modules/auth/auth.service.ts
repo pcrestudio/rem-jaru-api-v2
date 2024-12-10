@@ -64,7 +64,15 @@ export class AuthService {
   }
 
   async getUsers() {
-    return this.prisma.user.findMany({});
+    return this.prisma.user.findMany({
+      include: {
+        UserRole: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
   }
 
   private _generateUserToken(user: GetUserDto) {

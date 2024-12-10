@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch, Post, Query } from "@nestjs/common";
 import { MasterService } from "./master.service";
-import { CreateMasterDto } from "./dto/create-master.dto";
+import { UpsertMasterDto } from "./dto/create-master.dto";
 import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
 import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
@@ -24,9 +24,9 @@ export class MasterController {
     return this.masterService.getOptionsForAutocompletes();
   }
 
-  @Post("create")
-  async createMaster(@Body() master: CreateMasterDto) {
-    return this.masterService.createMaster(master);
+  @Post("upsert")
+  async upsertMaster(@Body() master: UpsertMasterDto) {
+    return this.masterService.upsertMaster(master);
   }
 
   @Post("create/option")

@@ -1,6 +1,6 @@
 import { IsNumber, IsString } from "class-validator";
 
-export class CreateMasterDto {
+export class UpsertMasterDto {
   @IsString()
   name: string;
 
@@ -9,4 +9,7 @@ export class CreateMasterDto {
 
   @IsNumber()
   moduleId?: number;
+
+  @IsNumber()
+  id?: number;
 }

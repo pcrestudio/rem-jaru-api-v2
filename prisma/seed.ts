@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { hash } from "bcrypt";
 import { CreateModuleDto } from "../src/modules/module/dto/create-module.dto";
 import { CreateSubmoduleDto } from "../src/modules/module/dto/create-submodule.dto";
-import { CreateMasterDto } from "../src/modules/master/dto/create-master.dto";
+import { UpsertMasterDto } from "../src/modules/master/dto/create-master.dto";
 
 const prisma = new PrismaClient();
 export enum MasterOptionConfig {
@@ -47,7 +47,7 @@ const subModulesSeed: CreateSubmoduleDto[] = [
   },
 ];
 
-const mastersSeed: CreateMasterDto[] = [
+const mastersSeed: UpsertMasterDto[] = [
   {
     name: "Estudios a cargo",
     slug: MasterOptionConfig.estudios,
