@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PrismaService } from "src/core/database/prisma.service";
-import { CreateMasterDto } from "./dto/create-master.dto";
+import { UpsertMasterDto } from "./dto/create-master.dto";
 import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
 import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
@@ -10,7 +10,7 @@ export class MasterService {
   constructor(private prisma: PrismaService) {}
 
   async getMasters() {
-    return this.prisma.master.findMany({
+    const masters = await this.prisma.master.findMany({
       where: {
         isActive: true,
       },
@@ -18,6 +18,18 @@ export class MasterService {
         module: true,
       },
     });
+
+    return masters.reduce(
+      (acc, master) => {
+        const category = master.module?.name || "General";
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(master);
+        return acc;
+      },
+      {} as Record<string, typeof masters>,
+    );
   }
 
   async getMasterOptions(id: number) {
@@ -44,13 +56,28 @@ export class MasterService {
     });
   }
 
-  async createMaster(master: CreateMasterDto) {
-    return this.prisma.master.create({
-      data: {
-        ...master,
-        moduleId: master.moduleId,
-      },
-    });
+  async upsertMaster(master: UpsertMasterDto) {
+    try {
+      await this.prisma.master.upsert({
+        create: {
+          name: master.name,
+          slug: master.slug,
+          moduleId: master.moduleId ? master.moduleId : null,
+        },
+        update: {
+          name: master.name,
+          slug: master.slug,
+          moduleId: master.moduleId ? master.moduleId : null,
+        },
+        where: {
+          id: master.id ?? 0,
+        },
+      });
+
+      return "master created";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async createMasterOption(masterOption: CreateMasterOptionDto) {
