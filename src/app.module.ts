@@ -18,6 +18,7 @@ import { TodoModule } from "./modules/todo/todo.module";
 import { InstanceModule } from "./modules/instance/instance.module";
 import { join } from "path";
 import { diskStorage } from "multer";
+import { SupervisionModule } from "./modules/supervision/supervision.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { diskStorage } from "multer";
     RolesModule,
     ModuleModule,
     JudicialProcessModule,
+    SupervisionModule,
     AttributeValuesModule,
     PrismaModule,
     MasterModule,

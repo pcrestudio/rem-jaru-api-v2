@@ -23,7 +23,12 @@ export class ModuleController {
   }
 
   @Get("submodules")
-  async getSubmodules(@Query("slug") slug: string) {
-    return this.moduleService.getSubmodules(slug);
+  async getSubmodulesBySlug(@Query("slug") slug: string) {
+    return this.moduleService.getSubmodulesBySlug(slug);
+  }
+
+  @Get("submodules/all")
+  async getSubmodules() {
+    return this.moduleService.getSubmodules();
   }
 }

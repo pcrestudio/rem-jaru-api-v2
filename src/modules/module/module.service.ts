@@ -32,7 +32,7 @@ export class ModuleService {
     });
   }
 
-  async getSubmodules(slug: string) {
+  async getSubmodulesBySlug(slug: string) {
     const module_id = await this.prisma.module.findFirst({
       where: {
         slug: slug,
@@ -42,6 +42,14 @@ export class ModuleService {
     return this.prisma.submodule.findMany({
       where: {
         moduleId: module_id.id,
+        isActive: true,
+      },
+    });
+  }
+
+  async getSubmodules() {
+    return this.prisma.submodule.findMany({
+      where: {
         isActive: true,
       },
     });

@@ -4,6 +4,7 @@ import { UpsertMasterDto } from "./dto/create-master.dto";
 import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
 import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
+import { AutocompleteFilterDto } from "./dto/autocomplete-filter.dto";
 
 @Injectable()
 export class MasterService {
@@ -16,12 +17,14 @@ export class MasterService {
       },
       include: {
         module: true,
+        submodule: true,
       },
     });
 
     return masters.reduce(
       (acc, master) => {
-        const category = master.module?.name || "General";
+        const category =
+          master.module?.name || master.submodule?.name || "General";
         if (!acc[category]) {
           acc[category] = [];
         }
@@ -40,8 +43,8 @@ export class MasterService {
     });
   }
 
-  async getOptionsForAutocompletes() {
-    return this.prisma.master.findMany({
+  async getOptionsForAutocompletes(filter?: AutocompleteFilterDto) {
+    const baseQuery = {
       where: {
         isActive: true,
       },
@@ -53,7 +56,26 @@ export class MasterService {
           },
         },
       },
-    });
+    };
+
+    if (filter?.submoduleSlug) {
+      const submodule = await this.prisma.submodule.findFirst({
+        where: { slug: filter.submoduleSlug },
+      });
+
+      if (submodule) {
+        return this.prisma.master.findMany({
+          ...baseQuery,
+          where: {
+            ...baseQuery.where,
+            submoduleId: submodule.id,
+            slug: filter.slug,
+          },
+        });
+      }
+    }
+
+    return this.prisma.master.findMany(baseQuery);
   }
 
   async upsertMaster(master: UpsertMasterDto) {
@@ -63,11 +85,13 @@ export class MasterService {
           name: master.name,
           slug: master.slug,
           moduleId: master.moduleId ? master.moduleId : null,
+          submoduleId: master.submoduleId ? master.submoduleId : null,
         },
         update: {
           name: master.name,
           slug: master.slug,
           moduleId: master.moduleId ? master.moduleId : null,
+          submoduleId: master.submoduleId ? master.submoduleId : null,
         },
         where: {
           id: master.id ?? 0,
