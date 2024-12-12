@@ -11,5 +11,8 @@ export class UpsertMasterDto {
   moduleId?: number;
 
   @IsNumber()
+  submoduleId?: number;
+
+  @IsNumber()
   id?: number;
 }

@@ -1,10 +1,12 @@
 export const entityReferenceMapping: Record<Entities, string> = {
   JPA: "JudicialProcess",
+  SPA: "Supervision",
   ISD: "StepData",
 };
 
 export enum Entities {
   JPA = "JPA",
+  SPA = "SPA",
   ISD = "ISD",
 }
 

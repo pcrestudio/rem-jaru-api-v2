@@ -6,6 +6,7 @@ import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
 import { TodoService } from "../todo/todo.service";
 import { Request } from "express";
 import { UpsertTodoDto } from "../todo/dto/upsert-todo.dto";
+import { getModelByEntityReference } from "../../utils/entity_reference_mapping";
 
 @Injectable()
 export class InstanceService {
@@ -112,7 +113,25 @@ export class InstanceService {
   }
 
   async getInstanceSteps(entityReference: string) {
+    const model = getModelByEntityReference(entityReference);
+    const result = await this.prisma[`${model}`].findFirst({
+      include: {
+        submodule: {
+          include: {
+            module: true,
+          },
+        },
+      },
+    });
+
     return this.prisma.instance.findMany({
+      where: {
+        OR: [
+          {
+            moduleId: result.submodule.module.id,
+          },
+        ],
+      },
       include: {
         module: true,
         submodule: true,

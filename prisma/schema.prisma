@@ -39,6 +39,8 @@ model User {
   secondaryResponsible JudicialProcess[] @relation("SecondaryResponsibleRelation")
   responsible          JudicialProcess[] @relation("ResponsibleRelation")
 
+  supervisionResponsible Supervision[] @relation("SupervisionResponsibleRelation")
+
   creatorToDo     ToDo[] @relation("UserCreator")
   responsibleToDo ToDo[] @relation("UserResponsible")
 }
@@ -78,6 +80,7 @@ model Module {
   SectionAttribute SectionAttribute[]
   Section          Section[]
   Instance         Instance[]
+  GlobalAttribute  GlobalAttribute[]
 }
 
 model Submodule {
@@ -95,6 +98,9 @@ model Submodule {
   SectionAttribute SectionAttribute[]
   Section          Section[]
   Instance         Instance[]
+  GlobalAttribute  GlobalAttribute[]
+  Supervision      Supervision[]
+  Master           Master[]
 }
 
 model Master {
@@ -105,9 +111,11 @@ model Master {
   updatedAt    DateTime?      @updatedAt
   isActive     Boolean        @default(true)
   moduleId     Int?
+  submoduleId  Int?
   masterOption MasterOption[]
 
-  module Module? @relation(fields: [moduleId], references: [id])
+  module    Module?    @relation(fields: [moduleId], references: [id])
+  submodule Submodule? @relation(fields: [submoduleId], references: [id])
 }
 
 model MasterOption {
@@ -123,6 +131,10 @@ model MasterOption {
   judicialProjects JudicialProcess[] @relation("ProjectRelation")
   judicialStudios  JudicialProcess[] @relation("StudioRelation")
   ToDo             ToDo[]
+
+  supervisionProjects    Supervision[] @relation("SupervisionProjectRelation")
+  supervisionAuthorities Supervision[] @relation("SupervisionAuthorityRelation")
+  supervisionSituation   Supervision[] @relation("SupervisionSituationRelation")
 }
 
 model JudicialProcess {
@@ -148,6 +160,25 @@ model JudicialProcess {
   studio               MasterOption? @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
   responsible          User?         @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
   secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
+}
+
+model Supervision {
+  id              Int       @id @default(autoincrement())
+  entityReference String?   @unique
+  submoduleId     Int
+  projectId       Int?      @map("project_id")
+  responsibleId   Int?      @map("responsible_id")
+  authorityId     Int?      @map("authority_id")
+  situationId     Int?      @map("situation_id")
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
+  isActive        Boolean   @default(true)
+
+  submodule   Submodule     @relation(fields: [submoduleId], references: [id])
+  project     MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
+  authority   MasterOption? @relation("SupervisionAuthorityRelation", fields: [authorityId], references: [id], map: "fk_supervision_authority_id")
+  situation   MasterOption? @relation("SupervisionSituationRelation", fields: [situationId], references: [id], map: "fk_supervision_situation_id")
+  responsible User?         @relation("SupervisionResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_supervision_responsible_id")
 }
 
 model Section {
@@ -191,7 +222,7 @@ model SectionAttributeOption {
   attributeId              Int
   optionLabel              String
   optionValue              String
-  isActive                 Boolean          @default(true)
+  isActive                 Boolean?         @default(true)
   attribute                SectionAttribute @relation(fields: [attributeId], references: [sectionAttributeId])
 }
 
@@ -209,15 +240,21 @@ model SectionAttributeValue {
 }
 
 model GlobalAttribute {
-  globalAttributeId Int                     @id @default(autoincrement())
-  slug              String                  @unique
+  globalAttributeId Int       @id @default(autoincrement())
+  slug              String    @unique
   label             String
-  dataType          DataType                @default(TEXT)
+  dataType          DataType  @default(TEXT)
+  moduleId          Int?
+  submoduleId       Int?
   order             Int
-  rowLayout         RowLayout               @default(single)
-  isActive          Boolean?                @default(true)
-  options           GlobalAttributeOption[]
-  values            GlobalAttributeValue[]
+  rowLayout         RowLayout @default(single)
+  isActive          Boolean?  @default(true)
+  isRequired        Boolean?  @default(true)
+
+  module    Module?                 @relation(fields: [moduleId], references: [id])
+  submodule Submodule?              @relation(fields: [submoduleId], references: [id])
+  options   GlobalAttributeOption[]
+  values    GlobalAttributeValue[]
 }
 
 model GlobalAttributeOption {
@@ -230,14 +267,16 @@ model GlobalAttributeOption {
 }
 
 model GlobalAttributeValue {
-  globalAttributeValueId Int             @id @default(autoincrement())
+  globalAttributeValueId Int      @id @default(autoincrement())
   globalAttributeId      Int
   value                  String
-  createdAt              DateTime        @default(now())
-  modifiedAt             DateTime        @updatedAt
+  createdAt              DateTime @default(now())
+  modifiedAt             DateTime @updatedAt
   createdBy              String
   modifiedBy             String
-  attribute              GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+  entityReference        String?
+
+  attribute GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
 }
 
 model AttributeRule {

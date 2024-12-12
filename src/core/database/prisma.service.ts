@@ -7,6 +7,7 @@ const prefixMapping: Record<string, string> = {
   judicial_process_labor_court: "JPL",
   judicial_process_civil_court: "JPC",
   judicial_process_criminal: "JPCR",
+  supervision_administrative_processes: "SPA",
 };
 
 @Injectable()
@@ -26,6 +27,29 @@ export class PrismaService extends PrismaClient {
     this.$extended = this.$extends({
       query: {
         judicialProcess: {
+          create: async ({ model, query, args }) => {
+            const result = await query(args);
+            const submodule = await this.submodule.findFirst({
+              where: {
+                id: result.submoduleId,
+              },
+            });
+
+            const entityReference = `${prefixMapping[submodule.slug]}${result.id.toString().padStart(8, "0")}`;
+
+            await this[model].update({
+              where: {
+                id: result.id,
+              },
+              data: {
+                entityReference,
+              },
+            });
+
+            return { result };
+          },
+        },
+        supervision: {
           create: async ({ model, query, args }) => {
             const result = await query(args);
             const submodule = await this.submodule.findFirst({

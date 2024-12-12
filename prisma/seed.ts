@@ -47,6 +47,19 @@ const subModulesSeed: CreateSubmoduleDto[] = [
   },
 ];
 
+const supervisionSubmodulesSeed: CreateSubmoduleDto[] = [
+  {
+    name: "Supervisiones Administrativos Laborales",
+    order: 1,
+    slug: "supervision_administrative_processes",
+  },
+  {
+    name: "Supervisiones Administrativos Sancionadores",
+    order: 1,
+    slug: "supervision_administrative_sanctioning",
+  },
+];
+
 const mastersSeed: UpsertMasterDto[] = [
   {
     name: "Estudios a cargo",
@@ -119,6 +132,13 @@ async function main() {
       data: subModulesSeed.map((submodule) => ({
         ...submodule,
         moduleId: modulesSet[0].id,
+      })),
+    });
+
+    await prisma.submodule.createMany({
+      data: supervisionSubmodulesSeed.map((submodule) => ({
+        ...submodule,
+        moduleId: modulesSet[1].id,
       })),
     });
 

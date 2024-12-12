@@ -4,6 +4,7 @@ import { UpsertMasterDto } from "./dto/create-master.dto";
 import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
 import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
+import { AutocompleteFilterDto } from "./dto/autocomplete-filter.dto";
 
 @Controller("masters")
 export class MasterController {
@@ -20,8 +21,8 @@ export class MasterController {
   }
 
   @Get("options/autocomplete")
-  async getOptionsForAutocompletes() {
-    return this.masterService.getOptionsForAutocompletes();
+  async getOptionsForAutocompletes(@Query() filter: AutocompleteFilterDto) {
+    return this.masterService.getOptionsForAutocompletes(filter);
   }
 
   @Post("upsert")
