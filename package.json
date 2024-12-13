@@ -39,7 +39,7 @@
     "class-validator": "^0.14.1",
     "docx": "^9.0.3",
     "jsonwebtoken": "^9.0.2",
-    "prisma": "^5.22.0",
+    "prisma": "^6.0.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "xlsx": "^0.18.5"

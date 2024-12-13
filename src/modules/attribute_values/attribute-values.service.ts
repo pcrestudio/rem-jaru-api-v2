@@ -146,7 +146,7 @@ export class AttributeValuesService {
           await tx.sectionAttributeValue.upsert({
             create: {
               value: attribute.value,
-              sectionAttributeId: Number(attributeFind.sectionAttributeId),
+              sectionAttributeId: 0,
               createdBy: `${userFind.firstName} ${userFind.lastName}`,
               modifiedBy: "",
               entityReference: sectionAttributeValue.entityReference,

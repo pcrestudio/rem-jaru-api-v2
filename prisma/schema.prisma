@@ -236,7 +236,8 @@ model SectionAttributeValue {
   modifiedBy              String
   entityReference         String?
 
-  attribute SectionAttribute @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  attribute                    SectionAttribute               @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  SectionAttributeValueHistory SectionAttributeValueHistory[]
 }
 
 model GlobalAttribute {
@@ -356,4 +357,14 @@ model StepData {
   completed       Boolean? @default(false)
 
   step Step @relation(fields: [stepId], references: [id])
+}
+
+model SectionAttributeValueHistory {
+  id                      Int      @id @default(autoincrement())
+  sectionAttributeValueId Int
+  oldValue                String?
+  changeDate              DateTime @default(now())
+  changedBy               String?
+
+  sectionAttribute SectionAttributeValue @relation(fields: [sectionAttributeValueId], references: [sectionAttributeValueId])
 }

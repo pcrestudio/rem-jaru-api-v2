@@ -7,7 +7,10 @@ const prefixMapping: Record<string, string> = {
   judicial_process_labor_court: "JPL",
   judicial_process_civil_court: "JPC",
   judicial_process_criminal: "JPCR",
-  supervision_administrative_processes: "SPA",
+  supervision_oefa: "SOEF",
+  supervision_osinergmin: "SONG",
+  supervision_sunafil: "SNF",
+  supervision_ana: "SANA",
 };
 
 @Injectable()

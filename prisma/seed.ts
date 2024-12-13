@@ -3,8 +3,10 @@ import { hash } from "bcrypt";
 import { CreateModuleDto } from "../src/modules/module/dto/create-module.dto";
 import { CreateSubmoduleDto } from "../src/modules/module/dto/create-submodule.dto";
 import { UpsertMasterDto } from "../src/modules/master/dto/create-master.dto";
+import { UpsertInstanceDto } from "../src/modules/instance/dto/upsert-instance.dto";
 
 const prisma = new PrismaClient();
+
 export enum MasterOptionConfig {
   materia = "materia-controvertida",
   estudios = "estudios-a-cargo",
@@ -49,14 +51,24 @@ const subModulesSeed: CreateSubmoduleDto[] = [
 
 const supervisionSubmodulesSeed: CreateSubmoduleDto[] = [
   {
-    name: "Supervisiones Administrativos Laborales",
+    name: "Supervisiones OEFA",
     order: 1,
-    slug: "supervision_administrative_processes",
+    slug: "supervision_oefa",
   },
   {
-    name: "Supervisiones Administrativos Sancionadores",
-    order: 1,
-    slug: "supervision_administrative_sanctioning",
+    name: "Supervisiones SUNAFIL",
+    order: 2,
+    slug: "supervision_sunafil",
+  },
+  {
+    name: "Supervisiones OSINERGMIN",
+    order: 3,
+    slug: "supervision_osinergmin",
+  },
+  {
+    name: "Supervisiones ANA",
+    order: 4,
+    slug: "supervision_ana",
   },
 ];
 
@@ -72,6 +84,32 @@ const mastersSeed: UpsertMasterDto[] = [
   {
     name: "Materia controvertida",
     slug: MasterOptionConfig.materia,
+  },
+];
+
+const judicialProcessInstancesSeed: UpsertInstanceDto[] = [
+  {
+    name: "Primera instancia",
+    isGlobal: true,
+  },
+  {
+    name: "Segunda instancia",
+    isGlobal: true,
+  },
+  {
+    name: "Casación",
+    isGlobal: true,
+  },
+];
+
+const supervisionInstancesSeed: UpsertInstanceDto[] = [
+  {
+    name: "Etapa inspectiva",
+    isGlobal: true,
+  },
+  {
+    name: "Etapa sancionadora",
+    isGlobal: true,
   },
 ];
 
@@ -155,6 +193,13 @@ async function main() {
       }
     });
 
+    await prisma.master.create({
+      data: {
+        name: "Estados",
+        slug: "todo-estados",
+      },
+    });
+
     await prisma.masterOption.create({
       data: {
         name: "Estudio Rodrigo, Elías & Medrano",
@@ -187,8 +232,44 @@ async function main() {
         moduleId: modulesSet[0].id,
       },
     });
+
+    await prisma.section.create({
+      data: {
+        label: "Situación actual",
+        order: 2,
+        collapsable: true,
+        moduleId: modulesSet[0].id,
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const instance of judicialProcessInstancesSeed) {
+        const instance_created = await tx.instance.create({
+          data: {
+            ...instance,
+            moduleId: modulesSet[0].id,
+          },
+        });
+
+        mastersSet.push(instance_created);
+      }
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const instance of supervisionInstancesSeed) {
+        const instance_created = await tx.instance.create({
+          data: {
+            ...instance,
+            moduleId: modulesSet[1].id,
+          },
+        });
+
+        mastersSet.push(instance_created);
+      }
+    });
   }
 }
+
 main()
   .then(async () => {
     await prisma.$disconnect();
