@@ -10,6 +10,7 @@ import { ToggleJudicialProcessDto } from "./dto/toggle-judicial-process.dto";
 import { Document, HeadingLevel, Packer, Paragraph } from "docx";
 import * as fs from "node:fs";
 import { angloDocHeader } from "../../common/utils/anglo_doc_header";
+import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
 
 @Injectable()
 export class JudicialProcessService {
@@ -79,16 +80,32 @@ export class JudicialProcessService {
     });
   }
 
-  async getJudicialProcesses(slug: string) {
+  async getJudicialProcesses(filter: FilterJudicialProcessDto) {
     const submodule = await this.prisma.submodule.findFirst({
       where: {
-        slug,
+        slug: filter.slug,
       },
     });
 
+    const searchableFields = [
+      "fileCode",
+      "demanded",
+      "plaintiff",
+      "coDefendant",
+    ];
+
+    const orConditions = filter.search
+      ? searchableFields.map((field) => ({
+          [field]: {
+            contains: filter.search,
+          },
+        }))
+      : undefined;
+
     return this.prisma.judicialProcess.findMany({
       where: {
-        submoduleId: submodule.id,
+        submoduleId: submodule?.id,
+        ...(orConditions ? { OR: orConditions } : {}),
       },
     });
   }

@@ -13,6 +13,7 @@ import { JudicialProcessService } from "./judicial-process.service";
 import { EditJudicialProcessDto } from "./dto/edit-judicial-process.dto";
 import { ToggleJudicialProcessDto } from "./dto/toggle-judicial-process.dto";
 import { Response } from "express";
+import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
 
 @Controller("judicial_processes")
 export class JudicialProcessController {
@@ -42,8 +43,8 @@ export class JudicialProcessController {
   }
 
   @Get("")
-  async getJudicialProcesses(@Query("slug") slug: string) {
-    return this.judicialProcessService.getJudicialProcesses(slug);
+  async getJudicialProcesses(@Query() filter: FilterJudicialProcessDto) {
+    return this.judicialProcessService.getJudicialProcesses(filter);
   }
 
   @Get("/:id")
