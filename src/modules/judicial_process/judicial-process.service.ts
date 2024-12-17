@@ -102,12 +102,34 @@ export class JudicialProcessService {
         }))
       : undefined;
 
-    return this.prisma.judicialProcess.findMany({
-      where: {
-        submoduleId: submodule?.id,
-        ...(orConditions ? { OR: orConditions } : {}),
-      },
-    });
+    const page = Number(filter.page) || 1;
+    const pageSize = Number(filter.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const [results, total] = await this.prisma.$transaction([
+      this.prisma.judicialProcess.findMany({
+        where: {
+          submoduleId: submodule?.id,
+          ...(orConditions ? { OR: orConditions } : {}),
+        },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.judicialProcess.count({
+        where: {
+          submoduleId: submodule?.id,
+          ...(orConditions ? { OR: orConditions } : {}),
+        },
+      }),
+    ]);
+
+    return {
+      results,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   async getJudicialProcess(id: number) {
