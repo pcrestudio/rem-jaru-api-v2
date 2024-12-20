@@ -4,6 +4,7 @@ import { CreateModuleDto } from "../src/modules/module/dto/create-module.dto";
 import { CreateSubmoduleDto } from "../src/modules/module/dto/create-submodule.dto";
 import { UpsertMasterDto } from "../src/modules/master/dto/create-master.dto";
 import { UpsertInstanceDto } from "../src/modules/instance/dto/upsert-instance.dto";
+import { CreateMasterOptionDto } from "../src/modules/master/dto/create-master-option.dto";
 
 const prisma = new PrismaClient();
 
@@ -113,6 +114,21 @@ const supervisionInstancesSeed: UpsertInstanceDto[] = [
   },
 ];
 
+const todoEstadosSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Caduca en más de dos semanas",
+    slug: "moreThanTwoWeeks",
+  },
+  {
+    name: "Caduca en menos de dos semanas",
+    slug: "lessThanTwoWeeks",
+  },
+  {
+    name: "Caducó",
+    slug: "expired",
+  },
+];
+
 async function main() {
   const password = await hash("admin", 9);
 
@@ -193,11 +209,23 @@ async function main() {
       }
     });
 
-    await prisma.master.create({
+    const masterTodoEstados = await prisma.master.create({
       data: {
         name: "Estados",
         slug: "todo-estados",
       },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of todoEstadosSeed) {
+        await tx.masterOption.create({
+          data: {
+            name: masterOption.name,
+            slug: masterOption.slug,
+            masterId: masterTodoEstados.id,
+          },
+        });
+      }
     });
 
     await prisma.masterOption.create({

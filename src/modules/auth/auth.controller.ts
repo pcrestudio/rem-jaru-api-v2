@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UserRegisterDto } from "./dto/user-register.dto";
 import { UserAuthDto } from "./dto/user-auth.dto";
+import { FilterUsersDto } from "./dto/filter-users.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -18,7 +19,7 @@ export class AuthController {
   }
 
   @Get("users")
-  async getUsers(): Promise<any> {
-    return this.authService.getUsers();
+  async getUsers(@Query() filter: FilterUsersDto): Promise<any> {
+    return this.authService.getUsers(filter);
   }
 }

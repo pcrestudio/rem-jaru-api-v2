@@ -7,7 +7,9 @@ import {
   Entities,
   entityReferenceMapping,
   getModelByEntityReference,
-} from "../../utils/entity_reference_mapping";
+} from "../../common/utils/entity_reference_mapping";
+import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
+import { FilterTodoDto } from "./dto/filter-todo.dto";
 
 @Injectable()
 export class TodoService {
@@ -35,23 +37,28 @@ export class TodoService {
     }
   }
 
-  async getTodosByInstance(entityReference: string) {
-    return this.prisma.toDo.findMany({
-      where: {
-        entityReference,
+  async getTodosByInstance(filter: FilterTodoDto) {
+    return CustomPaginationService._getPaginationModel(this.prisma, "ToDo", {
+      page: filter.page,
+      pageSize: filter.pageSize,
+      whereFields: {
+        entityReference: filter.entityReference,
       },
     });
   }
 
   async getTodos() {
-    const todos = await this.prisma.toDo.findMany({
-      include: {
-        responsible: true,
-      },
-    });
+    const { results, total, page, pageSize, totalPages } =
+      await CustomPaginationService._getPaginationModel(this.prisma, "ToDo", {
+        page: 1,
+        pageSize: 10,
+        includeConditions: {
+          responsible: true,
+        },
+      });
 
-    return await Promise.all(
-      todos.map(async (todo) => {
+    const processedResults = await Promise.all(
+      results.map(async (todo: any) => {
         try {
           const match = todo.entityReference.match(/^[^\d]+/);
           const model = match ? entityReferenceMapping[match[0]] : null;
@@ -78,7 +85,6 @@ export class TodoService {
           }
 
           const detail = await this.resolveSubmodule(todo.entityReference);
-
           return { ...todo, detail };
         } catch (error) {
           console.error(
@@ -89,6 +95,14 @@ export class TodoService {
         }
       }),
     );
+
+    return {
+      results: processedResults,
+      page,
+      pageSize,
+      total,
+      totalPages,
+    };
   }
 
   async upsertTodoStep(

@@ -236,7 +236,7 @@ model SectionAttributeValue {
   modifiedBy              String
   entityReference         String?
 
-  attribute                    SectionAttribute               @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  attribute                    SectionAttribute?              @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
   SectionAttributeValueHistory SectionAttributeValueHistory[]
 }
 
@@ -367,4 +367,45 @@ model SectionAttributeValueHistory {
   changedBy               String?
 
   sectionAttribute SectionAttributeValue @relation(fields: [sectionAttributeValueId], references: [sectionAttributeValueId])
+}
+
+model CEJ_Expedientes {
+  idExpediente Int      @id @default(autoincrement())
+  expedientePJ String   @unique @db.VarChar(100)
+  cuadernos    Int      @default(0)
+  actuaciones  Int      @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now())
+  juzgado      String?  @db.VarChar(1000)
+  partes       String?  @db.VarChar(1000)
+  activo       String?  @db.VarChar(1)
+
+  usuarios           CEJ_ExpedientesUsuarios[]
+  detalleactuaciones CEJ_ExpedientesActuaciones[]
+}
+
+model CEJ_ExpedientesUsuarios {
+  id           Int              @id @default(autoincrement())
+  usuario      String
+  Expedientes  CEJ_Expedientes? @relation(fields: [IdExpediente], references: [idExpediente])
+  IdExpediente Int?
+}
+
+model CEJ_ExpedientesActuaciones {
+  id                 Int              @id @default(autoincrement())
+  idExpediente       Int?
+  idActuacion        String           @db.VarChar(255)
+  fecha              DateTime         @default(now())
+  resolucion         String?          @db.VarChar(80)
+  tiponotificacion   String?          @db.VarChar(255)
+  acto               String?          @db.VarChar(255)
+  fojas              String?          @db.VarChar(50)
+  proveido           DateTime?        @default(now())
+  sumilla            String?          @db.VarChar(1000)
+  descripcion_usr    String?          @db.VarChar(255)
+  resolucion_archivo String?          @db.VarChar(150)
+  Expedientes        CEJ_Expedientes? @relation(fields: [idExpediente], references: [idExpediente])
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @default(now())
+  idProcesoUltimo    Int?
 }

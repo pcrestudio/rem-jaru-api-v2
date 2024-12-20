@@ -146,13 +146,14 @@ export class AttributeValuesService {
           await tx.sectionAttributeValue.upsert({
             create: {
               value: attribute.value,
-              sectionAttributeId: 0,
+              sectionAttributeId: attributeFind.sectionAttributeId,
               createdBy: `${userFind.firstName} ${userFind.lastName}`,
               modifiedBy: "",
               entityReference: sectionAttributeValue.entityReference,
             },
             update: {
               value: attribute.value,
+              sectionAttributeId: attributeFind.sectionAttributeId,
               createdBy: `${userFind.firstName} ${userFind.lastName}`,
               modifiedBy: `${userFind.firstName} ${userFind.lastName}`,
             },
@@ -169,7 +170,7 @@ export class AttributeValuesService {
 
       return "created";
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      console.log(error);
     }
   }
 

@@ -6,7 +6,7 @@ import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
 import { TodoService } from "../todo/todo.service";
 import { Request } from "express";
 import { UpsertTodoDto } from "../todo/dto/upsert-todo.dto";
-import { getModelByEntityReference } from "../../utils/entity_reference_mapping";
+import { getModelByEntityReference } from "../../common/utils/entity_reference_mapping";
 
 @Injectable()
 export class InstanceService {

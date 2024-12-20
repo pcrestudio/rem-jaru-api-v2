@@ -19,6 +19,7 @@ import { InstanceModule } from "./modules/instance/instance.module";
 import { join } from "path";
 import { diskStorage } from "multer";
 import { SupervisionModule } from "./modules/supervision/supervision.module";
+import { CejModule } from "./modules/cej/cej.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SupervisionModule } from "./modules/supervision/supervision.module";
     AuthModule,
     RolesModule,
     ModuleModule,
+    CejModule,
     JudicialProcessModule,
     SupervisionModule,
     AttributeValuesModule,

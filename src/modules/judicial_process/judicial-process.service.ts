@@ -11,6 +11,7 @@ import { Document, HeadingLevel, Packer, Paragraph } from "docx";
 import * as fs from "node:fs";
 import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
+import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 
 @Injectable()
 export class JudicialProcessService {
@@ -26,7 +27,7 @@ export class JudicialProcessService {
       },
     });
 
-    return this.prisma.$extended.judicialProcess.create({
+    const { result } = await this.prisma.$extended.judicialProcess.create({
       data: {
         fileCode: judicialProcess.fileCode,
         demanded: judicialProcess.demanded,
@@ -37,6 +38,20 @@ export class JudicialProcessService {
         cargoStudioId: judicialProcess.cargoStudioId,
         submoduleId: submodule.id,
       },
+    });
+
+    if (result) {
+      await this.prisma.cEJ_Expedientes.create({
+        data: {
+          expedientePJ: result.fileCode,
+        },
+      });
+
+      return result;
+    }
+
+    throw new InternalServerErrorException({
+      message: `Error creating judicial process`,
     });
   }
 
@@ -102,34 +117,21 @@ export class JudicialProcessService {
         }))
       : undefined;
 
-    const page = Number(filter.page) || 1;
-    const pageSize = Number(filter.pageSize) || 10;
-    const skip = (page - 1) * pageSize;
-
-    const [results, total] = await this.prisma.$transaction([
-      this.prisma.judicialProcess.findMany({
-        where: {
-          submoduleId: submodule?.id,
-          ...(orConditions ? { OR: orConditions } : {}),
-        },
-        skip,
-        take: pageSize,
-      }),
-      this.prisma.judicialProcess.count({
-        where: {
-          submoduleId: submodule?.id,
-          ...(orConditions ? { OR: orConditions } : {}),
-        },
-      }),
-    ]);
-
-    return {
-      results,
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+    const whereFields = {
+      submoduleId: submodule?.id,
+      ...(orConditions ? { OR: orConditions } : {}),
     };
+
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      "JudicialProcess",
+      {
+        page: filter.page,
+        pageSize: filter.pageSize,
+        whereFields,
+        orConditions,
+      },
+    );
   }
 
   async getJudicialProcess(id: number) {
