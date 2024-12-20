@@ -1,12 +1,18 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { PrismaService } from "src/core/database/prisma.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
 import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
 import { TodoService } from "../todo/todo.service";
-import { Request } from "express";
+import { Request, Response } from "express";
 import { UpsertTodoDto } from "../todo/dto/upsert-todo.dto";
 import { getModelByEntityReference } from "../../common/utils/entity_reference_mapping";
+import * as path from "path";
+import * as fs from "fs";
 
 @Injectable()
 export class InstanceService {
@@ -153,5 +159,17 @@ export class InstanceService {
         },
       },
     });
+  }
+
+  async exportDocument(fileName: string, res: Response) {
+    const filePath = path.join(process.cwd(), "upload", fileName);
+
+    console.log(filePath);
+
+    if (!fs.existsSync(filePath)) {
+      throw new BadRequestException("El archivo no existe");
+    }
+
+    return fs.readFileSync(filePath);
   }
 }

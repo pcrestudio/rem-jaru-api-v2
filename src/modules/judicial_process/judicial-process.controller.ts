@@ -70,4 +70,17 @@ export class JudicialProcessController {
 
     return res.send(document);
   }
+
+  @Get("export/excel")
+  async exportExcel(@Res() res: Response) {
+    const document = await this.judicialProcessService.exportExcel();
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
+
+    return res.send(document);
+  }
 }

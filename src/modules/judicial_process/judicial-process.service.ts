@@ -12,6 +12,7 @@ import * as fs from "node:fs";
 import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
+import { ExportablesService } from "../exportables/exportables.service";
 
 @Injectable()
 export class JudicialProcessService {
@@ -166,6 +167,23 @@ export class JudicialProcessService {
       fs.writeFileSync(`${entityReference}.docx`, buffer);
 
       return buffer;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async exportExcel() {
+    const judicialProcesses = await this.prisma.judicialProcess.findMany();
+
+    const headers = [
+      { key: "fileCode", header: "Código de expediente" },
+      { key: "demanded", header: "Demandante" },
+      { key: "plaintiff", header: "Demandado" },
+      { key: "coDefendant", header: "Co-demandado" },
+    ];
+
+    try {
+      return ExportablesService.generateExcel(headers, judicialProcesses);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

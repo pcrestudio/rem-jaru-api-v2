@@ -1,20 +1,24 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Post,
   Query,
   Req,
+  Res,
   UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
-import { Request } from "express";
+import { Request, Response } from "express";
 import { InstanceService } from "./instance.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
 import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
 import { AnyFilesInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from "../../config/multer.config";
+import * as path from "path";
+import { ExportablesService } from "../exportables/exportables.service";
 
 @Controller("instance")
 export class InstanceController {
@@ -47,5 +51,40 @@ export class InstanceController {
   @Get("")
   async getInstanceSteps(@Query("entityReference") entityReference: string) {
     return this.instanceService.getInstanceSteps(entityReference);
+  }
+
+  @Get("export")
+  async exportDocument(
+    @Query("fileName") fileName: string,
+    @Res() res: Response,
+  ) {
+    if (!fileName) {
+      throw new BadRequestException('El parámetro "fileName" es obligatorio.');
+    }
+
+    const fileExtension = path.extname(fileName).toLowerCase();
+
+    const fileContent = await this.instanceService.exportDocument(fileName);
+
+    if (
+      fileExtension === ".pdf" ||
+      fileExtension === ".png" ||
+      fileExtension === ".jpg"
+    ) {
+      res.setHeader(
+        "Content-Type",
+        ExportablesService.getMimeType(fileExtension),
+      );
+      res.send(fileContent);
+    } else if (fileExtension === ".docx" || fileExtension === ".xlsx") {
+      res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+      res.setHeader(
+        "Content-Type",
+        ExportablesService.getMimeType(fileExtension),
+      );
+      res.send(fileContent);
+    } else {
+      throw new BadRequestException("Tipo de archivo no soportado.");
+    }
   }
 }

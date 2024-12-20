@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { FilterCejDto } from "./dto/filter-cej.dto";
+import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
+import { Response } from "express";
+import * as path from "path";
+import * as fs from "fs";
 
 @Injectable()
 export class CejService {
@@ -33,33 +37,34 @@ export class CejService {
       },
     });
 
-    const page = Number(filter.page) || 1;
-    const pageSize = Number(filter.pageSize) || 10;
-    const skip = (page - 1) * pageSize;
-
-    const [results, total] = await this.prisma.$transaction([
-      this.prisma.cEJ_ExpedientesActuaciones.findMany({
-        where: {
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      "cEJ_ExpedientesActuaciones",
+      {
+        whereFields: {
           idExpediente: cejExpediente.idExpediente,
         },
-        skip,
-        take: pageSize,
-      }),
-      this.prisma.cEJ_ExpedientesActuaciones.count({
-        where: {
-          idExpediente: cejExpediente.idExpediente,
-        },
-      }),
-    ]);
+        page: filter.page,
+        pageSize: filter.pageSize,
+      },
+    );
+  }
 
-    return {
-      results,
-      dossier: cejExpediente,
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    };
+  async exportDossier(fileName: string, res: Response) {
+    const basePath = path.resolve(process.env.RESOLUCIONES);
+
+    const filePath = path.join(basePath, fileName);
+
+    if (!fs.existsSync(filePath)) {
+      throw new Error("El archivo no existe");
+    }
+
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error("Error al enviar el archivo:", err);
+        res.status(500).send("Error al descargar el archivo.");
+      }
+    });
   }
 
   private checkDateMessage(stored: Date): {
