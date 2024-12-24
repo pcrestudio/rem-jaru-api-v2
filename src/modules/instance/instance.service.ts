@@ -161,10 +161,8 @@ export class InstanceService {
     });
   }
 
-  async exportDocument(fileName: string, res: Response) {
+  async exportDocument(fileName: string) {
     const filePath = path.join(process.cwd(), "upload", fileName);
-
-    console.log(filePath);
 
     if (!fs.existsSync(filePath)) {
       throw new BadRequestException("El archivo no existe");

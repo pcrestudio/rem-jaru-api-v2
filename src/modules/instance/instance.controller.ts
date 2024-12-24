@@ -64,10 +64,7 @@ export class InstanceController {
 
     const fileExtension = path.extname(fileName).toLowerCase();
 
-    const fileContent = await this.instanceService.exportDocument(
-      fileName,
-      res,
-    );
+    const fileContent = await this.instanceService.exportDocument(fileName);
 
     if (
       fileExtension === ".pdf" ||
