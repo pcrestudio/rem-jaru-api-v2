@@ -12,6 +12,10 @@ export class EditSectionAttributeDto {
   @IsNumber()
   sectionAttributeId: number;
 
+  @IsNumber()
+  @IsOptional()
+  globalAttributeId?: number;
+
   @IsString()
   label: string;
 

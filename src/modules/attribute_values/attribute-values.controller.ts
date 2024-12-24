@@ -31,8 +31,10 @@ export class AttributeValuesController {
   constructor(private attributeValuesService: AttributeValuesService) {}
 
   @Post("section")
-  async createSection(@Body() section: CreateSectionDto) {
-    return this.attributeValuesService.createSection(section);
+  async createSection(
+    @Body() section: CreateSectionDto & CreateSectionAttributeDto,
+  ) {
+    return this.attributeValuesService.createSectionOrGlobalAttribute(section);
   }
 
   @Post("section/attribute")
@@ -50,6 +52,20 @@ export class AttributeValuesController {
     @Req() req: Request,
   ) {
     return this.attributeValuesService.createSectionAttributeValue(
+      sectionAttributeValues,
+      files,
+      req,
+    );
+  }
+
+  @Post("attribute/global/values")
+  @UseInterceptors(AnyFilesInterceptor(multerConfig))
+  async createGlobalAttributeValue(
+    @Body() sectionAttributeValues: CreateSectionAttributeValueGroup,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: Request,
+  ) {
+    return this.attributeValuesService.createGlobalAttributeValue(
       sectionAttributeValues,
       files,
       req,
@@ -90,15 +106,18 @@ export class AttributeValuesController {
   async getSectionBySlug(
     @Query("slug") slug: string,
     @Query("entityReference") entityReference: string,
+    @Query("isGlobal") isGlobal: string,
   ) {
-    return this.attributeValuesService.getSectionBySlug(slug, entityReference);
+    return this.attributeValuesService.getSectionBySlug(
+      slug,
+      entityReference,
+      isGlobal,
+    );
   }
 
   @Get("options")
-  async getSectionAttributeOptions(@Query("attributeId") attributeId: string) {
-    return this.attributeValuesService.getSectionAttributeOptions(
-      Number(attributeId),
-    );
+  async getAttributeOptions(@Query("attributeId") attributeId: string) {
+    return this.attributeValuesService.getAttributeOptions(Number(attributeId));
   }
 
   @Get("attribute/rules")

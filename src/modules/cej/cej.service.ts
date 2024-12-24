@@ -20,13 +20,13 @@ export class CejService {
       },
     });
 
-    const { message, updated } = this.checkDateMessage(dossier.updated_at);
+    const { message, updated } = this.checkDateMessage(dossier?.updated_at);
 
     return {
       ...dossier,
       message: message,
       updated: updated,
-      alternativeMessage: `Total de actuaciones: ${dossier.detalleactuaciones.length}`,
+      alternativeMessage: `Total de actuaciones: ${dossier?.detalleactuaciones.length}`,
     };
   }
 
@@ -74,9 +74,9 @@ export class CejService {
     const now = new Date();
 
     const isToday =
-      stored.getFullYear() === now.getFullYear() &&
-      stored.getMonth() === now.getMonth() &&
-      stored.getDate() === now.getDate();
+      stored?.getFullYear() === now.getFullYear() &&
+      stored?.getMonth() === now.getMonth() &&
+      stored?.getDate() === now.getDate();
 
     return {
       message: isToday

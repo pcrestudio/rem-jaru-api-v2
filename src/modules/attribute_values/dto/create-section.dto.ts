@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsString } from "class-validator";
+import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateSectionDto {
   @IsString()
@@ -9,4 +9,8 @@ export class CreateSectionDto {
 
   @IsBoolean()
   collapsable: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isSection?: boolean;
 }

@@ -259,12 +259,12 @@ model GlobalAttribute {
 }
 
 model GlobalAttributeOption {
-  id                Int             @id @default(autoincrement())
-  globalAttributeId Int
-  optionLabel       String
-  optionValue       String
-  isActive          Boolean?        @default(true)
-  attribute         GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+  globalAttributeOptionId Int             @id @default(autoincrement())
+  globalAttributeId       Int
+  optionLabel             String
+  optionValue             String
+  isActive                Boolean?        @default(true)
+  attribute               GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
 }
 
 model GlobalAttributeValue {
