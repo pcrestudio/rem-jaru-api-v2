@@ -5,6 +5,7 @@ import { CustomPaginationService } from "../custom_pagination/custom_pagination.
 import { Response } from "express";
 import * as path from "path";
 import * as fs from "fs";
+import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 
 @Injectable()
 export class CejService {
@@ -39,7 +40,7 @@ export class CejService {
 
     return CustomPaginationService._getPaginationModel(
       this.prisma,
-      "cEJ_ExpedientesActuaciones",
+      EntityReferenceModel.CEJ_ACTUACIONES,
       {
         whereFields: {
           idExpediente: cejExpediente.idExpediente,

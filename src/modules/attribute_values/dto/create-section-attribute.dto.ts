@@ -35,6 +35,10 @@ export class CreateSectionAttributeDto {
   @IsBoolean()
   isActive: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  isForReport?: boolean;
+
   @IsNumber()
   sectionId: number;
 

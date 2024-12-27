@@ -4,6 +4,14 @@ export class CreateSectionAttributeOptionDto {
   @IsNumber()
   attributeId: number;
 
+  @IsNumber()
+  @IsOptional()
+  sectionAttributeId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  globalAttributeId?: number;
+
   @IsString()
   optionLabel: string;
 

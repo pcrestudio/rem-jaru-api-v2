@@ -47,6 +47,21 @@ export class ModuleService {
     });
   }
 
+  async getSubmodulesById(id: number) {
+    const module_id = await this.prisma.module.findFirst({
+      where: {
+        id: id ?? 0,
+      },
+    });
+
+    return this.prisma.submodule.findMany({
+      where: {
+        moduleId: module_id?.id,
+        isActive: true,
+      },
+    });
+  }
+
   async getSubmodules() {
     return this.prisma.submodule.findMany({
       where: {

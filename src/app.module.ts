@@ -20,6 +20,7 @@ import { join } from "path";
 import { diskStorage } from "multer";
 import { SupervisionModule } from "./modules/supervision/supervision.module";
 import { CejModule } from "./modules/cej/cej.module";
+import { ReportModule } from "./modules/report/report.module";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CejModule } from "./modules/cej/cej.module";
     SupervisionModule,
     AttributeValuesModule,
     PrismaModule,
+    ReportModule,
     MasterModule,
     TodoModule,
     InstanceModule,

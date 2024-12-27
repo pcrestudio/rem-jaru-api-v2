@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 import { CreateModuleDto } from "./dto/create-module.dto";
 import { ModuleService } from "./module.service";
 import { CreateSubmoduleDto } from "./dto/create-submodule.dto";
@@ -25,6 +25,11 @@ export class ModuleController {
   @Get("submodules")
   async getSubmodulesBySlug(@Query("slug") slug: string) {
     return this.moduleService.getSubmodulesBySlug(slug);
+  }
+
+  @Get("submodules/autocomplete/:id")
+  async getSubmodulesById(@Param("id") id: string) {
+    return this.moduleService.getSubmodulesById(Number(id));
   }
 
   @Get("submodules/all")

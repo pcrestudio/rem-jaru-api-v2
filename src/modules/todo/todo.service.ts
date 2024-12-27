@@ -6,6 +6,7 @@ import { UpsertTodoStepDto } from "./dto/upsert-todo-step.dto";
 import {
   Entities,
   entityReferenceMapping,
+  EntityReferenceModel,
   getModelByEntityReference,
 } from "../../common/utils/entity_reference_mapping";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
@@ -38,24 +39,32 @@ export class TodoService {
   }
 
   async getTodosByInstance(filter: FilterTodoDto) {
-    return CustomPaginationService._getPaginationModel(this.prisma, "ToDo", {
-      page: filter.page,
-      pageSize: filter.pageSize,
-      whereFields: {
-        entityReference: filter.entityReference,
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      EntityReferenceModel.ToDo,
+      {
+        page: filter.page,
+        pageSize: filter.pageSize,
+        whereFields: {
+          entityReference: filter.entityReference,
+        },
       },
-    });
+    );
   }
 
   async getTodos() {
     const { results, total, page, pageSize, totalPages } =
-      await CustomPaginationService._getPaginationModel(this.prisma, "ToDo", {
-        page: 1,
-        pageSize: 10,
-        includeConditions: {
-          responsible: true,
+      await CustomPaginationService._getPaginationModel(
+        this.prisma,
+        EntityReferenceModel.ToDo,
+        {
+          page: 1,
+          pageSize: 10,
+          includeConditions: {
+            responsible: true,
+          },
         },
-      });
+      );
 
     const processedResults = await Promise.all(
       results.map(async (todo: any) => {

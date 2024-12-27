@@ -13,6 +13,7 @@ import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { ExportablesService } from "../exportables/exportables.service";
+import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 
 @Injectable()
 export class JudicialProcessService {
@@ -37,6 +38,8 @@ export class JudicialProcessService {
         controversialMatter: judicialProcess.controversialMatter,
         projectId: judicialProcess.projectId,
         cargoStudioId: judicialProcess.cargoStudioId,
+        responsibleId: judicialProcess.responsibleId,
+        secondaryResponsibleId: judicialProcess.secondaryResponsibleId,
         submoduleId: submodule.id,
       },
     });
@@ -72,6 +75,8 @@ export class JudicialProcessService {
         controversialMatter: judicialProcess.controversialMatter,
         projectId: judicialProcess.projectId,
         cargoStudioId: judicialProcess.cargoStudioId,
+        responsibleId: judicialProcess.responsibleId,
+        secondaryResponsibleId: judicialProcess.secondaryResponsibleId,
       },
       where: {
         id: judicialProcess.id,
@@ -125,12 +130,18 @@ export class JudicialProcessService {
 
     return CustomPaginationService._getPaginationModel(
       this.prisma,
-      "JudicialProcess",
+      EntityReferenceModel.JudicialProcess,
       {
         page: filter.page,
         pageSize: filter.pageSize,
         whereFields,
         orConditions,
+        includeConditions: {
+          responsible: true,
+          secondaryResponsible: true,
+          project: true,
+          studio: true,
+        },
       },
     );
   }

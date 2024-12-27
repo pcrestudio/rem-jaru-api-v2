@@ -36,6 +36,7 @@ export class AttributeValuesService {
           rowLayout: section.rowLayout ? section.rowLayout : RowLayout.single,
           moduleId: section.moduleId ?? undefined,
           submoduleId: section.submoduleId ?? undefined,
+          isForReport: section.isForReport ?? false,
         },
       });
     }
@@ -69,6 +70,7 @@ export class AttributeValuesService {
           : RowLayout.single,
         moduleId: section.moduleId ?? undefined,
         submoduleId: section.submoduleId ?? undefined,
+        isForReport: sectionAttribute.isForReport ?? false,
       },
     });
   }
@@ -112,14 +114,14 @@ export class AttributeValuesService {
   ) {
     const globalAttribute = await this.prisma.globalAttribute.findFirst({
       where: {
-        globalAttributeId: sectionAttributeOption.attributeId,
+        globalAttributeId: sectionAttributeOption.globalAttributeId ?? 0,
       },
     });
 
     if (globalAttribute) {
       if (globalAttribute.dataType !== DataType.LIST) {
         throw new BadRequestException(
-          "El atributo no está configurado como lista.",
+          "El atributo global no está configurado como lista.",
         );
       }
 
@@ -134,7 +136,7 @@ export class AttributeValuesService {
 
     const sectionAttribute = await this.prisma.sectionAttribute.findFirst({
       where: {
-        sectionAttributeId: sectionAttributeOption.attributeId,
+        sectionAttributeId: sectionAttributeOption.sectionAttributeId,
       },
     });
 
@@ -146,7 +148,9 @@ export class AttributeValuesService {
 
     return this.prisma.sectionAttributeOption.create({
       data: {
-        ...sectionAttributeOption,
+        optionLabel: sectionAttributeOption.optionLabel,
+        optionValue: sectionAttributeOption.optionValue,
+        attributeId: sectionAttributeOption.sectionAttributeId,
       },
     });
   }

@@ -206,6 +206,7 @@ model SectionAttribute {
   rowLayout          RowLayout
   isActive           Boolean?  @default(true)
   isRequired         Boolean?  @default(true)
+  isForReport        Boolean?  @default(false)
 
   section      Section                  @relation(fields: [sectionId], references: [sectionId])
   module       Module?                  @relation(fields: [moduleId], references: [id])
@@ -251,6 +252,7 @@ model GlobalAttribute {
   rowLayout         RowLayout @default(single)
   isActive          Boolean?  @default(true)
   isRequired        Boolean?  @default(true)
+  isForReport       Boolean?  @default(false)
 
   module    Module?                 @relation(fields: [moduleId], references: [id])
   submodule Submodule?              @relation(fields: [submoduleId], references: [id])

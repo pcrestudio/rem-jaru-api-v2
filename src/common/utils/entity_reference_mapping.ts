@@ -1,14 +1,29 @@
+export enum EntityReferenceModel {
+  JudicialProcess = "JudicialProcess",
+  Supervision = "Supervision",
+  StepData = "StepData",
+  ToDo = "ToDo",
+  User = "User",
+  CEJ_ACTUACIONES = "cEJ_ExpedientesActuaciones",
+}
+
 export const entityReferenceMapping: Record<Entities, string> = {
-  JPA: "JudicialProcess",
-  SOEF: "Supervision",
-  SONG: "Supervision",
-  SNF: "Supervision",
-  SANA: "Supervision",
-  ISD: "StepData",
+  JPA: EntityReferenceModel.JudicialProcess,
+  JPL: EntityReferenceModel.JudicialProcess,
+  JPC: EntityReferenceModel.JudicialProcess,
+  JPCR: EntityReferenceModel.JudicialProcess,
+  SOEF: EntityReferenceModel.Supervision,
+  SONG: EntityReferenceModel.Supervision,
+  SNF: EntityReferenceModel.Supervision,
+  SANA: EntityReferenceModel.Supervision,
+  ISD: EntityReferenceModel.StepData,
 };
 
 export enum Entities {
   JPA = "JPA",
+  JPL = "JPL",
+  JPC = "JPC",
+  JPCR = "JPCR",
   SOEF = "SOEF",
   SNF = "SNF",
   SONG = "SONG",

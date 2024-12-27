@@ -11,6 +11,7 @@ import { GetUserDto } from "./dto/get-user.dto";
 import { sign } from "jsonwebtoken";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { FilterUsersDto } from "./dto/filter-users.dto";
+import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 
 @Injectable()
 export class AuthService {
@@ -66,17 +67,21 @@ export class AuthService {
   }
 
   async getUsers(filter: FilterUsersDto) {
-    return CustomPaginationService._getPaginationModel(this.prisma, "User", {
-      page: filter.page,
-      pageSize: filter.pageSize,
-      includeConditions: {
-        UserRole: {
-          include: {
-            role: true,
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      EntityReferenceModel.User,
+      {
+        page: filter.page,
+        pageSize: filter.pageSize,
+        includeConditions: {
+          UserRole: {
+            include: {
+              role: true,
+            },
           },
         },
       },
-    });
+    );
   }
 
   private _generateUserToken(user: GetUserDto) {

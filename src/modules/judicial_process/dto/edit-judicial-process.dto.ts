@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class EditJudicialProcessDto {
   @IsString()
@@ -9,6 +9,13 @@ export class EditJudicialProcessDto {
 
   @IsNumber()
   cargoStudioId: number;
+
+  @IsNumber()
+  responsibleId: number;
+
+  @IsNumber()
+  @IsOptional()
+  secondaryResponsibleId: number;
 
   @IsString()
   demanded: string;
