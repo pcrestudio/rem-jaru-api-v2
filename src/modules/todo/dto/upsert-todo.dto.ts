@@ -10,6 +10,9 @@ export class UpsertTodoDto {
   @IsString()
   entityReference: string;
 
+  @IsString()
+  entityStepReference: string;
+
   @IsNumber()
   todoStateId: number;
 

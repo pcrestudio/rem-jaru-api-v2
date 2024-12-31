@@ -306,17 +306,19 @@ model Condition {
 }
 
 model ToDo {
-  id              Int       @id @default(autoincrement())
-  check           Boolean   @default(false)
-  alert           Boolean   @default(false)
-  title           String
-  description     String
-  creatorId       Int
-  responsibleId   Int
-  createdAt       DateTime? @default(now())
-  updatedAt       DateTime? @updatedAt
-  todoStateId     Int
-  entityReference String?
+  id            Int       @id @default(autoincrement())
+  check         Boolean   @default(false)
+  alert         Boolean   @default(false)
+  title         String
+  description   String
+  creatorId     Int
+  responsibleId Int
+  createdAt     DateTime? @default(now())
+  updatedAt     DateTime? @updatedAt
+  todoStateId   Int
+
+  entityReference     String?
+  entityStepReference String?
 
   creator     User         @relation("UserCreator", fields: [creatorId], references: [id])
   responsible User         @relation("UserResponsible", fields: [responsibleId], references: [id])

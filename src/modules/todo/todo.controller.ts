@@ -19,7 +19,7 @@ export class TodoController {
   }
 
   @Get("")
-  async getTodos() {
-    return this.todoService.getTodos();
+  async getTodos(@Query() filter: FilterTodoDto) {
+    return this.todoService.getTodos(filter);
   }
 }

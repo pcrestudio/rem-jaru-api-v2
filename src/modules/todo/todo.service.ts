@@ -25,6 +25,7 @@ export class TodoService {
           creatorId: Number(req.sub),
           responsibleId: todo.responsibleId,
           entityReference: todo.entityReference,
+          entityStepReference: todo.entityStepReference,
           todoStateId: todo.todoStateId,
         },
         update: todo,
@@ -52,14 +53,14 @@ export class TodoService {
     );
   }
 
-  async getTodos() {
+  async getTodos(filter: FilterTodoDto) {
     const { results, total, page, pageSize, totalPages } =
       await CustomPaginationService._getPaginationModel(
         this.prisma,
         EntityReferenceModel.ToDo,
         {
-          page: 1,
-          pageSize: 10,
+          page: filter.page,
+          pageSize: filter.pageSize,
           includeConditions: {
             responsible: true,
           },
@@ -69,7 +70,7 @@ export class TodoService {
     const processedResults = await Promise.all(
       results.map(async (todo: any) => {
         try {
-          const match = todo.entityReference.match(/^[^\d]+/);
+          const match = todo.entityStepReference.match(/^[^\d]+/);
           const model = match ? entityReferenceMapping[match[0]] : null;
 
           if (!model) {
@@ -80,7 +81,11 @@ export class TodoService {
           }
 
           if (match?.[0] === Entities.ISD) {
-            const entity = await this.prisma[`${model}`].findFirst();
+            const entity = await this.prisma[`${model}`].findFirst({
+              where: {
+                entityReference: todo.entityReference,
+              },
+            });
 
             if (!entity) {
               console.warn(
@@ -90,10 +95,12 @@ export class TodoService {
             }
 
             const detail = await this.resolveSubmodule(entity.entityReference);
+
             return { ...todo, detail };
           }
 
           const detail = await this.resolveSubmodule(todo.entityReference);
+
           return { ...todo, detail };
         } catch (error) {
           console.error(
