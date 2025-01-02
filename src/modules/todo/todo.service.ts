@@ -11,6 +11,8 @@ import {
 } from "../../common/utils/entity_reference_mapping";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { FilterTodoDto } from "./dto/filter-todo.dto";
+import processDate from "../../common/utils/conver_date_string";
+import { MasterTodosStates } from "../../config/master-todos-states.config";
 
 @Injectable()
 export class TodoService {
@@ -18,6 +20,9 @@ export class TodoService {
 
   async upsertTodo(todo: UpsertTodoDto, req: Request) {
     try {
+      const dateExpiration = processDate(todo.dateExpiration);
+      const masterOption = await this._getTodoState(dateExpiration);
+
       return this.prisma.toDo.upsert({
         create: {
           title: todo.title,
@@ -26,9 +31,14 @@ export class TodoService {
           responsibleId: todo.responsibleId,
           entityReference: todo.entityReference,
           entityStepReference: todo.entityStepReference,
-          todoStateId: todo.todoStateId,
+          todoStateId: masterOption.id,
+          dateExpiration,
         },
-        update: todo,
+        update: {
+          ...todo,
+          todoStateId: masterOption.id,
+          dateExpiration,
+        },
         where: {
           id: todo.id ?? 0,
           entityReference: todo.entityReference,
@@ -63,6 +73,7 @@ export class TodoService {
           pageSize: filter.pageSize,
           includeConditions: {
             responsible: true,
+            state: true,
           },
         },
       );
@@ -128,6 +139,9 @@ export class TodoService {
   ) {
     try {
       for (const todo of todos) {
+        const dateExpiration = processDate(todo.dateExpiration);
+        const masterOption = await this._getTodoState(dateExpiration);
+
         await this.prisma.toDo.upsert({
           create: {
             title: todo.title,
@@ -135,7 +149,7 @@ export class TodoService {
             creatorId: Number(req.sub),
             responsibleId: todo.responsibleId,
             entityReference: entityReference,
-            todoStateId: todo.todoStateId,
+            todoStateId: masterOption.id,
           },
           update: todo,
           where: {
@@ -178,5 +192,30 @@ export class TodoService {
       console.error(`Error al obtener submodule para ${model}:`, error);
       return null;
     }
+  }
+
+  private _getTodoState(date: string) {
+    const targetDate = new Date(date);
+    const currentDate = new Date();
+
+    const differenceInMilliseconds =
+      targetDate.getTime() - currentDate.getTime();
+
+    const differenceInDays = Math.floor(
+      differenceInMilliseconds / (1000 * 60 * 60 * 24),
+    );
+
+    const masterSlug =
+      differenceInDays >= 14
+        ? MasterTodosStates.moreThanTwoWeeks
+        : differenceInDays >= 0
+          ? MasterTodosStates.lessThanTwoWeeks
+          : MasterTodosStates.expired;
+
+    return this.prisma.masterOption.findFirst({
+      where: {
+        slug: masterSlug,
+      },
+    });
   }
 }

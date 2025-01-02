@@ -230,7 +230,7 @@ model SectionAttributeOption {
 model SectionAttributeValue {
   sectionAttributeValueId Int      @id @default(autoincrement())
   sectionAttributeId      Int
-  value                   String
+  value                   String   @db.VarChar(255)
   createdAt               DateTime @default(now())
   modifiedAt              DateTime @updatedAt
   createdBy               String
@@ -272,7 +272,7 @@ model GlobalAttributeOption {
 model GlobalAttributeValue {
   globalAttributeValueId Int      @id @default(autoincrement())
   globalAttributeId      Int
-  value                  String
+  value                  String   @db.VarChar(255)
   createdAt              DateTime @default(now())
   modifiedAt             DateTime @updatedAt
   createdBy              String
@@ -306,16 +306,17 @@ model Condition {
 }
 
 model ToDo {
-  id            Int       @id @default(autoincrement())
-  check         Boolean   @default(false)
-  alert         Boolean   @default(false)
-  title         String
-  description   String
-  creatorId     Int
-  responsibleId Int
-  createdAt     DateTime? @default(now())
-  updatedAt     DateTime? @updatedAt
-  todoStateId   Int
+  id             Int       @id @default(autoincrement())
+  check          Boolean   @default(false)
+  alert          Boolean   @default(false)
+  title          String
+  description    String
+  creatorId      Int
+  responsibleId  Int
+  dateExpiration String?
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime? @updatedAt
+  todoStateId    Int
 
   entityReference     String?
   entityStepReference String?

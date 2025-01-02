@@ -5,6 +5,7 @@ import { CreateSubmoduleDto } from "../src/modules/module/dto/create-submodule.d
 import { UpsertMasterDto } from "../src/modules/master/dto/create-master.dto";
 import { UpsertInstanceDto } from "../src/modules/instance/dto/upsert-instance.dto";
 import { CreateMasterOptionDto } from "../src/modules/master/dto/create-master-option.dto";
+import { MasterTodosStates } from "../src/config/master-todos-states.config";
 
 const prisma = new PrismaClient();
 
@@ -117,15 +118,15 @@ const supervisionInstancesSeed: UpsertInstanceDto[] = [
 const todoEstadosSeed: CreateMasterOptionDto[] = [
   {
     name: "Caduca en más de dos semanas",
-    slug: "moreThanTwoWeeks",
+    slug: MasterTodosStates.moreThanTwoWeeks,
   },
   {
     name: "Caduca en menos de dos semanas",
-    slug: "lessThanTwoWeeks",
+    slug: MasterTodosStates.lessThanTwoWeeks,
   },
   {
     name: "Caducó",
-    slug: "expired",
+    slug: MasterTodosStates.expired,
   },
 ];
 

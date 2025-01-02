@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export class UpsertTodoDto {
   @IsString()
@@ -14,10 +14,10 @@ export class UpsertTodoDto {
   entityStepReference: string;
 
   @IsNumber()
-  todoStateId: number;
-
-  @IsNumber()
   responsibleId: number;
+
+  @IsObject()
+  dateExpiration: object;
 
   @IsNumber()
   @IsOptional()
