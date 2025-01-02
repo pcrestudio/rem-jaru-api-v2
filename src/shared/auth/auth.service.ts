@@ -17,7 +17,7 @@ export class AuthService {
     private readonly httpService: HttpService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
   ) {}
 
   validateKey(apiKey: string) {
@@ -32,7 +32,7 @@ export class AuthService {
       const metadataUrl = `https://login.microsoftonline.com/${this.config.get("TENANT_ID")}/v2.0/.well-known/openid-configuration`;
 
       const metadataResponse = await firstValueFrom(
-        this.httpService.get(metadataUrl)
+        this.httpService.get(metadataUrl),
       );
       const jwksUri = metadataResponse.data.jwks_uri;
 
@@ -49,7 +49,7 @@ export class AuthService {
       const signingKey = this.jwksCache.find((key) => key.kid === kid);
       if (!signingKey) {
         throw new Error(
-          `The JWKS endpoint did not contain a key with kid ${kid}`
+          `The JWKS endpoint did not contain a key with kid ${kid}`,
         );
       }
       return signingKey;
@@ -139,7 +139,7 @@ export class AuthService {
       passwordResetTemplate,
       templateData,
       to,
-      subject
+      subject,
     );
   }
 
