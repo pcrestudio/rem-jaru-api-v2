@@ -2,7 +2,8 @@ import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { AuthModule } from "src/modules/auth/auth.module";
+import { AuthModule } from "./shared/auth/auth.module";
+//import { AuthModule } from "src/modules/auth/auth.module";
 import { PrismaModule } from "src/core/database/prisma.module";
 import { APP_FILTER } from "@nestjs/core";
 import { HttpExceptionFilters } from "./core/exception-filters/http-exception.filters";
@@ -21,13 +22,22 @@ import { diskStorage } from "multer";
 import { SupervisionModule } from "./modules/supervision/supervision.module";
 import { CejModule } from "./modules/cej/cej.module";
 import { ReportModule } from "./modules/report/report.module";
+import { OtpModule } from "./shared/otp/otp.module";
+import { UsersModule } from "./shared/users/users.module";
+import { APP_GUARD } from "@nestjs/core";
+import { GlobalJwtAuthGuard } from "./shared/auth/guards/global-jwt.guard";
+import { MailModule } from "./shared/mail/mail.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ".env",
     }),
+    MailModule.register(),
     AuthModule,
+    OtpModule,
+    UsersModule,
     RolesModule,
     ModuleModule,
     CejModule,
@@ -67,14 +77,19 @@ import { ReportModule } from "./modules/report/report.module";
       provide: APP_FILTER,
       useClass: HttpExceptionFilters,
     },
+    {
+      provide: APP_GUARD,
+      useClass: GlobalJwtAuthGuard,
+    },
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .exclude("auth/token")
-      .exclude("auth/register")
-      .forRoutes("*");
-  }
-}
+export class AppModule {}
+// export class AppModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer) {
+//     consumer
+//       .apply(AuthMiddleware)
+//       .exclude("auth/token")
+//       .exclude("auth/register")
+//       .forRoutes("*");
+//   }
+// }

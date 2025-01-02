@@ -27,13 +27,22 @@ enum RowLayout {
 
 model User {
   id        Int        @id @default(autoincrement())
-  firstName String     @db.VarChar(50)
-  lastName  String     @db.VarChar(50)
-  email     String     @db.VarChar(50)
-  password  String     @db.VarChar(255)
+  email     String     @db.VarChar(50) @unique
+  firstName String?     @db.VarChar(50)
+  lastName  String?     @db.VarChar(50)
+  displayName String?  @db.VarChar(100)
+  authMethod String     @default("local")
+  password  String?     @db.VarChar(255)
+  resetPasswordToken String? @db.VarChar(255) @unique
+  resetPasswordExpires DateTime?
+  otpSecret String?     @db.VarChar(255)
+  otpExpires DateTime?
+  lastLogon DateTime?
   isActive  Boolean    @default(true)
   createdAt DateTime?  @default(now())
+  createdBy String?    @db.VarChar(50)
   updatedAt DateTime?  @updatedAt
+  updatedBy String?    @db.VarChar(50)
   UserRole  UserRole[]
 
   secondaryResponsible JudicialProcess[] @relation("SecondaryResponsibleRelation")

@@ -40,8 +40,7 @@ export class ReportService {
       }),
     ]);
 
-    //const projects = await this.getGeneralProjects();
-    const studios = await this.getCargoStudioReport(moduleId);
+    const projects = await this.getGeneralProjects();
     const judicialProcesses = await this.getJudicialProcessesReport(moduleId);
     const { provisionAmountSum, contingencyGroups, criticalProcessGroups } =
       await this.getAttributesValuesReport(attributesWithValues);
@@ -60,7 +59,7 @@ export class ReportService {
         report: judicialProcesses,
       },
       studio: {
-        report: studios,
+        report: projects,
       },
     };
   }
@@ -97,26 +96,6 @@ export class ReportService {
             _count: {
               select: {
                 judicialProjects: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
-  private async getCargoStudioReport(moduleId: number) {
-    return this.prisma.master.findMany({
-      where: {
-        moduleId,
-      },
-      select: {
-        masterOption: {
-          select: {
-            name: true,
-            _count: {
-              select: {
-                judicialStudios: true,
               },
             },
           },
