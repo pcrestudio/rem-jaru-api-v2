@@ -20,6 +20,11 @@ export class MasterController {
     return this.masterService.getMasterOptions(Number(id));
   }
 
+  @Get("report")
+  async getMasterBySlugWithOptions(@Query("slug") slug: string) {
+    return this.masterService.getMasterBySlugWithOptions(slug);
+  }
+
   @Get("options/autocomplete")
   async getOptionsForAutocompletes(@Query() filter: AutocompleteFilterDto) {
     return this.masterService.getOptionsForAutocompletes(filter);

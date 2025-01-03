@@ -39,12 +39,14 @@ export class InstanceController {
   async upsertInstanceStepData(
     @Body() instanceStepData: UpsertInstanceStepDataDto,
     @UploadedFiles() files: Express.Multer.File[],
-    @Req() req: Request,
+    @Req() req,
   ) {
+    const user = req.user;
+
     return this.instanceService.upsertInstanceStepData(
       instanceStepData,
       files,
-      req,
+      Number(user.userId),
     );
   }
 

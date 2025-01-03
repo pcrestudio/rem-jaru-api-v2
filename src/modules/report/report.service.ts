@@ -4,6 +4,8 @@ import { FilterReportDto } from "./dto/filter-report.dto";
 import { MasterOptionConfig } from "../../config/master-option.config";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
 import { GetReportAttributeValues } from "./dto/get-report-attribute-values";
+import { getModelByEntityReference } from "../../common/utils/entity_reference_mapping";
+import { MasterTodosStates } from "../../config/master-todos-states.config";
 
 @Injectable()
 export class ReportService {
@@ -62,6 +64,27 @@ export class ReportService {
         report: projects,
       },
     };
+  }
+
+  async getReportByTodos(filter: FilterReportDto) {
+    const reportTodos = [];
+
+    const todos = await this.prisma.toDo.findMany({
+      select: {
+        state: true,
+        entityReference: true,
+        id: true,
+        creator: true,
+      },
+    });
+
+    for (const todo of todos) {
+      const detail = await this.resolveSubmodule(todo.entityReference, filter);
+
+      reportTodos.push({ ...detail, todo });
+    }
+
+    return this._countTotalStates(reportTodos);
   }
 
   private async getJudicialProcessesReport(moduleId: number) {
@@ -150,5 +173,59 @@ export class ReportService {
       contingencyGroups,
       criticalProcessGroups,
     };
+  }
+
+  private async resolveSubmodule(
+    entityReference: string,
+    filter: FilterReportDto,
+  ) {
+    const model = getModelByEntityReference(entityReference);
+
+    if (!model) {
+      console.warn(
+        `No se encontró un modelo para la referencia: ${entityReference}`,
+      );
+      return null;
+    }
+
+    try {
+      return await this.prisma[`${model}`].findFirst({
+        where: {
+          OR: [
+            {
+              entityReference: entityReference,
+            },
+          ],
+        },
+        include: {
+          submodule: {
+            include: {
+              module: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error(`Error al obtener submodule para ${model}:`, error);
+      return null;
+    }
+  }
+
+  private _countTotalStates(todos: any) {
+    const slugsToMatch = [
+      MasterTodosStates.moreThanTwoWeeks,
+      MasterTodosStates.lessThanTwoWeeks,
+      MasterTodosStates.expired,
+    ];
+
+    return todos.reduce((acc, item) => {
+      const state = item.todo.state || {};
+
+      if (slugsToMatch.includes(state["slug"])) {
+        acc[state["slug"]] = (acc[state["slug"]] || 0) + 1;
+      }
+
+      return acc;
+    }, {});
   }
 }

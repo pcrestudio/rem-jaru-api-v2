@@ -10,4 +10,9 @@ export class ReportController {
   async getInitReportByFilter(@Query() filter: FilterReportDto) {
     return this.reportService.getInitReportByFilter(filter);
   }
+
+  @Get("byTodos")
+  async getReportByTodos(@Query() filter: FilterReportDto) {
+    return this.reportService.getReportByTodos(filter);
+  }
 }

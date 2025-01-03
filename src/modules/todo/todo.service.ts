@@ -1,7 +1,6 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PrismaService } from "src/core/database/prisma.service";
 import { UpsertTodoDto } from "./dto/upsert-todo.dto";
-import { Request } from "express";
 import { UpsertTodoStepDto } from "./dto/upsert-todo-step.dto";
 import {
   Entities,
@@ -18,7 +17,7 @@ import { MasterTodosStates } from "../../config/master-todos-states.config";
 export class TodoService {
   constructor(private prisma: PrismaService) {}
 
-  async upsertTodo(todo: UpsertTodoDto, req: Request) {
+  async upsertTodo(todo: UpsertTodoDto, userId: number) {
     try {
       const dateExpiration = processDate(todo.dateExpiration);
       const masterOption = await this._getTodoState(dateExpiration);
@@ -27,7 +26,7 @@ export class TodoService {
         create: {
           title: todo.title,
           description: todo.description,
-          creatorId: Number(req.sub),
+          creatorId: userId,
           responsibleId: todo.responsibleId,
           entityReference: todo.entityReference,
           entityStepReference: todo.entityStepReference,
@@ -135,7 +134,7 @@ export class TodoService {
   async upsertTodoStep(
     { todos }: UpsertTodoStepDto,
     entityReference: string,
-    req?: Request,
+    userId: number,
   ) {
     try {
       for (const todo of todos) {
@@ -146,7 +145,7 @@ export class TodoService {
           create: {
             title: todo.title,
             description: todo.description,
-            creatorId: Number(req.sub),
+            creatorId: userId,
             responsibleId: todo.responsibleId,
             entityReference: entityReference,
             todoStateId: masterOption.id,
@@ -163,6 +162,17 @@ export class TodoService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async alertTodo(id: number) {
+    return this.prisma.toDo.update({
+      data: {
+        alert: true,
+      },
+      where: {
+        id,
+      },
+    });
   }
 
   private async resolveSubmodule(entityReference: string) {

@@ -62,7 +62,7 @@ export class InstanceService {
   async upsertInstanceStepData(
     instanceStepData: UpsertInstanceStepDataDto,
     files: Express.Multer.File[],
-    req: Request,
+    userId: number,
   ) {
     try {
       const stepDataWithFiles = instanceStepData.stepData.map((step, index) => {
@@ -107,7 +107,7 @@ export class InstanceService {
           await this.todoService.upsertTodoStep(
             { todos },
             entityReference,
-            req,
+            userId,
           );
         }
       }

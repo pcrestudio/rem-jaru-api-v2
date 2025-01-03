@@ -149,4 +149,15 @@ export class MasterService {
       },
     });
   }
+
+  async getMasterBySlugWithOptions(slug: string) {
+    return this.prisma.master.findFirst({
+      where: {
+        slug: slug,
+      },
+      include: {
+        masterOption: true,
+      },
+    });
+  }
 }

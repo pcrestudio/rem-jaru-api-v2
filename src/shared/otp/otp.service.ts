@@ -4,13 +4,15 @@ import * as speakeasy from "speakeasy";
 import { JwtService } from "@nestjs/jwt";
 import { MailService } from "../mail/mail.service";
 import otpTemplate from "./templates/one-time-password.tpl";
+import { PrismaService } from "../../core/database/prisma.service";
 
 @Injectable()
 export class OtpService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly prisma: PrismaService,
   ) {}
 
   // Generate and send OTP
@@ -39,7 +41,7 @@ export class OtpService {
       otpTemplate,
       templateData,
       [email],
-      "Código de Verificación"
+      "Código de Verificación",
     );
     // await this.mailService.sendEmail(
     //   [email],
@@ -66,13 +68,41 @@ export class OtpService {
     });
 
     if (isValid) {
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        //roles: user.roles
+      const valid_user = await this.prisma.user.findFirst({
+        where: { email: user.email },
+        include: {
+          UserRole: {
+            include: {
+              role: {
+                select: {
+                  name: true,
+                  title: true,
+                  description: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const user_payload = {
+        email: valid_user.email,
+        firstName: valid_user.firstName,
+        lastName: valid_user.lastName,
+        role:
+          valid_user.UserRole.length > 0
+            ? valid_user.UserRole[0].role.name
+            : "",
       };
+
+      const payload = {
+        sub: valid_user.id,
+        user: user_payload,
+      };
+
       return {
         access_token: this.jwtService.sign(payload),
+        user: user_payload,
       };
     } else {
       throw new Error("Invalid OTP");

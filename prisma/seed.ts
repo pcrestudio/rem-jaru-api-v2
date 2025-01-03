@@ -6,6 +6,7 @@ import { UpsertMasterDto } from "../src/modules/master/dto/create-master.dto";
 import { UpsertInstanceDto } from "../src/modules/instance/dto/upsert-instance.dto";
 import { CreateMasterOptionDto } from "../src/modules/master/dto/create-master-option.dto";
 import { MasterTodosStates } from "../src/config/master-todos-states.config";
+import { MasterReportTabs } from "../src/config/master-report-tabs.config";
 
 const prisma = new PrismaClient();
 
@@ -130,6 +131,29 @@ const todoEstadosSeed: CreateMasterOptionDto[] = [
   },
 ];
 
+const reportTabsSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Total de to-do's y alertas",
+    slug: MasterReportTabs.byTodos,
+  },
+  {
+    name: "Por responsables",
+    slug: MasterReportTabs.byResponsible,
+  },
+  {
+    name: "Por demandante",
+    slug: MasterReportTabs.byDemanded,
+  },
+  {
+    name: "Por demandado",
+    slug: MasterReportTabs.byPlaintiff,
+  },
+  {
+    name: "Por estudio a cargo",
+    slug: MasterReportTabs.byStudio,
+  },
+];
+
 async function main() {
   const password = await hash("admin", 9);
 
@@ -224,6 +248,25 @@ async function main() {
             name: masterOption.name,
             slug: masterOption.slug,
             masterId: masterTodoEstados.id,
+          },
+        });
+      }
+    });
+
+    const masterTabs = await prisma.master.create({
+      data: {
+        name: "Tabs para reportes global",
+        slug: "reportes-tabs",
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of reportTabsSeed) {
+        await tx.masterOption.create({
+          data: {
+            name: masterOption.name,
+            slug: masterOption.slug,
+            masterId: masterTabs.id,
           },
         });
       }
