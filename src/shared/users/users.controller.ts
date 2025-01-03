@@ -7,12 +7,14 @@ import {
   UseGuards,
   Request,
   Param,
+  Query,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { Public } from "../auth/decorators/public.decorator";
+import { FilterUsersDto } from "../../modules/auth/dto/filter-users.dto";
 
 @Controller("users")
 export class UsersController {
@@ -52,5 +54,11 @@ export class UsersController {
   @Get("admin")
   findAllUsers() {
     return this.usersService.findAll();
+  }
+
+  @Get("")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async getUsers(@Query() filter: FilterUsersDto): Promise<any> {
+    return this.usersService.getUsers(filter);
   }
 }

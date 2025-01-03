@@ -1,5 +1,9 @@
 import { HttpService } from "@nestjs/axios";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { firstValueFrom } from "rxjs";
 import { UsersService } from "../users/users.service";
@@ -9,6 +13,8 @@ import { JwtService } from "@nestjs/jwt";
 import { MailService } from "../mail/mail.service";
 import passwordResetTemplate from "./templates/password-reset.tpl";
 import { User } from "@prisma/client";
+import { PrismaService } from "../../core/database/prisma.service";
+import { GetUserDto } from "../../modules/auth/dto/get-user.dto";
 
 @Injectable()
 export class AuthService {
@@ -18,6 +24,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly prisma: PrismaService,
   ) {}
 
   validateKey(apiKey: string) {
@@ -63,22 +70,35 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user; // Exclude password from result
+      const { ...result } = user;
       return result;
     }
     return null;
   }
 
-  // Generate JWT token
   async login(user: any) {
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      roles: user.roles || "user",
-    };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    const valid_user = await this.prisma.user.findFirst({
+      where: { email: user.email },
+      include: {
+        UserRole: {
+          include: {
+            role: {
+              select: {
+                name: true,
+                title: true,
+                description: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (valid_user) {
+      return this._generateUserToken(valid_user);
+    }
+
+    throw new BadRequestException("El usuario no existe");
   }
 
   // Validate or create user from Azure AD profile
@@ -173,5 +193,24 @@ export class AuthService {
     const saltRounds = 10;
     const bcrypt = await import("bcrypt");
     return bcrypt.hash(password, saltRounds);
+  }
+
+  private _generateUserToken(user: GetUserDto) {
+    const user_payload = {
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.UserRole.length > 0 ? user.UserRole[0].role.name : "",
+    };
+
+    const payload = {
+      sub: user.id,
+      user: user_payload,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: user_payload,
+    };
   }
 }

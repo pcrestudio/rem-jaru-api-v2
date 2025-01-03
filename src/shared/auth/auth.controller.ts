@@ -22,12 +22,11 @@ export class AuthController {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {
     this.cookiesConfig = {
       httpOnly: true,
-      secure:
-        this.configService.get("NODE_ENV") === "production" ? true : false,
+      secure: this.configService.get("NODE_ENV") === "production",
       sameSite:
         this.configService.get("NODE_ENV") === "production" ? "none" : "lax",
       maxAge: 3600000,
@@ -95,7 +94,7 @@ export class AuthController {
 
     // Redirect with the token *and* the original redirect path
     return res.redirect(
-      `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`
+      `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`,
     );
   }
 
@@ -109,7 +108,7 @@ export class AuthController {
   @Post("reset-password")
   async resetPassword(
     @Body("token") token: string,
-    @Body("password") password: string
+    @Body("password") password: string,
   ) {
     return this.authService.resetPassword(token, password);
   }
