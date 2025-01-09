@@ -1,9 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { verify, decode } from 'jsonwebtoken';
-import { Socket } from 'socket.io';
-import jwkToPem from 'jwk-to-pem';
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { verify, decode } from "jsonwebtoken";
+import { Socket } from "socket.io";
+import jwkToPem from "jwk-to-pem";
 
-import { AuthService } from '../auth.service';
+import { AuthService } from "../auth.service";
 
 @Injectable()
 export class SocketAuthGuard implements CanActivate {
@@ -19,7 +19,7 @@ export class SocketAuthGuard implements CanActivate {
 
     const unverifiedHeader = decode(token, { complete: true })?.header;
     if (!unverifiedHeader || !unverifiedHeader.kid) {
-      console.error('Invalid token: No kid found in header');
+      console.error("Invalid token: No kid found in header");
       return false;
     }
 
@@ -28,10 +28,10 @@ export class SocketAuthGuard implements CanActivate {
         unverifiedHeader.kid,
       ); // Fetch the JWK using the 'kid'
       const pem = jwkToPem(jwk); // Convert JWK to PEM
-      verify(token, pem, { algorithms: ['RS256'] }); // Use the PEM for verification
+      verify(token, pem, { algorithms: ["RS256"] }); // Use the PEM for verification
       return true; // Token is valid
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error("Invalid token:", error);
       return false; // Token is invalid or some error occurred
     }
   }

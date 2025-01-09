@@ -10,7 +10,7 @@ import {
 } from "../../common/utils/entity_reference_mapping";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { FilterTodoDto } from "./dto/filter-todo.dto";
-import processDate from "../../common/utils/conver_date_string";
+import processDate from "../../common/utils/convert_date_string";
 import { MasterTodosStates } from "../../config/master-todos-states.config";
 
 @Injectable()

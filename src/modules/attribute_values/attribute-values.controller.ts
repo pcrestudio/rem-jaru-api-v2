@@ -49,12 +49,14 @@ export class AttributeValuesController {
   async createSectionAttributeValue(
     @Body() sectionAttributeValues: CreateSectionAttributeValueGroup,
     @UploadedFiles() files: Express.Multer.File[],
-    @Req() req: Request,
+    @Req() req,
   ) {
+    const user = req.user;
+
     return this.attributeValuesService.createSectionAttributeValue(
       sectionAttributeValues,
       files,
-      req,
+      Number(user.userId),
     );
   }
 

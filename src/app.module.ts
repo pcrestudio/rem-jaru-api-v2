@@ -82,12 +82,3 @@ import { MailModule } from "./shared/mail/mail.module";
   ],
 })
 export class AppModule {}
-// export class AppModule implements NestModule {
-//   configure(consumer: MiddlewareConsumer) {
-//     consumer
-//       .apply(AuthMiddleware)
-//       .exclude("auth/token")
-//       .exclude("auth/register")
-//       .forRoutes("*");
-//   }
-// }

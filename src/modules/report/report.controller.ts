@@ -15,4 +15,24 @@ export class ReportController {
   async getReportByTodos(@Query() filter: FilterReportDto) {
     return this.reportService.getReportByTodos(filter);
   }
+
+  @Get("generic")
+  async getGenericReportByTabSlug(@Query() filter: FilterReportDto) {
+    return this.reportService.getGenericReportByTabSlug(filter);
+  }
+
+  @Get("byResponsible")
+  async getReportByResponsible(@Query() filter: FilterReportDto) {
+    return this.reportService.getReportByResponsible(filter);
+  }
+
+  @Get("byPerson")
+  async getReportByDemandedOrPlaintiff(@Query() filter: FilterReportDto) {
+    return this.reportService.getReportByDemandedOrPlaintiff(filter);
+  }
+
+  @Get("byStudio")
+  async getReportByStudio(@Query() filter: FilterReportDto) {
+    return this.reportService.getReportByStudio(filter);
+  }
 }

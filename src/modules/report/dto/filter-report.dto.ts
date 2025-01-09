@@ -3,4 +3,6 @@ export interface FilterReportDto {
   submoduleId: number;
   projectId: number;
   responsibleId: number;
+  cargoStudioId: number;
+  tabSlug?: string;
 }

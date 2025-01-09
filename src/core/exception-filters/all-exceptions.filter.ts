@@ -5,9 +5,9 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
-import { WsException } from '@nestjs/websockets';
+} from "@nestjs/common";
+import { Request, Response } from "express";
+import { WsException } from "@nestjs/websockets";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -17,13 +17,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const contextType = host.getType();
 
     switch (contextType) {
-      case 'http':
+      case "http":
         this.handleHttpException(exception, host);
         break;
-      case 'ws':
+      case "ws":
         this.handleWsException(exception, host);
         break;
-      case 'rpc':
+      case "rpc":
         this.handleRpcException(exception, host);
         break;
       default:
@@ -45,11 +45,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const message =
       exception instanceof HttpException
         ? exception.getResponse()
-        : 'Internal server error';
+        : "Internal server error";
 
-    console.log('====================================');
+    console.log("====================================");
     console.log(exception);
-    console.log('====================================');
+    console.log("====================================");
 
     response.status(status).json({
       statusCode: status,
@@ -65,20 +65,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const message =
       exception instanceof WsException
         ? exception.getError()
-        : 'Internal server error';
+        : "Internal server error";
 
-    client.emit('exception', {
-      status: 'error',
+    client.emit("exception", {
+      status: "error",
       message: message,
     });
   }
 
   private handleRpcException(exception: unknown, host: ArgumentsHost) {
-    this.logger.error('RPC exception', exception);
+    this.logger.error("RPC exception", exception);
   }
 
   private handleUnknownException(exception: unknown) {
-    this.logger.error('Unhandled exception', exception);
+    this.logger.error("Unhandled exception", exception);
   }
 }
 

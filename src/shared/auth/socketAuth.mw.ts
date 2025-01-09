@@ -1,7 +1,7 @@
-import { Socket } from 'socket.io';
-import jwkToPem from 'jwk-to-pem';
-import { verify, decode } from 'jsonwebtoken';
-import { AuthService } from './auth.service';
+import { Socket } from "socket.io";
+import jwkToPem from "jwk-to-pem";
+import { verify, decode } from "jsonwebtoken";
+import { AuthService } from "./auth.service";
 
 export const SocketAuthMiddleware =
   (azureAdService: AuthService) =>
@@ -9,14 +9,14 @@ export const SocketAuthMiddleware =
     const token = socket.handshake?.auth?.token;
 
     if (!token) {
-      return next(new Error('Authentication error: Token not found'));
+      return next(new Error("Authentication error: Token not found"));
     }
 
     const unverifiedHeader = decode(token, { complete: true })?.header;
     if (!unverifiedHeader || !unverifiedHeader.kid) {
-      console.error('Invalid token: No kid found in header');
+      console.error("Invalid token: No kid found in header");
       return next(
-        new Error('Authentication error: No kid found in token header'),
+        new Error("Authentication error: No kid found in token header"),
       );
     }
 
@@ -25,7 +25,7 @@ export const SocketAuthMiddleware =
         unverifiedHeader.kid,
       ); // Fetch the JWK using the 'kid'
       const pem = jwkToPem(jwk); // Convert JWK to PEM
-      const decodedToken = verify(token, pem, { algorithms: ['RS256'] }); // Use the PEM for verification
+      const decodedToken = verify(token, pem, { algorithms: ["RS256"] }); // Use the PEM for verification
 
       // Attach user information to the socket instance for later use
       socket.data = {

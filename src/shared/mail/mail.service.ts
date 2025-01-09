@@ -17,7 +17,7 @@ export class MailService {
     subject: string,
     body: string,
     isHtml: boolean = true,
-    attachments: any[] = []
+    attachments: any[] = [],
   ): Promise<void> {
     const message = {
       subject,
@@ -53,7 +53,7 @@ export class MailService {
     templateData: Record<string, string>,
     to: string[],
     subject: string,
-    attachments: any[] = []
+    attachments: any[] = [],
   ): Promise<void> {
     //const renderedTemplate = this.renderTemplate(template, templateData);
     //await this.sendEmail(to, subject, renderedTemplate, true, attachments);
@@ -64,11 +64,11 @@ export class MailService {
 
   private renderTemplate(
     template: string,
-    data: Record<string, string>
+    data: Record<string, string>,
   ): string {
     return Object.keys(data).reduce(
       (result, key) => result.replace(`{{${key}}}`, data[key]),
-      template
+      template,
     );
   }
 

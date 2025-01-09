@@ -28,7 +28,7 @@ export class OtpService {
       encoding: "base32",
     });
 
-    this.usersService.updateOtpSecret(user.id, user.otpSecret);
+    await this.usersService.updateOtpSecret(user.id, user.otpSecret);
 
     // TODO: Send OTP via email or SMS
     console.log(`OTP for ${email}: ${token}`);

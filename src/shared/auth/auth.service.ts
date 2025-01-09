@@ -104,7 +104,7 @@ export class AuthService {
   // Validate or create user from Azure AD profile
   async validateAzureAdUser(profile: any): Promise<any> {
     const email = profile._json.preferred_username;
-    let user = await this.usersService.findByEmail(email);
+    let user: GetUserDto = await this.usersService.findByEmail(email);
     if (!user) {
       user = await this.usersService.create({
         email,
@@ -200,6 +200,7 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      displayName: user.displayName,
       role: user.UserRole.length > 0 ? user.UserRole[0].role.name : "",
     };
 

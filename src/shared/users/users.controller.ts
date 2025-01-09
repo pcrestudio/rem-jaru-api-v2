@@ -15,6 +15,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { Public } from "../auth/decorators/public.decorator";
 import { FilterUsersDto } from "../../modules/auth/dto/filter-users.dto";
+import { UpsertRegisterDto } from "../../modules/auth/dto/user-register.dto";
 
 @Controller("users")
 export class UsersController {
@@ -39,7 +40,7 @@ export class UsersController {
 
   @Public()
   @Post("register")
-  async create(@Body() createUserDto: any) {
+  async create(@Body() createUserDto: UpsertRegisterDto) {
     return this.usersService.create(createUserDto);
   }
 

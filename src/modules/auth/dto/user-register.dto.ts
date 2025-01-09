@@ -1,15 +1,30 @@
-import { IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 
-export class UserRegisterDto {
+export class UpsertRegisterDto {
   @IsString()
-  firstName: string;
+  firstName?: string;
 
   @IsString()
-  lastName: string;
+  lastName?: string;
 
   @IsString()
   email: string;
 
   @IsString()
+  @IsOptional()
   password: string;
+
+  @IsString()
+  authMethod?: string;
+
+  @IsString()
+  displayName?: string;
+
+  @IsNumber()
+  @IsOptional()
+  roleId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  id?: number;
 }

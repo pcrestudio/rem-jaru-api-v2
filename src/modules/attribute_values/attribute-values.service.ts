@@ -158,7 +158,7 @@ export class AttributeValuesService {
   async createSectionAttributeValue(
     sectionAttributeValue: CreateSectionAttributeValueGroup,
     files: Express.Multer.File[],
-    req: Request,
+    userId: number,
   ) {
     try {
       this.prisma.$transaction(async (tx) => {
@@ -198,7 +198,7 @@ export class AttributeValuesService {
 
           const userFind = await tx.user.findFirst({
             where: {
-              id: Number(req.sub),
+              id: userId,
             },
           });
 

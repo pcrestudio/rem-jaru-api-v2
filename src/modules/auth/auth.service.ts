@@ -4,18 +4,21 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "src/core/database/prisma.service";
-import { UserRegisterDto } from "./dto/user-register.dto";
-import { compare, hash } from "bcrypt";
+import { compare } from "bcrypt";
 import { UserAuthDto } from "./dto/user-auth.dto";
 import { GetUserDto } from "./dto/get-user.dto";
 import { sign } from "jsonwebtoken";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { FilterUsersDto } from "./dto/filter-users.dto";
 import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async auth(user: UserAuthDto) {
     const valid_user = await this.prisma.user.findFirst({
@@ -47,23 +50,6 @@ export class AuthService {
     }
 
     throw new NotFoundException("Usuario no encontrado");
-  }
-
-  async register(user: UserRegisterDto): Promise<GetUserDto> {
-    const encrypt_password: string = await hash(user.password, 10);
-
-    try {
-      return this.prisma.user.create({
-        data: {
-          email: user.email,
-          password: encrypt_password,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
-      });
-    } catch (error) {
-      console.log(error);
-    }
   }
 
   async getUsers(filter: FilterUsersDto) {

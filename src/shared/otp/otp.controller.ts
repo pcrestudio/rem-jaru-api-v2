@@ -8,7 +8,7 @@ export class OtpController {
   protected cookiesConfig = {};
   constructor(
     private readonly configService: ConfigService,
-    private readonly otpService: OtpService
+    private readonly otpService: OtpService,
   ) {
     this.cookiesConfig = {
       httpOnly: true,

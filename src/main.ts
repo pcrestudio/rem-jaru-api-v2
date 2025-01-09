@@ -24,7 +24,7 @@ async function bootstrap() {
       secret: process.env.SESSION_SECRET || "some_secret_key",
       resave: false, // do not rewrite session if unmodified
       saveUninitialized: false, // do not save new session if it is unmodified
-    })
+    }),
   );
 
   // 2. Initialize passport and passport session

@@ -6,6 +6,8 @@ export interface GetUserDto {
   lastName: string;
   email: string;
   password: string;
+  displayName?: string;
+  authMethod?: string;
   createdAt?: Date;
   updatedAt?: Date;
   UserRole?: GetUserRoleDto[];

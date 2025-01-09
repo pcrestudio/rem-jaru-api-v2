@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PassportModule } from "@nestjs/passport";
-import { AzureAdStrategy } from "./strategies/azure-ad.strategy";
+import { AzureAdStrategy } from "./strategies";
 import { AuthService } from "./auth.service";
 import { SocketConfigService } from "./socketConfig.service";
 import { HttpModule } from "@nestjs/axios";

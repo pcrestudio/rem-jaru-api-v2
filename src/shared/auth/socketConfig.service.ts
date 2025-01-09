@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { verify } from 'jsonwebtoken';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { verify } from "jsonwebtoken";
 
 @Injectable()
 export class SocketConfigService {
-	constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {}
 
-	isValidAuthHeader(authorization: string) {
-		const token: string = authorization.split(' ')[1];
-		const payload = verify(token, this.configService.get('JWT_SECRET_KEY'), {
-			ignoreExpiration: true,
-		});
-		return payload;
-	}
+  isValidAuthHeader(authorization: string) {
+    const token: string = authorization.split(" ")[1];
+    const payload = verify(token, this.configService.get("JWT_SECRET_KEY"), {
+      ignoreExpiration: true,
+    });
+    return payload;
+  }
 }

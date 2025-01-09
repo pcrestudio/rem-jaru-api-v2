@@ -22,7 +22,7 @@ export class GlobalJwtAuthGuard extends AuthGuard("jwt") {
     if (isPublic) {
       return true;
     }
-    // 2. Otherwise use the normal JWT auth guard logic
+
     return super.canActivate(context);
   }
 

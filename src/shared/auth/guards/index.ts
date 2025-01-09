@@ -1,1 +1,1 @@
-export * from './azure-ad.guard';
+export * from "./azure-ad.guard";

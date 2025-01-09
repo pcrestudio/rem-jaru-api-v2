@@ -1,1 +1,1 @@
-export * from './azure-ad.strategy';
+export * from "./azure-ad.strategy";
