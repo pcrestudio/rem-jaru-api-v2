@@ -39,6 +39,10 @@ export class CreateSectionAttributeDto {
   @IsOptional()
   isForReport?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  conditionalRender?: boolean;
+
   @IsNumber()
   sectionId: number;
 

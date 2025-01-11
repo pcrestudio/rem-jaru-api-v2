@@ -44,6 +44,26 @@ export class AttributeValuesController {
     return this.attributeValuesService.createSectionAttribute(sectionAttribute);
   }
 
+  @Post("bulk")
+  async upsertBulkSectionAttributes(
+    @Body() sectionAttributes: CreateSectionAttributeDto[],
+    @Query("sectionId") sectionId: string,
+  ) {
+    return this.attributeValuesService.upsertBulkSectionAttributes(
+      sectionAttributes,
+      Number(sectionId),
+    );
+  }
+
+  @Post("plain/bulk")
+  async upsertBulkGlobalAttributes(
+    @Body() globalAttributes: CreateSectionAttributeDto[],
+  ) {
+    return this.attributeValuesService.upsertBulkGlobalAttributes(
+      globalAttributes,
+    );
+  }
+
   @Post("attribute/values")
   @UseInterceptors(AnyFilesInterceptor(multerConfig))
   async createSectionAttributeValue(
@@ -65,12 +85,14 @@ export class AttributeValuesController {
   async createGlobalAttributeValue(
     @Body() sectionAttributeValues: CreateSectionAttributeValueGroup,
     @UploadedFiles() files: Express.Multer.File[],
-    @Req() req: Request,
+    @Req() req,
   ) {
+    const user = req.user;
+
     return this.attributeValuesService.createGlobalAttributeValue(
       sectionAttributeValues,
       files,
-      req,
+      Number(user.userId),
     );
   }
 

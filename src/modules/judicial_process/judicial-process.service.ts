@@ -48,6 +48,7 @@ export class JudicialProcessService {
       await this.prisma.cEJ_Expedientes.create({
         data: {
           expedientePJ: result.fileCode,
+          activo: "S",
         },
       });
 
@@ -59,11 +60,25 @@ export class JudicialProcessService {
     });
   }
 
-  async editJudicialProcess(judicialProcess: EditJudicialProcessDto) {
+  async editJudicialProcess(
+    judicialProcess: EditJudicialProcessDto,
+    files: Express.Multer.File[],
+  ) {
     if (!judicialProcess.id) {
       throw new BadRequestException(
         "Debe ingresar un ID correspondiente, para la edición",
       );
+    }
+
+    let guaranteeLetter: string = "";
+
+    console.log(judicialProcess.guaranteeLetter);
+
+    if (files && files.length > 0) {
+      const file = files.find((f) => f.fieldname === "guaranteeLetter");
+      guaranteeLetter = file ? file.filename : "";
+    } else if (judicialProcess.guaranteeLetter) {
+      guaranteeLetter = judicialProcess.guaranteeLetter;
     }
 
     return this.prisma.judicialProcess.update({
@@ -73,13 +88,15 @@ export class JudicialProcessService {
         plaintiff: judicialProcess.plaintiff,
         coDefendant: judicialProcess.coDefendant,
         controversialMatter: judicialProcess.controversialMatter,
-        projectId: judicialProcess.projectId,
-        cargoStudioId: judicialProcess.cargoStudioId,
-        responsibleId: judicialProcess.responsibleId,
-        secondaryResponsibleId: judicialProcess.secondaryResponsibleId,
+        isProvisional: judicialProcess.isProvisional === "false" ? false : true,
+        projectId: Number(judicialProcess.projectId),
+        cargoStudioId: Number(judicialProcess.cargoStudioId),
+        responsibleId: Number(judicialProcess.responsibleId),
+        guaranteeLetter,
+        secondaryResponsibleId: Number(judicialProcess.secondaryResponsibleId),
       },
       where: {
-        id: judicialProcess.id,
+        id: Number(judicialProcess.id),
       },
     });
   }
@@ -184,19 +201,41 @@ export class JudicialProcessService {
   }
 
   async exportExcel() {
-    const judicialProcesses = await this.prisma.judicialProcess.findMany();
+    const judicialProcesses = await this.prisma.judicialProcess.findMany({
+      include: {
+        responsible: true,
+        studio: true,
+        project: true,
+      },
+    });
+
+    console.log(judicialProcesses);
 
     const headers = [
       { key: "fileCode", header: "Código de expediente" },
       { key: "demanded", header: "Demandante" },
       { key: "plaintiff", header: "Demandado" },
       { key: "coDefendant", header: "Co-demandado" },
+      { key: "responsible.displayName", header: "Responsable" },
+      { key: "project.name", header: "Proyecto" },
+      { key: "studio.name", header: "Estudio" },
     ];
 
+    const flattenedProcesses = judicialProcesses.map((process) =>
+      headers.reduce((acc, { key }) => {
+        acc[key] = this.getNestedValue(process, key);
+        return acc;
+      }, {}),
+    );
+
     try {
-      return ExportablesService.generateExcel(headers, judicialProcesses);
+      return ExportablesService.generateExcel(headers, flattenedProcesses);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  private getNestedValue(obj: any, path: string) {
+    return path.split(".").reduce((acc, key) => (acc ? acc[key] : null), obj);
   }
 }

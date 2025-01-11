@@ -26,24 +26,24 @@ enum RowLayout {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @db.VarChar(50) @unique
-  firstName String?     @db.VarChar(50)
-  lastName  String?     @db.VarChar(50)
-  displayName String?  @db.VarChar(100)
-  authMethod String     @default("local")
-  password  String?     @db.VarChar(255)
-  resetPasswordToken String? @db.VarChar(255) @unique
+  id                   Int        @id @default(autoincrement())
+  email                String     @unique @db.VarChar(50)
+  firstName            String?    @db.VarChar(50)
+  lastName             String?    @db.VarChar(50)
+  displayName          String?    @db.VarChar(100)
+  authMethod           String     @default("local")
+  password             String?    @db.VarChar(255)
+  resetPasswordToken   String?    @unique @db.VarChar(255)
   resetPasswordExpires DateTime?
-  otpSecret String?     @db.VarChar(255)
-  otpExpires DateTime?
-  lastLogon DateTime?
-  isActive  Boolean    @default(true)
-  createdAt DateTime?  @default(now())
-  createdBy String?    @db.VarChar(50)
-  updatedAt DateTime?  @updatedAt
-  updatedBy String?    @db.VarChar(50)
-  UserRole  UserRole[]
+  otpSecret            String?    @db.VarChar(255)
+  otpExpires           DateTime?
+  lastLogon            DateTime?
+  isActive             Boolean    @default(true)
+  createdAt            DateTime?  @default(now())
+  createdBy            String?    @db.VarChar(50)
+  updatedAt            DateTime?  @updatedAt
+  updatedBy            String?    @db.VarChar(50)
+  UserRole             UserRole[]
 
   secondaryResponsible JudicialProcess[] @relation("SecondaryResponsibleRelation")
   responsible          JudicialProcess[] @relation("ResponsibleRelation")
@@ -163,6 +163,8 @@ model JudicialProcess {
   isActive               Boolean   @default(true)
   controversialMatter    String?   @default("")
   amount                 Float?    @default(0)
+  isProvisional          Boolean?  @default(false)
+  guaranteeLetter        String?   @default("")
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
@@ -262,6 +264,7 @@ model GlobalAttribute {
   isActive          Boolean?  @default(true)
   isRequired        Boolean?  @default(true)
   isForReport       Boolean?  @default(false)
+  conditionalRender Boolean?  @default(false)
 
   module    Module?                 @relation(fields: [moduleId], references: [id])
   submodule Submodule?              @relation(fields: [submoduleId], references: [id])

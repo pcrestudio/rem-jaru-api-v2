@@ -7,6 +7,8 @@ import {
   Post,
   Query,
   Res,
+  UploadedFiles,
+  UseInterceptors,
 } from "@nestjs/common";
 import { CreateJudicialProcessDto } from "./dto/create-judicial-process.dto";
 import { JudicialProcessService } from "./judicial-process.service";
@@ -14,6 +16,8 @@ import { EditJudicialProcessDto } from "./dto/edit-judicial-process.dto";
 import { ToggleJudicialProcessDto } from "./dto/toggle-judicial-process.dto";
 import { Response } from "express";
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
+import { AnyFilesInterceptor } from "@nestjs/platform-express";
+import { multerConfig } from "../../config/multer.config";
 
 @Controller("judicial_processes")
 export class JudicialProcessController {
@@ -31,8 +35,15 @@ export class JudicialProcessController {
   }
 
   @Patch("edit")
-  async editJudicialProcess(@Body() judicialProcess: EditJudicialProcessDto) {
-    return this.judicialProcessService.editJudicialProcess(judicialProcess);
+  @UseInterceptors(AnyFilesInterceptor(multerConfig))
+  async editJudicialProcess(
+    @Body() judicialProcess: EditJudicialProcessDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.judicialProcessService.editJudicialProcess(
+      judicialProcess,
+      files,
+    );
   }
 
   @Patch("toggle")

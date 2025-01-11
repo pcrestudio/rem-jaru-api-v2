@@ -52,6 +52,71 @@ export class AttributeValuesService {
     });
   }
 
+  async upsertBulkSectionAttributes(
+    attributes: CreateSectionAttributeDto[],
+    sectionId: number,
+  ) {
+    try {
+      this.prisma.$transaction(async (tx) => {
+        const section = await tx.section.findUnique({
+          where: {
+            sectionId: sectionId,
+          },
+        });
+
+        for (const attribute of attributes) {
+          await tx.sectionAttribute.create({
+            data: {
+              ...attribute,
+              dataType: attribute.dataType ? attribute.dataType : DataType.TEXT,
+              rowLayout: attribute.rowLayout
+                ? attribute.rowLayout
+                : RowLayout.single,
+              moduleId: section.moduleId ?? undefined,
+              submoduleId: section.submoduleId ?? undefined,
+              isForReport: attribute.isForReport ?? false,
+              sectionId: section.sectionId,
+            },
+          });
+        }
+      });
+
+      return "Atributos insertados";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async upsertBulkGlobalAttributes(attributes: CreateSectionAttributeDto[]) {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        for (const attribute of attributes) {
+          await tx.globalAttribute.create({
+            data: {
+              ...attribute,
+              dataType: attribute.dataType ? attribute.dataType : DataType.TEXT,
+              rowLayout: attribute.rowLayout
+                ? attribute.rowLayout
+                : RowLayout.single,
+              moduleId: attribute.moduleId ?? undefined,
+              submoduleId: attribute.submoduleId ?? undefined,
+              isForReport: attribute.isForReport ?? false,
+              conditionalRender: attribute.conditionalRender ?? false,
+            },
+          });
+        }
+      });
+
+      return "Atributos insertados";
+    } catch (error) {
+      console.error("Error en upsertBulkGlobalAttributes:", error); // Ayuda a depurar
+      throw new InternalServerErrorException({
+        message: "Error al insertar atributos",
+        details: error.message, // Puedes agregar detalles útiles
+      });
+    }
+  }
+
   async createSectionAttribute(sectionAttribute: CreateSectionAttributeDto) {
     const section = await this.prisma.section.findUnique({
       where: {
@@ -245,7 +310,7 @@ export class AttributeValuesService {
   async createGlobalAttributeValue(
     sectionAttributeValue: CreateSectionAttributeValueGroup,
     files: Express.Multer.File[],
-    req: Request,
+    userId: number,
   ) {
     try {
       this.prisma.$transaction(async (tx) => {
@@ -285,7 +350,7 @@ export class AttributeValuesService {
 
           const userFind = await tx.user.findFirst({
             where: {
-              id: Number(req.sub),
+              id: userId,
             },
           });
 
