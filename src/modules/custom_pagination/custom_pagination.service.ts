@@ -6,15 +6,36 @@ export class CustomPaginationService {
     prisma: PrismaClient,
     model: string,
     filter: FilterCustomPaginationDto,
+    searchableFields: string[] = [],
   ) {
     const page = Number(filter.page) || 1;
     const pageSize = Number(filter.pageSize) || 10;
     const skip = (page - 1) * pageSize;
 
+    const orConditions = filter.search
+      ? searchableFields.map((field) => {
+          if (field.includes(".")) {
+            const [relation, nestedField] = field.split(".");
+            return {
+              [relation]: {
+                [nestedField]: {
+                  contains: filter.search,
+                },
+              },
+            };
+          }
+          return {
+            [field]: {
+              contains: filter.search,
+            },
+          };
+        })
+      : undefined;
+
     const whereConditions = filter.whereFields
       ? {
           ...filter.whereFields,
-          ...(filter.orConditions ? { OR: filter.orConditions } : {}),
+          ...(orConditions ? { OR: orConditions } : {}),
         }
       : {};
 

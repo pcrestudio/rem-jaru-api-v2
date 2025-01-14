@@ -6,4 +6,5 @@ export interface FilterCustomPaginationDto {
   includeConditions?: object;
   selectConditions?: object;
   orConditions?: any;
+  search?: string;
 }

@@ -130,19 +130,13 @@ export class JudicialProcessService {
       "demanded",
       "plaintiff",
       "coDefendant",
+      "responsible.firstName",
+      "responsible.displayName",
+      "studio.name",
     ];
-
-    const orConditions = filter.search
-      ? searchableFields.map((field) => ({
-          [field]: {
-            contains: filter.search,
-          },
-        }))
-      : undefined;
 
     const whereFields = {
       submoduleId: submodule?.id,
-      ...(orConditions ? { OR: orConditions } : {}),
     };
 
     return CustomPaginationService._getPaginationModel(
@@ -152,14 +146,17 @@ export class JudicialProcessService {
         page: filter.page,
         pageSize: filter.pageSize,
         whereFields,
-        orConditions,
         includeConditions: {
           responsible: true,
           secondaryResponsible: true,
           project: true,
           studio: true,
+          sectionAttributeValues: true,
+          globalAttributeValues: true,
         },
+        search: filter.search,
       },
+      searchableFields,
     );
   }
 
@@ -206,10 +203,18 @@ export class JudicialProcessService {
         responsible: true,
         studio: true,
         project: true,
+        sectionAttributeValues: {
+          include: {
+            attribute: true,
+          },
+        },
+        globalAttributeValues: {
+          include: {
+            attribute: true,
+          },
+        },
       },
     });
-
-    console.log(judicialProcesses);
 
     const headers = [
       { key: "fileCode", header: "Código de expediente" },
@@ -220,6 +225,22 @@ export class JudicialProcessService {
       { key: "project.name", header: "Proyecto" },
       { key: "studio.name", header: "Estudio" },
     ];
+
+    for (const item of judicialProcesses) {
+      item.globalAttributeValues?.forEach((attribute, index) => {
+        headers.push({
+          key: `globalAttributeValues[${index}].value`,
+          header: `${attribute.attribute.label}`,
+        });
+      });
+
+      item.sectionAttributeValues?.forEach((attribute, index) => {
+        headers.push({
+          key: `sectionAttributeValues[${index}].value`,
+          header: `${attribute.attribute.label}`,
+        });
+      });
+    }
 
     const flattenedProcesses = judicialProcesses.map((process) =>
       headers.reduce((acc, { key }) => {
@@ -235,7 +256,13 @@ export class JudicialProcessService {
     }
   }
 
-  private getNestedValue(obj: any, path: string) {
-    return path.split(".").reduce((acc, key) => (acc ? acc[key] : null), obj);
+  private getNestedValue(obj: any, key: string) {
+    return key.split(".").reduce((o, k) => {
+      if (k.includes("[") && k.includes("]")) {
+        const [arrayKey, index] = k.split(/[\[\]]/).filter(Boolean);
+        return o?.[arrayKey]?.[parseInt(index, 10)];
+      }
+      return o?.[k];
+    }, obj);
   }
 }

@@ -1,11 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { FilterReportDto } from "./dto/filter-report.dto";
-import { MasterOptionConfig } from "../../config/master-option.config";
-import { AttributeSlugConfig } from "../../config/attribute-slug.config";
-import { GetReportAttributeValues } from "./dto/get-report-attribute-values";
 import { getModelByEntityReference } from "../../common/utils/entity_reference_mapping";
 import { MasterTodosStates } from "../../config/master-todos-states.config";
+import { AttributeSlugConfig } from "../../config/attribute-slug.config";
 
 @Injectable()
 export class ReportService {
@@ -14,54 +12,89 @@ export class ReportService {
   async getInitReportByFilter(filter: FilterReportDto) {
     const moduleId = Number(filter.moduleId ?? 0);
 
-    const [attributesWithValues] = await this.prisma.$transaction([
-      this.prisma.sectionAttribute.findMany({
-        where: {
-          moduleId,
-          isForReport: true,
-        },
-        select: {
-          slug: true,
-          label: true,
-          sectionAttributeId: true,
-          values: {
-            where: {
-              value: { not: "" },
+    const allData = await this.prisma.module.findMany({
+      where: {
+        id: moduleId,
+        isActive: true,
+      },
+      include: {
+        Submodule: {
+          include: {
+            JudicialProcess: {
+              include: {
+                sectionAttributeValues: {
+                  where: {
+                    attribute: {
+                      isForReport: true,
+                    },
+                  },
+                  include: {
+                    attribute: {
+                      include: {
+                        options: true,
+                      },
+                    },
+                  },
+                },
+                globalAttributeValues: {
+                  where: {
+                    attribute: {
+                      isForReport: true,
+                    },
+                  },
+                  include: {
+                    attribute: {
+                      include: {
+                        options: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
+            Supervision: {},
           },
-          options: {
-            where: {
-              isActive: true,
-            },
-            select: {
-              optionLabel: true,
-              optionValue: true,
-            },
-          },
         },
-      }),
-    ]);
+      },
+    });
 
-    const projects = await this.getGeneralProjects();
-    const judicialProcesses = await this.getJudicialProcessesReport(moduleId);
-    const { provisionAmountSum, contingencyGroups, criticalProcessGroups } =
-      await this.getAttributesValuesReport(attributesWithValues);
+    const provisionAmountSum = this.sumProvisionAmount(allData);
+    const contingencies = this.countBySlug(
+      allData,
+      AttributeSlugConfig.contingencyLevel,
+    );
+
+    const criticalProcesses = this.countBySlug(
+      allData,
+      AttributeSlugConfig.criticalProcess,
+    );
+
+    const matters = await this.getMattersReport(moduleId);
+
+    const studios = await this.getReportByStudio(filter);
 
     return {
       provisionAmount: {
         report: provisionAmountSum,
       },
       contingencies: {
-        report: contingencyGroups,
+        report: contingencies,
       },
       criticalProcesses: {
-        report: criticalProcessGroups,
+        report: criticalProcesses,
       },
       matters: {
-        report: judicialProcesses,
+        report: matters,
       },
       studio: {
-        report: projects,
+        report: [
+          {
+            masterOption: studios.map((report) => ({
+              name: report.name,
+              _count: { judicialStudios: report.count },
+            })),
+          },
+        ],
       },
     };
   }
@@ -374,94 +407,6 @@ export class ReportService {
     }));
   }
 
-  private async getJudicialProcessesReport(moduleId: number) {
-    return this.prisma.module.findMany({
-      where: {
-        id: moduleId,
-      },
-      select: {
-        Submodule: {
-          select: {
-            name: true,
-            _count: {
-              select: {
-                JudicialProcess: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
-  private async getGeneralProjects() {
-    return this.prisma.master.findMany({
-      where: {
-        slug: MasterOptionConfig.proyectosGeneral,
-      },
-      select: {
-        masterOption: {
-          select: {
-            name: true,
-            _count: {
-              select: {
-                judicialProjects: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
-  private async getAttributesValuesReport(
-    attributesWithValues: GetReportAttributeValues[],
-  ) {
-    const provisionAmount = attributesWithValues.find(
-      (item) => item.slug === AttributeSlugConfig.provisionAmount,
-    );
-
-    const sum = provisionAmount.values.reduce((acc, curr) => {
-      return acc + parseFloat(curr.value);
-    }, 0);
-
-    const processAttributeOptions = (attributeSlug: string, options: any) => {
-      const selectedValues = attributesWithValues
-        .find((attribute) => attribute.slug === attributeSlug)
-        ?.values.map((value) => value.value);
-
-      return options.map((option: any) => {
-        const count =
-          selectedValues?.filter((value) => value === option.optionValue)
-            .length || 0;
-        return {
-          name: option.optionValue,
-          _count: { group: count },
-        };
-      });
-    };
-
-    const contingencyGroups = processAttributeOptions(
-      AttributeSlugConfig.contingencyLevel,
-      attributesWithValues.find(
-        (item) => item.slug === AttributeSlugConfig.contingencyLevel,
-      ).options,
-    );
-
-    const criticalProcessGroups = processAttributeOptions(
-      AttributeSlugConfig.criticalProcess,
-      attributesWithValues.find(
-        (item) => item.slug === AttributeSlugConfig.criticalProcess,
-      ).options,
-    );
-
-    return {
-      provisionAmountSum: sum,
-      contingencyGroups,
-      criticalProcessGroups,
-    };
-  }
-
   private async resolveSubmodule(
     entityReference: string,
     filter: FilterReportDto,
@@ -519,43 +464,163 @@ export class ReportService {
 
     return todos.reduce(
       (acc, item) => {
-        const state = item.todo.state || {};
+        const state = item?.todo?.state || {};
 
         if (slugsToMatch.includes(state["slug"])) {
-          const existingState = acc.states.find(
-            (s: any) => s.label === state["name"],
+          const isAlert = Boolean(item.todo.alert);
+          const isCheck = Boolean(item.todo.check);
+
+          let existingState = acc.states.find(
+            (s: any) => s.slug === state["slug"],
           );
 
-          if (existingState) {
-            existingState.count += 1;
-
-            if (item.alert) {
-              existingState.alertTrue += 1;
-            } else {
-              existingState.alertFalse += 1;
-            }
-
-            if (item.check) {
-              existingState.checkTrue += 1;
-            } else {
-              existingState.checkFalse += 1;
-            }
-          } else {
-            acc.states.push({
-              label: state["name"],
+          if (!existingState) {
+            existingState = {
+              label: state["name"] || "Sin Nombre",
               slug: state["slug"],
-              count: 1,
-              alertTrue: item.alert ? 1 : 0,
-              alertFalse: item.alert ? 0 : 1,
-              checkTrue: item.check ? 1 : 0,
-              checkFalse: item.check ? 0 : 1,
-            });
+              count: 0,
+              alertTrue: 0,
+              alertFalse: 0,
+              checkTrue: 0,
+              checkFalse: 0,
+            };
+            acc.states.push(existingState);
           }
+
+          existingState.count += 1;
+          existingState.alertTrue += isAlert ? 1 : 0;
+          existingState.alertFalse += isAlert ? 0 : 1;
+          existingState.checkTrue += isCheck ? 1 : 0;
+          existingState.checkFalse += isCheck ? 0 : 1;
         }
 
         return acc;
       },
       { states: [] },
     );
+  }
+
+  private sumProvisionAmount(data) {
+    let total = 0;
+
+    data.forEach((item) => {
+      item.Submodule.forEach((submodule) => {
+        submodule.JudicialProcess.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (
+              attrValue.attribute.slug.startsWith(
+                AttributeSlugConfig.provisionAmount,
+              )
+            ) {
+              const value = parseFloat(attrValue.value);
+
+              if (!isNaN(value)) {
+                total += value;
+              }
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (
+              globalAttrValue.attribute.slug.startsWith(
+                AttributeSlugConfig.provisionAmount,
+              )
+            ) {
+              const value = parseFloat(globalAttrValue.value);
+
+              if (!isNaN(value)) {
+                total += value;
+              }
+            }
+          });
+        });
+      });
+    });
+
+    return total;
+  }
+
+  private countBySlug(data: any, slug: string) {
+    const result = [];
+
+    data.forEach((item) => {
+      item.Submodule.forEach((submodule) => {
+        submodule.JudicialProcess.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (attrValue.attribute.slug === slug) {
+              const value = attrValue.value;
+
+              const option = attrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                const existing = result.find(
+                  (res) => res.name === option.optionLabel,
+                );
+
+                if (existing) {
+                  existing._count.group += 1;
+                } else {
+                  result.push({
+                    name: option.optionLabel,
+                    _count: { group: 1 },
+                  });
+                }
+              }
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (globalAttrValue.attribute.slug === slug) {
+              const value = globalAttrValue.value;
+
+              const option = globalAttrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                const existing = result.find(
+                  (res) => res.name === option.optionLabel,
+                );
+
+                if (existing) {
+                  existing._count.group += 1;
+                } else {
+                  result.push({
+                    name: option.optionLabel,
+                    _count: { group: 1 },
+                  });
+                }
+              }
+            }
+          });
+        });
+      });
+    });
+
+    return result;
+  }
+
+  private async getMattersReport(moduleId: number) {
+    return this.prisma.module.findMany({
+      select: {
+        Submodule: {
+          where: {
+            module: {
+              id: moduleId,
+            },
+          },
+          select: {
+            name: true,
+            _count: {
+              select: {
+                JudicialProcess: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 }

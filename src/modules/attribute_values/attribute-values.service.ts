@@ -15,7 +15,6 @@ import { EditSectionAttributeOptionDto } from "./dto/edit-section-attribute-opti
 import { EditSectionAttributeDto } from "./dto/edit-section-attribute.dto";
 import { mappingRevertSubmodules } from "../../common/utils/mapping_submodules";
 import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
-import { Request } from "express";
 import { ZonedDateTime } from "@internationalized/date";
 import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
 

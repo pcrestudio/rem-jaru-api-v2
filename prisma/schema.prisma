@@ -166,11 +166,13 @@ model JudicialProcess {
   isProvisional          Boolean?  @default(false)
   guaranteeLetter        String?   @default("")
 
-  submodule            Submodule     @relation(fields: [submoduleId], references: [id])
-  project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
-  studio               MasterOption? @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
-  responsible          User?         @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
-  secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
+  submodule              Submodule               @relation(fields: [submoduleId], references: [id])
+  project                MasterOption?           @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
+  studio                 MasterOption?           @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
+  responsible            User?                   @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
+  secondaryResponsible   User?                   @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
+  sectionAttributeValues SectionAttributeValue[] @relation("JudicialProcessSectionAttributeValues")
+  globalAttributeValues  GlobalAttributeValue[]  @relation("JudicialProcessGlobalAttributeValues")
 }
 
 model Supervision {
@@ -249,6 +251,7 @@ model SectionAttributeValue {
   entityReference         String?
 
   attribute                    SectionAttribute?              @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
+  judicialProcess              JudicialProcess?               @relation("JudicialProcessSectionAttributeValues", fields: [entityReference], references: [entityReference])
   SectionAttributeValueHistory SectionAttributeValueHistory[]
 }
 
@@ -291,7 +294,8 @@ model GlobalAttributeValue {
   modifiedBy             String
   entityReference        String?
 
-  attribute GlobalAttribute @relation(fields: [globalAttributeId], references: [globalAttributeId])
+  judicialProcess JudicialProcess? @relation("JudicialProcessGlobalAttributeValues", fields: [entityReference], references: [entityReference])
+  attribute       GlobalAttribute  @relation(fields: [globalAttributeId], references: [globalAttributeId])
 }
 
 model AttributeRule {
