@@ -219,6 +219,76 @@ export class AttributeValuesService {
     });
   }
 
+  async upsertBulkSectionAttributesOption(
+    options: CreateSectionAttributeOptionDto[],
+    attributeId: number,
+  ) {
+    try {
+      const sectionAttribute = await this.prisma.sectionAttribute.findFirst({
+        where: {
+          sectionAttributeId: attributeId,
+        },
+      });
+
+      if (sectionAttribute.dataType !== DataType.LIST) {
+        throw new BadRequestException(
+          "El atributo no está configurado como lista.",
+        );
+      }
+
+      this.prisma.$transaction(async (tx) => {
+        for (const option of options) {
+          await tx.sectionAttributeOption.create({
+            data: {
+              optionLabel: option.optionLabel,
+              optionValue: option.optionValue,
+              attributeId: attributeId,
+            },
+          });
+        }
+      });
+
+      return "Opciones insertadas";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async upsertGlobalAttributesOption(
+    options: CreateSectionAttributeOptionDto[],
+    attributeId: number,
+  ) {
+    const globalAttribute = await this.prisma.globalAttribute.findFirst({
+      where: {
+        globalAttributeId: attributeId,
+      },
+    });
+
+    if (globalAttribute.dataType !== DataType.LIST) {
+      throw new BadRequestException(
+        "El atributo no está configurado como lista.",
+      );
+    }
+
+    try {
+      this.prisma.$transaction(async (tx) => {
+        for (const option of options) {
+          await tx.globalAttributeOption.create({
+            data: {
+              optionLabel: option.optionLabel,
+              optionValue: option.optionValue,
+              globalAttributeId: attributeId,
+            },
+          });
+        }
+      });
+
+      return "Opciones insertadas";
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   async createSectionAttributeValue(
     sectionAttributeValue: CreateSectionAttributeValueGroup,
     files: Express.Multer.File[],
@@ -302,7 +372,7 @@ export class AttributeValuesService {
 
       return "created";
     } catch (error) {
-      console.log(error);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -390,7 +460,7 @@ export class AttributeValuesService {
 
       return "created";
     } catch (error) {
-      console.log(error);
+      throw new InternalServerErrorException(error);
     }
   }
 

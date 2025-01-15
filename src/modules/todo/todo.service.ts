@@ -12,17 +12,22 @@ import { CustomPaginationService } from "../custom_pagination/custom_pagination.
 import { FilterTodoDto } from "./dto/filter-todo.dto";
 import processDate from "../../common/utils/convert_date_string";
 import { MasterTodosStates } from "../../config/master-todos-states.config";
+import { MailService } from "../../shared/mail/mail.service";
+import assignTodoTemplate from "./templates/assign-todo.tpl";
 
 @Injectable()
 export class TodoService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   async upsertTodo(todo: UpsertTodoDto, userId: number) {
     try {
       const dateExpiration = processDate(todo.dateExpiration);
       const masterOption = await this._getTodoState(dateExpiration);
 
-      return this.prisma.toDo.upsert({
+      const todoUpsert = await this.prisma.toDo.upsert({
         create: {
           title: todo.title,
           description: todo.description,
@@ -43,6 +48,26 @@ export class TodoService {
           entityReference: todo.entityReference,
         },
       });
+
+      const { email, displayName } = await this.prisma.user.findFirst({
+        where: {
+          id: todoUpsert.responsibleId,
+        },
+      });
+
+      const templateData = {
+        displayName: displayName,
+        title: todoUpsert.title,
+      };
+
+      await this.mail.sendWithTemplate(
+        assignTodoTemplate,
+        templateData,
+        [email],
+        "To-Do asignado.",
+      );
+
+      return todoUpsert;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -62,7 +87,7 @@ export class TodoService {
     );
   }
 
-  async getTodos(filter: FilterTodoDto) {
+  async getTodos(filter: FilterTodoDto, userId: number) {
     const { results, total, page, pageSize, totalPages } =
       await CustomPaginationService._getPaginationModel(
         this.prisma,
@@ -73,6 +98,18 @@ export class TodoService {
           includeConditions: {
             responsible: true,
             state: true,
+          },
+          whereFields: {
+            OR: [
+              {
+                creator: {
+                  id: userId,
+                },
+              },
+              {
+                responsibleId: userId,
+              },
+            ],
           },
         },
       );

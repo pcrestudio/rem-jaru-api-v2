@@ -68,18 +68,16 @@ export class JudicialProcessController {
     @Query("entityReference") entityReference: string,
     @Res() res: Response,
   ) {
-    const document = this.judicialProcessService.exportWord(entityReference);
+    const document =
+      await this.judicialProcessService.exportWord(entityReference);
 
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=documento_generado.docx",
-    );
+    res.setHeader("Content-Disposition", `attachment; filename=document.docx`);
 
-    return res.send(document);
+    return res.end(document);
   }
 
   @Get("export/excel")

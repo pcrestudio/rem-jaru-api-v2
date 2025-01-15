@@ -55,6 +55,28 @@ export class AttributeValuesController {
     );
   }
 
+  @Post("bulk/options")
+  async upsertBulkSectionAttributesOption(
+    @Body() sectionAttributes: CreateSectionAttributeOptionDto[],
+    @Query("attributeId") attributeId: string,
+  ) {
+    return this.attributeValuesService.upsertBulkSectionAttributesOption(
+      sectionAttributes,
+      Number(attributeId),
+    );
+  }
+
+  @Post("plain/bulk/options")
+  async upsertGlobalAttributesOption(
+    @Body() sectionAttributes: CreateSectionAttributeOptionDto[],
+    @Query("attributeId") attributeId: string,
+  ) {
+    return this.attributeValuesService.upsertGlobalAttributesOption(
+      sectionAttributes,
+      Number(attributeId),
+    );
+  }
+
   @Post("plain/bulk")
   async upsertBulkGlobalAttributes(
     @Body() globalAttributes: CreateSectionAttributeDto[],

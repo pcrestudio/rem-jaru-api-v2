@@ -55,7 +55,7 @@ export class MailService {
     subject: string,
     attachments: any[] = [],
   ): Promise<void> {
-    //const renderedTemplate = this.renderTemplate(template, templateData);
+    //const renderedTemplate = this.renderTemplate(templates, templateData);
     //await this.sendEmail(to, subject, renderedTemplate, true, attachments);
 
     const renderedTemplate = this.getTemplate(template, templateData);

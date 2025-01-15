@@ -1,6 +1,6 @@
-import { IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 
-export class CreateRoleDto {
+export class UpsertRoleDto {
   @IsString()
   name: string;
 
@@ -9,4 +9,8 @@ export class CreateRoleDto {
 
   @IsString()
   description: string;
+
+  @IsNumber()
+  @IsOptional()
+  id?: number;
 }

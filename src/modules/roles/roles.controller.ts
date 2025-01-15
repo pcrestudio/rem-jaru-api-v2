@@ -1,15 +1,16 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
-import { CreateRoleDto } from "./dto/create-role.dto";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { UpsertRoleDto } from "./dto/create-role.dto";
 import { RolesService } from "./roles.service";
 import { AssignRoleDto } from "./dto/assign-role.dto";
+import { FilterCustomPaginationDto } from "../custom_pagination/dto/fiter-custom-pagination.dto";
 
 @Controller("roles")
 export class RolesController {
   constructor(private rolesService: RolesService) {}
 
-  @Post("create")
-  async create(@Body() role: CreateRoleDto) {
-    return this.rolesService.createRole(role);
+  @Post("upsert")
+  async upsertRole(@Body() role: UpsertRoleDto) {
+    return this.rolesService.upsertRole(role);
   }
 
   @Post("assign")
@@ -20,5 +21,10 @@ export class RolesController {
   @Get("")
   async getRoles() {
     return this.rolesService.getRoles();
+  }
+
+  @Get("filter")
+  async getRolesFilter(@Query() filter: FilterCustomPaginationDto) {
+    return this.rolesService.getRolesFilter(filter);
   }
 }

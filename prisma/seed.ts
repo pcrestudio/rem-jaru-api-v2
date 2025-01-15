@@ -7,14 +7,11 @@ import { UpsertInstanceDto } from "../src/modules/instance/dto/upsert-instance.d
 import { CreateMasterOptionDto } from "../src/modules/master/dto/create-master-option.dto";
 import { MasterTodosStates } from "../src/config/master-todos-states.config";
 import { MasterReportTabs } from "../src/config/master-report-tabs.config";
+import { UpsertRoleDto } from "../src/modules/roles/dto/create-role.dto";
+import { AuthMethod } from "../src/config/auth-method.config";
+import { MasterOptionConfig } from "../src/config/master-option.config";
 
 const prisma = new PrismaClient();
-
-export enum MasterOptionConfig {
-  materia = "materia-controvertida",
-  estudios = "estudios-a-cargo",
-  proyectos = "proyectos",
-}
 
 const modulesSeed: CreateModuleDto[] = [
   {
@@ -154,46 +151,196 @@ const reportTabsSeed: CreateMasterOptionDto[] = [
   },
 ];
 
+const generalProjectsSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Proyecto #1",
+    slug: "proyecto-general-1",
+  },
+  {
+    name: "Proyecto #2",
+    slug: "proyecto-general-2",
+  },
+  {
+    name: "Proyecto #3",
+    slug: "proyecto-general-3",
+  },
+];
+
+const rolesSeed: UpsertRoleDto[] = [
+  {
+    title: "Súper administrador",
+    name: "super-admin",
+    description:
+      "El súper administrador tiene acceso total a todo tipo de acciones y módulos que existan en la plataforma.",
+  },
+  {
+    title: "Administrador",
+    name: "admin",
+    description:
+      "El administrador tiene acceso limitado a módulos que existan en la plataforma.",
+  },
+  {
+    title: "Supervisor",
+    name: "visualizer",
+    description:
+      "El Supervisor puede ver todos los módulos, To Do y reportes. También puede crear To Dos.",
+  },
+  {
+    title: "Ejecutor",
+    name: "executor",
+    description:
+      "El Ejecutor puede ver y editar los To Dos asignados a su usuario.",
+  },
+];
+
+const judicialInstanceStepOneSeed: UpsertInstanceDto[] = [
+  {
+    name: "Demanda",
+    isGlobal: true,
+  },
+  {
+    name: "Contestación de demanda",
+    isGlobal: true,
+  },
+  {
+    name: "Oposiciones a los medios probatorios",
+    isGlobal: true,
+  },
+  {
+    name: "Solicitud de excepciones",
+    isGlobal: true,
+  },
+  {
+    name: "Absolución de contestación",
+    isGlobal: true,
+  },
+  {
+    name: "Solicitud de improcedencia",
+    isGlobal: true,
+  },
+  {
+    name: "Informe de saneamiento",
+    isGlobal: true,
+  },
+  {
+    name: "Informe oral",
+    isGlobal: true,
+  },
+  {
+    name: "Sentencia",
+    isGlobal: true,
+  },
+];
+
+const judicialInstanceStepTwoSeed: UpsertInstanceDto[] = [
+  {
+    name: "Apelación",
+    isGlobal: true,
+  },
+  {
+    name: "Absolución de traslado de apelación",
+    isGlobal: true,
+  },
+  {
+    name: "Programación de vista de la causa",
+    isGlobal: true,
+  },
+  {
+    name: "Solicitud de uso de palabra",
+    isGlobal: true,
+  },
+  {
+    name: "Sentencia de la vista",
+    isGlobal: true,
+  },
+];
+
+const judicialInstanceStepThreeSeed: UpsertInstanceDto[] = [
+  {
+    name: "Solicitud de casación",
+    isGlobal: true,
+  },
+  {
+    name: "Solicitud de improcedencia",
+    isGlobal: true,
+  },
+  {
+    name: "Auto de procedencia",
+    isGlobal: true,
+  },
+  {
+    name: "Programación de vista de la causa",
+    isGlobal: true,
+  },
+  {
+    name: "Solicitud de uso de palabra",
+    isGlobal: true,
+  },
+  {
+    name: "Sentencia de fondo",
+    isGlobal: true,
+  },
+];
+
+const angloamericanStudioSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Estudio Rodrigo, Elías & Medrano",
+    slug: "rem",
+  },
+  {
+    name: "Estudio PAYET",
+    slug: "payet",
+  },
+  {
+    name: "Estudio CUATRECASAS",
+    slug: "rem",
+  },
+  {
+    name: "Estudio GRAU",
+    slug: "grau",
+  },
+];
+
 async function main() {
   const password = await hash("admin", 9);
 
   const user_one = await prisma.user.create({
     data: {
-      firstName: "Piero",
-      lastName: "Cusi",
-      email: "piero.cusi@jaru.pe",
-      password,
-    },
-  });
-
-  const user_two = await prisma.user.create({
-    data: {
       firstName: "Jaru",
-      lastName: "Súper admin",
-      email: "super.admin@jaru.pe",
+      lastName: "Admin",
+      displayName: "Jaru Admin",
+      authMethod: AuthMethod.local,
+      email: "piero.cusi@estudiorodrigo.com",
       password,
     },
   });
 
-  const role_super_admin = await prisma.role.create({
-    data: {
-      title: "Súper administrador",
-      name: "super-admin",
-      description:
-        "El súper administrador tiene acceso total a todo tipo de acciones y módulos que existan en la plataforma.",
-    },
+  const rolesSet = [];
+
+  await prisma.$transaction(async (tx) => {
+    for (const role of rolesSeed) {
+      const roles_created = await tx.role.create({
+        data: {
+          ...role,
+        },
+      });
+
+      rolesSet.push(roles_created);
+    }
   });
 
   const assign_role = await prisma.userRole.createMany({
-    data: [user_one, user_two].map((user) => ({
+    data: [user_one].map((user) => ({
       userId: user.id,
-      roleId: role_super_admin.id,
+      roleId: rolesSet[0].id,
     })),
   });
 
   if (assign_role) {
     const modulesSet = [];
     const mastersSet = [];
+    const instanceSet = [];
+    const instanceSupervisionSet = [];
 
     await prisma.$transaction(async (tx) => {
       for (const module of modulesSeed) {
@@ -253,10 +400,31 @@ async function main() {
       }
     });
 
+    // Empieza creacion de proyectos generales
+    const generalProjects = await prisma.master.create({
+      data: {
+        name: "Proyectos",
+        slug: MasterOptionConfig.proyectosGeneral,
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of generalProjectsSeed) {
+        await tx.masterOption.create({
+          data: {
+            name: masterOption.name,
+            slug: masterOption.slug,
+            masterId: generalProjects.id,
+          },
+        });
+      }
+    });
+    // Finaliza creacion de opciones de proyectos generales
+
     const masterTabs = await prisma.master.create({
       data: {
         name: "Tabs para reportes global",
-        slug: "reportes-tabs",
+        slug: MasterOptionConfig.tabs,
       },
     });
 
@@ -272,12 +440,15 @@ async function main() {
       }
     });
 
-    await prisma.masterOption.create({
-      data: {
-        name: "Estudio Rodrigo, Elías & Medrano",
-        slug: "rem",
-        masterId: mastersSet[0].id,
-      },
+    await prisma.$transaction(async (tx) => {
+      for (const studio of angloamericanStudioSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...studio,
+            masterId: mastersSet[0].id,
+          },
+        });
+      }
     });
 
     await prisma.masterOption.create({
@@ -298,22 +469,14 @@ async function main() {
 
     await prisma.section.create({
       data: {
-        label: "Control de contingencia",
-        order: 1,
+        label: "Datos generales",
+        order: 3,
         collapsable: true,
         moduleId: modulesSet[0].id,
       },
     });
 
-    await prisma.section.create({
-      data: {
-        label: "Situación actual",
-        order: 2,
-        collapsable: true,
-        moduleId: modulesSet[0].id,
-      },
-    });
-
+    // Instancias de procesos judiciales
     await prisma.$transaction(async (tx) => {
       for (const instance of judicialProcessInstancesSeed) {
         const instance_created = await tx.instance.create({
@@ -323,10 +486,46 @@ async function main() {
           },
         });
 
-        mastersSet.push(instance_created);
+        instanceSet.push(instance_created);
       }
     });
 
+    //Empieza creación de pasos en procesos judiciales
+    await prisma.$transaction(async (tx) => {
+      for (const step of judicialInstanceStepOneSeed) {
+        await tx.step.create({
+          data: {
+            ...step,
+            instanceId: instanceSet[0].id,
+          },
+        });
+      }
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const step of judicialInstanceStepTwoSeed) {
+        await tx.step.create({
+          data: {
+            ...step,
+            instanceId: instanceSet[1].id,
+          },
+        });
+      }
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const step of judicialInstanceStepThreeSeed) {
+        await tx.step.create({
+          data: {
+            ...step,
+            instanceId: instanceSet[2].id,
+          },
+        });
+      }
+    });
+    // Finaliza creacion de pasos en procesos judiciales
+
+    // Instancias de supervisiones
     await prisma.$transaction(async (tx) => {
       for (const instance of supervisionInstancesSeed) {
         const instance_created = await tx.instance.create({
@@ -336,7 +535,7 @@ async function main() {
           },
         });
 
-        mastersSet.push(instance_created);
+        instanceSupervisionSet.push(instance_created);
       }
     });
   }

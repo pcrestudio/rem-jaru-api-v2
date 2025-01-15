@@ -3,7 +3,7 @@ import footerTemplate from "src/common/templates/footerTemplate";
 
 const frontendUrl = process.env.FRONTEND_URL;
 
-const otpTemplate = (obj) => `${headerTemplate}
+const assignTodoTemplate = (obj) => `${headerTemplate}
   <table align="center" border="0" cellpadding="0" cellspacing="0" class="row row-3" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;" width="100%">
     <tbody>
       <tr>
@@ -23,7 +23,7 @@ const otpTemplate = (obj) => `${headerTemplate}
                               </strong>
                             </span>
                             <br/>
-                            <span style="word-break: break-word;">Código de Verificación</span>
+                            <span style="word-break: break-word;">Te asignaron un To-Do con el asunto: "${obj.title}"</span>
                           </p>
                         </div>
                       </td>
@@ -48,7 +48,7 @@ const otpTemplate = (obj) => `${headerTemplate}
                         <div style="font-family: sans-serif">
                           <div class="" style="font-size: 12px; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
                             <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 21px;">
-                              Recibimos tu solicitud de incio de sesión.
+                              Verifica esta tarea en el siguiente enlace.
                               <span style="word-break: break-word; color: #a8bf6f; font-size: 14px;">
                                 <strong>
                                   <br/>
@@ -60,23 +60,11 @@ const otpTemplate = (obj) => `${headerTemplate}
                       </td>
                     </tr>
                   </table>
-
-                  <table border="0" cellpadding="0" cellspacing="0" class="paragraph_block block-4" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;" width="100%">
-                    <tr>
-                      <td class="pad" style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:20px;">
-                        <div style="color:#0D0D0D;font-family:'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;font-size:14px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
-                          <p style="margin: 0; word-break: break-word;">VÁLIDO POR 60 MINUTOS</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
-                          
+                           
                   <table border="0" cellpadding="0" cellspacing="0" class="button_block block-5" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;" width="100%">
                     <tr>
                       <td class="pad" style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:25px;text-align:center;">
                         <div align="center" class="alignment">
-                          
-
                            <table
                   align="center"
                   border="0"
@@ -101,7 +89,7 @@ const otpTemplate = (obj) => `${headerTemplate}
                         font-family: 'Montserrat', Arial, sans-serif;
                       "
                     >
-                    ${obj.otpCode}
+                      <a href="${frontendUrl}">Ir a Jaru Software</a>
                     </td>
                   </tr>
                 </table>
@@ -121,4 +109,4 @@ const otpTemplate = (obj) => `${headerTemplate}
 ${footerTemplate}
 `;
 
-export default otpTemplate;
+export default assignTodoTemplate;

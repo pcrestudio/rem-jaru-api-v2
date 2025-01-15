@@ -7,12 +7,15 @@ import { FilterUsersDto } from "../../modules/auth/dto/filter-users.dto";
 import { UpsertRegisterDto } from "../../modules/auth/dto/user-register.dto";
 import { hash } from "bcrypt";
 import { ConfigService } from "@nestjs/config";
+import { MailService } from "../mail/mail.service";
+import createUserTemplate from "./templates/create-user.tpl";
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -32,13 +35,13 @@ export class UsersService {
   }
 
   async create(payload: UpsertRegisterDto) {
-    let encrypt_password: string = "";
+    let encrypt_password = "";
 
     if (payload.password) {
       encrypt_password = await hash(payload.password, 10);
     }
 
-    const jaru_generated_password: string = await hash(
+    const jaru_generated_password = await hash(
       this.config.get("JARU_PASSWORD"),
       10,
     );
@@ -67,36 +70,53 @@ export class UsersService {
         },
       });
 
-      const findRole = await this.prisma.userRole.findFirst({
+      const findRole = await this.prisma.userRole.findUnique({
         where: {
-          userId: payload.id ? payload.id : 0,
-          roleId: payload.roleId ? payload.roleId : 0,
+          userId_roleId: {
+            userId: userCreated.id,
+            roleId: payload.roleId,
+          },
         },
       });
 
-      if (!findRole) {
+      if (findRole) {
+        await this.prisma.userRole.update({
+          data: {
+            roleId: payload.roleId,
+          },
+          where: {
+            userId_roleId: {
+              userId: userCreated.id,
+              roleId: payload.roleId,
+            },
+          },
+        });
+      } else {
+        await this.prisma.userRole.deleteMany({
+          where: {
+            userId: userCreated.id,
+          },
+        });
+
         await this.prisma.userRole.create({
           data: {
             userId: userCreated.id,
             roleId: payload.roleId,
           },
         });
-
-        return userCreated;
       }
 
-      await this.prisma.userRole.update({
-        data: {
-          userId: userCreated.id,
-          roleId: payload.roleId,
-        },
-        where: {
-          userId_roleId: {
-            userId: userCreated.id,
-            roleId: findRole.roleId,
-          },
-        },
-      });
+      const templateData = {
+        displayName: userCreated.displayName,
+        password: this.config.get("JARU_PASSWORD"),
+      };
+
+      await this.mail.sendWithTemplate(
+        createUserTemplate,
+        templateData,
+        [userCreated.email],
+        "Nuevo usuario - Jaru Software.",
+      );
 
       return userCreated;
     } catch (error) {

@@ -32,8 +32,10 @@ export class TodoController {
   }
 
   @Get("")
-  async getTodos(@Query() filter: FilterTodoDto) {
-    return this.todoService.getTodos(filter);
+  async getTodos(@Query() filter: FilterTodoDto, @Req() req) {
+    const user = req.user;
+
+    return this.todoService.getTodos(filter, Number(user.userId));
   }
 
   @Patch("alert/:id")

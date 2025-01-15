@@ -4,6 +4,8 @@ export enum EntityReferenceModel {
   StepData = "StepData",
   ToDo = "ToDo",
   User = "User",
+  Roles = "UserRole",
+  Role = "Role",
   CEJ_ACTUACIONES = "cEJ_ExpedientesActuaciones",
 }
 

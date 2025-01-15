@@ -7,13 +7,29 @@ import { PrismaService } from "../../core/database/prisma.service";
 import { CreateJudicialProcessDto } from "./dto/create-judicial-process.dto";
 import { EditJudicialProcessDto } from "./dto/edit-judicial-process.dto";
 import { ToggleJudicialProcessDto } from "./dto/toggle-judicial-process.dto";
-import { Document, HeadingLevel, Packer, Paragraph } from "docx";
-import * as fs from "node:fs";
-import { angloDocHeader } from "../../common/utils/anglo_doc_header";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  WidthType,
+} from "docx";
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { ExportablesService } from "../exportables/exportables.service";
 import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
+import { readFileSync } from "fs";
+import { angloDocHeader } from "../../common/utils/anglo_doc_header";
+import AngloTableCell from "../../common/utils/anglo_table_cell";
+import { AttributeSlugConfig } from "../../config/attribute-slug.config";
+import { UtilsService } from "../../utils/utils.service";
+import { GetModuleAttributeValueDto } from "../../utils/dto/get-module-attribute.value.dto";
+import AngloMultipleTableHeaderCell from "../../common/utils/anglo_table_header_cell";
+import AngloSingleTableHeaderCell from "../../common/utils/anglo_table_single_header_cell";
+import { ExtendedAttributeConfig } from "../../config/extended-attribute.config";
+import { DataType } from "@prisma/client";
 
 @Injectable()
 export class JudicialProcessService {
@@ -71,8 +87,6 @@ export class JudicialProcessService {
     }
 
     let guaranteeLetter: string = "";
-
-    console.log(judicialProcess.guaranteeLetter);
 
     if (files && files.length > 0) {
       const file = files.find((f) => f.fieldname === "guaranteeLetter");
@@ -132,11 +146,47 @@ export class JudicialProcessService {
       "coDefendant",
       "responsible.firstName",
       "responsible.displayName",
+      "project.name",
       "studio.name",
     ];
 
     const whereFields = {
       submoduleId: submodule?.id,
+    };
+
+    if (filter.cargoStudioId) {
+      whereFields["cargoStudioId"] = Number(filter.cargoStudioId);
+    }
+
+    if (filter.projectId) {
+      whereFields["projectId"] = Number(filter.projectId);
+    }
+
+    const includeConditions: any = {
+      responsible: filter.responsibleId
+        ? {
+            where: {
+              id: Number(filter.responsibleId),
+            },
+          }
+        : true,
+      secondaryResponsible: true,
+      project: filter.projectId
+        ? {
+            where: {
+              id: Number(filter.projectId),
+            },
+          }
+        : true,
+      studio: filter.cargoStudioId
+        ? {
+            where: {
+              id: Number(filter.cargoStudioId),
+            },
+          }
+        : true,
+      sectionAttributeValues: true,
+      globalAttributeValues: true,
     };
 
     return CustomPaginationService._getPaginationModel(
@@ -146,14 +196,7 @@ export class JudicialProcessService {
         page: filter.page,
         pageSize: filter.pageSize,
         whereFields,
-        includeConditions: {
-          responsible: true,
-          secondaryResponsible: true,
-          project: true,
-          studio: true,
-          sectionAttributeValues: true,
-          globalAttributeValues: true,
-        },
+        includeConditions,
         search: filter.search,
       },
       searchableFields,
@@ -168,9 +211,177 @@ export class JudicialProcessService {
     });
   }
 
-  async exportWord(entityReference?: string) {
+  async exportWord(entityReference: string) {
     try {
-      const bufferLogo = fs.readFileSync(`${process.cwd()}/public/img/rem.png`);
+      const bufferLogo = readFileSync(
+        `${process.cwd()}/public/img/Anglo_American_Logo_RGB_4C.png`,
+      );
+      const judicialProcess = await this.prisma.judicialProcess.findFirst({
+        where: {
+          entityReference,
+        },
+        include: {
+          sectionAttributeValues: {
+            include: {
+              attribute: {
+                include: {
+                  options: true,
+                },
+              },
+            },
+          },
+          globalAttributeValues: {
+            include: {
+              attribute: {
+                include: {
+                  options: true,
+                },
+              },
+            },
+          },
+          studio: true,
+          project: true,
+          secondaryResponsible: true,
+          responsible: true,
+        },
+      });
+
+      const lastSituation = UtilsService._getModuleAttributeWithValueBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.lastSituation,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const resume = UtilsService._getModuleAttributeWithValueBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.resume,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const successRate = UtilsService._getModuleAttributeOptionLabelBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.successRate,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const actualState = UtilsService._getModuleAttributeOptionLabelBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.actualState,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const principalSituation =
+        UtilsService._getModuleAttributeWithValueBySlug(
+          judicialProcess as unknown as GetModuleAttributeValueDto,
+          AttributeSlugConfig.principalSituation,
+          ExtendedAttributeConfig.sectionAttributeValues,
+        );
+
+      const contingencyLevel =
+        UtilsService._getModuleAttributeOptionLabelBySlug(
+          judicialProcess as unknown as GetModuleAttributeValueDto,
+          AttributeSlugConfig.contingencyLevel,
+          ExtendedAttributeConfig.sectionAttributeValues,
+        );
+
+      const provisionAmount = UtilsService._getModuleAttributeWithValueBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.provisionAmount,
+        ExtendedAttributeConfig.globalAttributeValues,
+      );
+
+      const payAmount = UtilsService._getModuleAttributeWithValueBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.payAmount,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const comments = UtilsService._getModuleAttributeWithValueBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.comments,
+        ExtendedAttributeConfig.globalAttributeValues,
+      );
+
+      const rows = [
+        AngloMultipleTableHeaderCell("Criterios claves", "Detalle"),
+        new TableRow({
+          children: AngloTableCell(
+            "Materia",
+            judicialProcess.controversialMatter,
+          ),
+        }),
+        new TableRow({
+          children: AngloTableCell(
+            "Sujeto demandado",
+            `${judicialProcess.plaintiff} / ${judicialProcess.demanded}`,
+          ),
+        }),
+        new TableRow({
+          children: AngloTableCell("Breve resumen del caso", resume),
+        }),
+        new TableRow({
+          children: AngloTableCell("Estado actual", actualState),
+        }),
+        new TableRow({
+          children: AngloTableCell("Último actuado", lastSituation),
+        }),
+        new TableRow({
+          children: AngloTableCell("Indicador de éxito", successRate),
+        }),
+        new TableRow({
+          children: AngloTableCell("Nivel de contingencia", contingencyLevel),
+        }),
+        new TableRow({
+          children: AngloTableCell("Monto demandado", `S/. ${provisionAmount}`),
+        }),
+        new TableRow({
+          children: AngloTableCell("Monto pagado", `S/. ${payAmount}`),
+        }),
+      ];
+
+      const table = new Table({
+        rows: rows,
+        columnWidths: [4505, 4505],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      });
+
+      const tableComments = new Table({
+        rows: [
+          AngloSingleTableHeaderCell("Comentarios", "347ff6"),
+          new TableRow({
+            children: [
+              new TableCell({
+                children: [new Paragraph(comments)],
+              }),
+            ],
+          }),
+        ],
+        columnWidths: [9010],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      });
+
+      const tablePrincipalSituation = new Table({
+        rows: [
+          AngloSingleTableHeaderCell("Principales Actuados", "347ff6"),
+          new TableRow({
+            children: [
+              new TableCell({
+                children: [new Paragraph(principalSituation)],
+              }),
+            ],
+          }),
+        ],
+        columnWidths: [9010],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      });
+
+      const tableTitle = new Table({
+        rows: [
+          AngloSingleTableHeaderCell("FICHA DE RESUMEN DE PROCESOS", "031795"),
+        ],
+        columnWidths: [9010],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      });
 
       const doc = new Document({
         sections: [
@@ -182,16 +393,16 @@ export class JudicialProcessService {
           },
           {
             children: [
-              new Paragraph({ text: "Yes", heading: HeadingLevel.HEADING_1 }),
+              tableTitle,
+              table,
+              tableComments,
+              tablePrincipalSituation,
             ],
           },
         ],
       });
 
-      const buffer = await Packer.toBuffer(doc);
-      fs.writeFileSync(`${entityReference}.docx`, buffer);
-
-      return buffer;
+      return Packer.toBuffer(doc);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -205,19 +416,27 @@ export class JudicialProcessService {
         project: true,
         sectionAttributeValues: {
           include: {
-            attribute: true,
+            attribute: {
+              include: {
+                options: true,
+              },
+            },
           },
         },
         globalAttributeValues: {
           include: {
-            attribute: true,
+            attribute: {
+              include: {
+                options: true,
+              },
+            },
           },
         },
       },
     });
 
     const headers = [
-      { key: "fileCode", header: "Código de expediente" },
+      { key: "fileCode", header: "Código de judicialProcess" },
       { key: "demanded", header: "Demandante" },
       { key: "plaintiff", header: "Demandado" },
       { key: "coDefendant", header: "Co-demandado" },
@@ -228,17 +447,45 @@ export class JudicialProcessService {
 
     for (const item of judicialProcesses) {
       item.globalAttributeValues?.forEach((attribute, index) => {
-        headers.push({
-          key: `globalAttributeValues[${index}].value`,
-          header: `${attribute.attribute.label}`,
-        });
+        const findIndex = attribute.attribute.options.findIndex(
+          (option) => option.optionValue === attribute.value,
+        );
+
+        if (
+          attribute.attribute.dataType === DataType.LIST &&
+          findIndex !== -1
+        ) {
+          headers.push({
+            key: `globalAttributeValues[${index}].attribute.options[${findIndex}].optionLabel`,
+            header: `${attribute.attribute.label}`,
+          });
+        } else {
+          headers.push({
+            key: `globalAttributeValues[${index}].value`,
+            header: `${attribute.attribute.label}`,
+          });
+        }
       });
 
       item.sectionAttributeValues?.forEach((attribute, index) => {
-        headers.push({
-          key: `sectionAttributeValues[${index}].value`,
-          header: `${attribute.attribute.label}`,
-        });
+        const findIndex = attribute.attribute.options.findIndex(
+          (option) => option.optionValue === attribute.value,
+        );
+
+        if (
+          attribute.attribute.dataType === DataType.LIST &&
+          findIndex !== -1
+        ) {
+          headers.push({
+            key: `sectionAttributeValues[${index}].attribute.options[${findIndex}].optionLabel`,
+            header: `${attribute.attribute.label}`,
+          });
+        } else {
+          headers.push({
+            key: `sectionAttributeValues[${index}].value`,
+            header: `${attribute.attribute.label}`,
+          });
+        }
       });
     }
 
@@ -260,9 +507,19 @@ export class JudicialProcessService {
     return key.split(".").reduce((o, k) => {
       if (k.includes("[") && k.includes("]")) {
         const [arrayKey, index] = k.split(/[\[\]]/).filter(Boolean);
-        return o?.[arrayKey]?.[parseInt(index, 10)];
+
+        if (arrayKey === "attribute" && o?.[arrayKey]?.options) {
+          const option = o[arrayKey].options.find(
+            (option: any) => option.optionValue === o?.value,
+          );
+
+          return option ? option.optionLabel : "";
+        }
+
+        return o?.[arrayKey]?.[parseInt(index, 10)] ?? "";
       }
-      return o?.[k];
+
+      return o?.[k] ?? "";
     }, obj);
   }
 }
