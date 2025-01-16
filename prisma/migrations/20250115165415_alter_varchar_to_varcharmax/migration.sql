@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE `Master` MODIFY `name` LONGTEXT NOT NULL,
+    MODIFY `slug` LONGTEXT NULL;
+
+-- AlterTable
+ALTER TABLE `MasterOption` MODIFY `name` LONGTEXT NOT NULL,
+    MODIFY `slug` LONGTEXT NOT NULL;

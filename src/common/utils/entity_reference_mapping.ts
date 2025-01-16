@@ -9,6 +9,11 @@ export enum EntityReferenceModel {
   CEJ_ACTUACIONES = "cEJ_ExpedientesActuaciones",
 }
 
+export enum ModelType {
+  JudicialProcess = "JudicialProcess",
+  Supervision = "Supervision",
+}
+
 export const entityReferenceMapping: Record<Entities, string> = {
   JPA: EntityReferenceModel.JudicialProcess,
   JPL: EntityReferenceModel.JudicialProcess,
@@ -36,4 +41,9 @@ export enum Entities {
 export const getModelByEntityReference = (entityReference: string) => {
   const match = entityReference.match(/^[^\d]+/);
   return match ? entityReferenceMapping[match[0]] : null;
+};
+
+export const getPrefixByEntityReference = (entityReference: string) => {
+  const match = entityReference.match(/^[^\d]+/);
+  return match ? match[0] : null;
 };

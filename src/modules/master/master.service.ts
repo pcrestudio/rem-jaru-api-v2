@@ -5,6 +5,7 @@ import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
 import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
 import { AutocompleteFilterDto } from "./dto/autocomplete-filter.dto";
+import { FilterMasterReportDto } from "./dto/filter-master-report.dto";
 
 @Injectable()
 export class MasterService {
@@ -150,10 +151,10 @@ export class MasterService {
     });
   }
 
-  async getMasterBySlugWithOptions(slug: string) {
+  async getMasterBySlugWithOptions(filter: FilterMasterReportDto) {
     return this.prisma.master.findFirst({
       where: {
-        slug: slug,
+        slug: filter.slug,
       },
       include: {
         masterOption: true,

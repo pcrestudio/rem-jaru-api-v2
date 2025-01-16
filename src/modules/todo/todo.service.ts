@@ -82,6 +82,7 @@ export class TodoService {
         pageSize: filter.pageSize,
         whereFields: {
           entityReference: filter.entityReference,
+          entityStepReference: filter.entityStepReference,
         },
       },
     );
@@ -117,7 +118,7 @@ export class TodoService {
     const processedResults = await Promise.all(
       results.map(async (todo: any) => {
         try {
-          const match = todo.entityStepReference.match(/^[^\d]+/);
+          const match = todo.entityReference.match(/^[^\d]+/);
           const model = match ? entityReferenceMapping[match[0]] : null;
 
           if (!model) {

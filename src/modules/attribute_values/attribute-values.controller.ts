@@ -9,7 +9,6 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
-import { Request } from "express";
 import { AttributeValuesService } from "./attribute-values.service";
 import { CreateSectionDto } from "./dto/create-section.dto";
 import { CreateSectionAttributeDto } from "./dto/create-section-attribute.dto";
@@ -152,11 +151,13 @@ export class AttributeValuesController {
   async getSectionBySlug(
     @Query("slug") slug: string,
     @Query("entityReference") entityReference: string,
+    @Query("modelType") modelType: string,
     @Query("isGlobal") isGlobal: string,
   ) {
     return this.attributeValuesService.getSectionBySlug(
       slug,
       entityReference,
+      modelType,
       isGlobal,
     );
   }

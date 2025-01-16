@@ -2,4 +2,5 @@ import { FilterCustomPaginationDto } from "../../custom_pagination/dto/fiter-cus
 
 export interface FilterTodoDto extends FilterCustomPaginationDto {
   entityReference: string;
+  entityStepReference: string;
 }

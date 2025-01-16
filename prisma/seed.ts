@@ -10,6 +10,8 @@ import { MasterReportTabs } from "../src/config/master-report-tabs.config";
 import { UpsertRoleDto } from "../src/modules/roles/dto/create-role.dto";
 import { AuthMethod } from "../src/config/auth-method.config";
 import { MasterOptionConfig } from "../src/config/master-option.config";
+import { mappingSubmodules } from "../src/common/utils/mapping_submodules";
+import { MasterSituationConfig } from "../src/config/master-situation.config";
 
 const prisma = new PrismaClient();
 
@@ -72,6 +74,66 @@ const supervisionSubmodulesSeed: CreateSubmoduleDto[] = [
   },
 ];
 
+const situationOefaSupervisionSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Dirección de Supervisión",
+    slug: "dir-supervision",
+  },
+  {
+    name: "Dirección de Fiscalización",
+    slug: "dir-fiscalizacion",
+  },
+  {
+    name: "Tribunal de Fiscalización Ambiental",
+    slug: "trib-fiscal-ambiental",
+  },
+];
+
+const situationSunafilSupervisionSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Intendencia de Lima Metropolitana",
+    slug: "int-lima-metro",
+  },
+  {
+    name: "Intendencia Regional",
+    slug: "int-regional",
+  },
+  {
+    name: "Tribunal de Fiscalizacion Laboral",
+    slug: "trib-fiscal-laboral",
+  },
+];
+
+const situationOsinergminSupervisionSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Gerencia de Supervisión",
+    slug: "int-lima-metro",
+  },
+  {
+    name: "Gerencia de Fiscalización",
+    slug: "int-regional",
+  },
+  {
+    name: "TASTEM",
+    slug: "trib-fiscal-laboral",
+  },
+];
+
+const situationAnaSupervisionSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Autoridad Local del Agua",
+    slug: "aut-agua",
+  },
+  {
+    name: "Autoridad Administrativa del Agua",
+    slug: "aut-adm-agua",
+  },
+  {
+    name: "Tribunal Nacional de Resolución de Controversias Hídricas",
+    slug: "trib-nac-hidricas",
+  },
+];
+
 const mastersSeed: UpsertMasterDto[] = [
   {
     name: "Estudios a cargo",
@@ -104,7 +166,11 @@ const judicialProcessInstancesSeed: UpsertInstanceDto[] = [
 
 const supervisionInstancesSeed: UpsertInstanceDto[] = [
   {
-    name: "Etapa inspectiva",
+    name: "Etapa preliminar",
+    isGlobal: true,
+  },
+  {
+    name: "Etapa de supervisión",
     isGlobal: true,
   },
   {
@@ -148,6 +214,21 @@ const reportTabsSeed: CreateMasterOptionDto[] = [
   {
     name: "Por estudio a cargo",
     slug: MasterReportTabs.byStudio,
+  },
+];
+
+const situationSeed: CreateMasterOptionDto[] = [
+  {
+    name: "En proceso",
+    slug: MasterSituationConfig.en_proceso,
+  },
+  {
+    name: "Vigente",
+    slug: MasterSituationConfig.vigente,
+  },
+  {
+    name: "Vencido",
+    slug: MasterSituationConfig.vencido,
   },
 ];
 
@@ -341,6 +422,8 @@ async function main() {
     const mastersSet = [];
     const instanceSet = [];
     const instanceSupervisionSet = [];
+    const supervisionSet = [];
+    const masterAuthority = [];
 
     await prisma.$transaction(async (tx) => {
       for (const module of modulesSeed) {
@@ -361,12 +444,20 @@ async function main() {
       })),
     });
 
-    await prisma.submodule.createMany({
-      data: supervisionSubmodulesSeed.map((submodule) => ({
-        ...submodule,
-        moduleId: modulesSet[1].id,
-      })),
+    // Empieza configuración de supervisiones
+    await prisma.$transaction(async (tx) => {
+      for (const submodule of supervisionSubmodulesSeed) {
+        const supervision_created = await tx.submodule.create({
+          data: {
+            ...submodule,
+            moduleId: modulesSet[1].id,
+          },
+        });
+
+        supervisionSet.push(supervision_created);
+      }
     });
+    // Finaliza configuración de supervisiones
 
     await prisma.$transaction(async (tx) => {
       for (const master of mastersSeed) {
@@ -440,6 +531,28 @@ async function main() {
       }
     });
 
+    // Empieza la creación de maestro situación
+    const situationMaster = await prisma.master.create({
+      data: {
+        name: "Situación",
+        slug: MasterOptionConfig.situacion,
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of situationSeed) {
+        await tx.masterOption.create({
+          data: {
+            name: masterOption.name,
+            slug: masterOption.slug,
+            masterId: situationMaster.id,
+          },
+        });
+      }
+    });
+
+    // finaliza la creación de maestro de situación
+
     await prisma.$transaction(async (tx) => {
       for (const studio of angloamericanStudioSeed) {
         await tx.masterOption.create({
@@ -473,6 +586,15 @@ async function main() {
         order: 3,
         collapsable: true,
         moduleId: modulesSet[0].id,
+      },
+    });
+
+    await prisma.section.create({
+      data: {
+        label: "Datos generales",
+        order: 1,
+        collapsable: true,
+        moduleId: modulesSet[1].id,
       },
     });
 
@@ -525,6 +647,71 @@ async function main() {
     });
     // Finaliza creacion de pasos en procesos judiciales
 
+    // Empieza la creacion de maestros autoridad en cada uno de los submodulos, más sus opciones
+    await prisma.$transaction(async (tx) => {
+      for (const submodule of supervisionSet) {
+        const master_authority_created = await tx.master.create({
+          data: {
+            name: "Autoridad",
+            slug: `autoridad-${mappingSubmodules[submodule.slug]}`,
+            submoduleId: submodule.id,
+          },
+        });
+
+        masterAuthority.push(master_authority_created);
+      }
+    });
+
+    // OEFA
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of situationOefaSupervisionSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...masterOption,
+            masterId: masterAuthority[0].id,
+          },
+        });
+      }
+    });
+
+    // SUNAFIL
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of situationSunafilSupervisionSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...masterOption,
+            masterId: masterAuthority[1].id,
+          },
+        });
+      }
+    });
+
+    // OSINERGMIN
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of situationOsinergminSupervisionSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...masterOption,
+            masterId: masterAuthority[2].id,
+          },
+        });
+      }
+    });
+
+    // ANA
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of situationAnaSupervisionSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...masterOption,
+            masterId: masterAuthority[3].id,
+          },
+        });
+      }
+    });
+
+    // Finaliza la creacióm
+
     // Instancias de supervisiones
     await prisma.$transaction(async (tx) => {
       for (const instance of supervisionInstancesSeed) {
@@ -538,6 +725,7 @@ async function main() {
         instanceSupervisionSet.push(instance_created);
       }
     });
+    // Finaliza creación de instancias
   }
 }
 

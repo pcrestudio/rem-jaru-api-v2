@@ -10,7 +10,7 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { InstanceService } from "./instance.service";
 import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
@@ -34,6 +34,11 @@ export class InstanceController {
     return this.instanceService.upsertInstanceStep(instanceStep);
   }
 
+  @Post("bulk/steps")
+  async upsertInstanceStepBulk(@Body() instanceSteps: UpsertInstanceStepDto[]) {
+    return this.instanceService.upsertInstanceStepBulk(instanceSteps);
+  }
+
   @Post("upsert/step/record")
   @UseInterceptors(AnyFilesInterceptor(multerConfig))
   async upsertInstanceStepData(
@@ -51,8 +56,11 @@ export class InstanceController {
   }
 
   @Get("")
-  async getInstanceSteps(@Query("entityReference") entityReference: string) {
-    return this.instanceService.getInstanceSteps(entityReference);
+  async getInstanceSteps(
+    @Query("entityReference") entityReference: string,
+    @Query("modelType") modelType: string,
+  ) {
+    return this.instanceService.getInstanceSteps(entityReference, modelType);
   }
 
   @Get("export")

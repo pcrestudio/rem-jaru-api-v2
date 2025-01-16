@@ -8,11 +8,16 @@ import { UpsertInstanceDto } from "./dto/upsert-instance.dto";
 import { UpsertInstanceStepDto } from "./dto/upsert-instance-step.dto";
 import { UpsertInstanceStepDataDto } from "./dto/upsert-instance-stepdata.dto";
 import { TodoService } from "../todo/todo.service";
-import { Request, Response } from "express";
 import { UpsertTodoDto } from "../todo/dto/upsert-todo.dto";
-import { getModelByEntityReference } from "../../common/utils/entity_reference_mapping";
+import {
+  Entities,
+  getModelByEntityReference,
+  getPrefixByEntityReference,
+  ModelType,
+} from "../../common/utils/entity_reference_mapping";
 import * as path from "path";
 import * as fs from "fs";
+import processDate from "../../common/utils/convert_date_string";
 
 @Injectable()
 export class InstanceService {
@@ -59,6 +64,24 @@ export class InstanceService {
     });
   }
 
+  async upsertInstanceStepBulk(instanceStep: UpsertInstanceStepDto[]) {
+    try {
+      this.prisma.$transaction(async (tx) => {
+        for (const step of instanceStep) {
+          await tx.step.create({
+            data: {
+              name: step.name,
+              instanceId: step.instanceId,
+              isGlobal: step.isGlobal,
+            },
+          });
+        }
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
   async upsertInstanceStepData(
     instanceStepData: UpsertInstanceStepDataDto,
     files: Express.Multer.File[],
@@ -69,46 +92,105 @@ export class InstanceService {
         const file = files.find(
           (f) => f.fieldname === `stepData[${index}][file]`,
         );
-        return { ...step, file: file || null };
+
+        const fileTwo = files.find(
+          (f) => f.fieldname === `stepData[${index}][fileTwo]`,
+        );
+
+        const fileThree = files.find(
+          (f) => f.fieldname === `stepData[${index}][fileThree]`,
+        );
+
+        const fileFour = files.find(
+          (f) => f.fieldname === `stepData[${index}][fileFour]`,
+        );
+
+        const fileFive = files.find(
+          (f) => f.fieldname === `stepData[${index}][fileFive]`,
+        );
+
+        return {
+          ...step,
+          file: file || null,
+          fileTwo: fileTwo || null,
+          fileThree: fileThree || null,
+          fileFour: fileFour || null,
+          fileFive: fileFive || null,
+        };
       });
 
       for (const stepData of stepDataWithFiles) {
         if (stepData.comments === undefined || stepData.file === undefined)
           continue;
 
-        const { entityReference } = await this.prisma.$extended.stepData.upsert(
-          {
-            create: {
-              comments: stepData.comments,
-              stepId: Number(stepData.stepId),
-              file: stepData.file ? stepData.file.filename : undefined,
-              entityReference: stepData.entityReference,
-              completed: !!stepData.comments,
-            },
-            update: {
-              comments: stepData.comments,
-              stepId: Number(stepData.stepId),
-              entityReference: stepData.entityReference,
-              file:
-                stepData.file && stepData.file.filename
-                  ? stepData.file.filename
-                  : undefined,
-              completed: true,
-            },
-            where: {
-              id: stepData.id ? Number(stepData.id) : 0,
-            },
+        const entityReference =
+          instanceStepData.modelType === ModelType.JudicialProcess
+            ? { entityJudicialProcessReference: stepData.entityReference }
+            : { entitySupervisionReference: stepData.entityReference };
+
+        const dateResume = stepData.dateResume
+          ? processDate(JSON.parse(stepData.dateResume))
+          : "";
+
+        const { entityId } = await this.prisma.$extended.stepData.upsert({
+          create: {
+            comments: stepData.comments,
+            choice: stepData.choice ?? undefined,
+            resume: stepData.resume ?? undefined,
+            dateResume,
+            stepId: Number(stepData.stepId),
+            file: stepData.file ? stepData.file.filename : undefined,
+            fileTwo: stepData.fileTwo ? stepData.fileTwo.filename : undefined,
+            fileThree: stepData.fileThree
+              ? stepData.fileThree.filename
+              : undefined,
+            fileFour: stepData.fileFour
+              ? stepData.fileFour.filename
+              : undefined,
+            fileFive: stepData.fileFive
+              ? stepData.fileFive.filename
+              : undefined,
+            modelType: instanceStepData.modelType,
+            completed: !!stepData.comments,
+            ...entityReference,
           },
-        );
+          update: {
+            comments: stepData.comments,
+            stepId: Number(stepData.stepId),
+            choice: stepData.choice ?? undefined,
+            resume: stepData.resume ?? undefined,
+            dateResume,
+            file:
+              stepData.file && stepData.file.filename
+                ? stepData.file.filename
+                : undefined,
+            fileTwo:
+              stepData.fileTwo && stepData.fileTwo.filename
+                ? stepData.fileTwo.filename
+                : undefined,
+            fileThree:
+              stepData.fileThree && stepData.fileThree.filename
+                ? stepData.fileThree.filename
+                : undefined,
+            fileFour:
+              stepData.fileFour && stepData.fileFour.filename
+                ? stepData.fileFour.filename
+                : undefined,
+            fileFive:
+              stepData.fileFive && stepData.fileFive.filename
+                ? stepData.fileFive.filename
+                : undefined,
+            completed: true,
+          },
+          where: {
+            id: stepData.id ? Number(stepData.id) : 0,
+          },
+        });
 
         if (stepData.todos && stepData.todos.length > 0 && !stepData.id) {
           const todos: UpsertTodoDto[] = JSON.parse(stepData.todos.toString());
 
-          await this.todoService.upsertTodoStep(
-            { todos },
-            entityReference,
-            userId,
-          );
+          await this.todoService.upsertTodoStep({ todos }, entityId, userId);
         }
       }
 
@@ -118,9 +200,19 @@ export class InstanceService {
     }
   }
 
-  async getInstanceSteps(entityReference: string) {
+  async getInstanceSteps(entityReference: string, modelType: string) {
     const model = getModelByEntityReference(entityReference);
+    const prefix = getPrefixByEntityReference(entityReference);
+
+    const where =
+      modelType === ModelType.JudicialProcess
+        ? { entityJudicialProcessReference: entityReference }
+        : { entitySupervisionReference: entityReference };
+
     const result = await this.prisma[`${model}`].findFirst({
+      where: {
+        entityReference,
+      },
       include: {
         submodule: {
           include: {
@@ -130,11 +222,16 @@ export class InstanceService {
       },
     });
 
-    return this.prisma.instance.findMany({
+    const instances = await this.prisma.instance.findMany({
       where: {
         OR: [
           {
+            isGlobal: true,
             moduleId: result.submodule.module.id,
+          },
+          {
+            isGlobal: false,
+            submoduleId: result.submodule.id,
           },
         ],
       },
@@ -144,12 +241,17 @@ export class InstanceService {
         steps: {
           include: {
             stepData: {
-              where: {
-                entityReference,
-              },
+              where: where,
               select: {
                 comments: true,
+                resume: true,
+                choice: true,
+                dateResume: true,
                 file: true,
+                fileTwo: true,
+                fileThree: true,
+                fileFour: true,
+                fileFive: true,
                 completed: true,
                 id: true,
                 entityId: true,
@@ -159,6 +261,16 @@ export class InstanceService {
         },
       },
     });
+
+    if (prefix === Entities.SOEF) {
+      return instances.filter(
+        (instance) =>
+          instance.name === "Etapa inspectiva" ||
+          instance.name === "Etapa sancionadora",
+      );
+    }
+
+    return instances;
   }
 
   async exportDocument(fileName: string) {

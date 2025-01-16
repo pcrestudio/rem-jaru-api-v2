@@ -17,6 +17,7 @@ import { mappingRevertSubmodules } from "../../common/utils/mapping_submodules";
 import { CreateSectionAttributeValueGroup } from "./dto/create-section-attribute-value.dto";
 import { ZonedDateTime } from "@internationalized/date";
 import { CreateAttributeRuleDto } from "./dto/create-attribute-rule.dto";
+import { ModelType } from "../../common/utils/entity_reference_mapping";
 
 @Injectable()
 export class AttributeValuesService {
@@ -82,7 +83,11 @@ export class AttributeValuesService {
 
       return "Atributos insertados";
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      console.error("Error en upsertBulkSectionAttributes:", error);
+      throw new InternalServerErrorException({
+        message: "Error al insertar atributos",
+        details: error.message,
+      });
     }
   }
 
@@ -108,10 +113,10 @@ export class AttributeValuesService {
 
       return "Atributos insertados";
     } catch (error) {
-      console.error("Error en upsertBulkGlobalAttributes:", error); // Ayuda a depurar
+      console.error("Error en upsertBulkGlobalAttributes:", error);
       throw new InternalServerErrorException({
         message: "Error al insertar atributos",
-        details: error.message, // Puedes agregar detalles útiles
+        details: error.message,
       });
     }
   }
@@ -339,20 +344,49 @@ export class AttributeValuesService {
           const sectionAttributeValueFind =
             await tx.sectionAttributeValue.findFirst({
               where: {
-                sectionAttributeId: attributeFind?.sectionAttributeId,
-                entityReference: sectionAttributeValue.entityReference,
+                AND: [
+                  {
+                    sectionAttributeId: attributeFind?.sectionAttributeId,
+                  },
+                  {
+                    OR: [
+                      sectionAttributeValue.modelType ===
+                      ModelType.JudicialProcess
+                        ? {
+                            entityJudicialProcessReference:
+                              sectionAttributeValue.entityReference,
+                          }
+                        : {
+                            entitySupervisionReference:
+                              sectionAttributeValue.entityReference,
+                          },
+                    ],
+                  },
+                ],
               },
             });
 
           if (attribute.value === null) continue;
+
+          const entityReference =
+            sectionAttributeValue.modelType === ModelType.JudicialProcess
+              ? {
+                  entityJudicialProcessReference:
+                    sectionAttributeValue.entityReference,
+                }
+              : {
+                  entitySupervisionReference:
+                    sectionAttributeValue.entityReference,
+                };
 
           await tx.sectionAttributeValue.upsert({
             create: {
               value: attribute.value,
               sectionAttributeId: attributeFind?.sectionAttributeId,
               createdBy: `${userFind.firstName} ${userFind.lastName}`,
+              modelType: sectionAttributeValue.modelType,
               modifiedBy: "",
-              entityReference: sectionAttributeValue.entityReference,
+              ...entityReference,
             },
             update: {
               value: attribute.value,
@@ -364,7 +398,6 @@ export class AttributeValuesService {
                 ? sectionAttributeValueFind.sectionAttributeValueId
                 : 0,
               sectionAttributeId: attributeFind?.sectionAttributeId,
-              entityReference: sectionAttributeValue.entityReference,
             },
           });
         }
@@ -372,7 +405,11 @@ export class AttributeValuesService {
 
       return "created";
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      console.error("Error en createSectionAttributeValue:", error);
+      throw new InternalServerErrorException({
+        message: "Error al insertar atributos",
+        details: error.message,
+      });
     }
   }
 
@@ -423,23 +460,51 @@ export class AttributeValuesService {
             },
           });
 
-          const sectionAttributeValueFind =
-            await tx.globalAttributeValue.findFirst({
-              where: {
-                globalAttributeId: attributeFind?.globalAttributeId,
-                entityReference: sectionAttributeValue.entityReference,
-              },
-            });
+          const globalAttributeFind = await tx.globalAttributeValue.findFirst({
+            where: {
+              AND: [
+                {
+                  globalAttributeId: attributeFind?.globalAttributeId,
+                },
+                {
+                  OR: [
+                    sectionAttributeValue.modelType ===
+                    ModelType.JudicialProcess
+                      ? {
+                          entityJudicialProcessReference:
+                            sectionAttributeValue.entityReference,
+                        }
+                      : {
+                          entitySupervisionReference:
+                            sectionAttributeValue.entityReference,
+                        },
+                  ],
+                },
+              ],
+            },
+          });
 
           if (attribute.value === null) continue;
+
+          const entityReference =
+            sectionAttributeValue.modelType === ModelType.JudicialProcess
+              ? {
+                  entityJudicialProcessReference:
+                    sectionAttributeValue.entityReference,
+                }
+              : {
+                  entitySupervisionReference:
+                    sectionAttributeValue.entityReference,
+                };
 
           await tx.globalAttributeValue.upsert({
             create: {
               value: attribute.value,
               globalAttributeId: attributeFind?.globalAttributeId,
               createdBy: `${userFind.firstName} ${userFind.lastName}`,
+              modelType: sectionAttributeValue.modelType,
               modifiedBy: "",
-              entityReference: sectionAttributeValue.entityReference,
+              ...entityReference,
             },
             update: {
               value: attribute.value,
@@ -448,11 +513,10 @@ export class AttributeValuesService {
               modifiedBy: `${userFind.firstName} ${userFind.lastName}`,
             },
             where: {
-              globalAttributeValueId: sectionAttributeValueFind
-                ? sectionAttributeValueFind.globalAttributeValueId
+              globalAttributeValueId: globalAttributeFind
+                ? globalAttributeFind.globalAttributeValueId
                 : 0,
               globalAttributeId: attributeFind?.globalAttributeId,
-              entityReference: sectionAttributeValue.entityReference,
             },
           });
         }
@@ -460,7 +524,11 @@ export class AttributeValuesService {
 
       return "created";
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      console.error("Error en createGlobalAttributeValue:", error);
+      throw new InternalServerErrorException({
+        message: "Error al insertar atributos",
+        details: error.message,
+      });
     }
   }
 
@@ -545,6 +613,7 @@ export class AttributeValuesService {
   async getSectionBySlug(
     pathname: string,
     entityReference: string,
+    modelType: string,
     isGlobal?: string,
   ) {
     const slug = pathname.split("/").filter((path) => path !== "");
@@ -561,6 +630,11 @@ export class AttributeValuesService {
       },
     });
 
+    const where =
+      modelType === ModelType.JudicialProcess
+        ? { entityJudicialProcessReference: entityReference }
+        : { entitySupervisionReference: entityReference };
+
     if (isGlobal) {
       return this.prisma.globalAttribute.findMany({
         where: {
@@ -576,13 +650,7 @@ export class AttributeValuesService {
         include: {
           options: true,
           values: {
-            where: {
-              OR: [
-                {
-                  entityReference,
-                },
-              ],
-            },
+            where: where,
           },
         },
       });
@@ -604,13 +672,7 @@ export class AttributeValuesService {
           include: {
             options: true,
             values: {
-              where: {
-                OR: [
-                  {
-                    entityReference,
-                  },
-                ],
-              },
+              where: where,
             },
           },
         },

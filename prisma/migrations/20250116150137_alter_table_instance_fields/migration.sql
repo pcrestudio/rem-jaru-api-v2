@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `StepData` ADD COLUMN `choice` VARCHAR(191) NULL,
+    ADD COLUMN `dateResume` VARCHAR(191) NULL,
+    ADD COLUMN `resume` VARCHAR(191) NULL;

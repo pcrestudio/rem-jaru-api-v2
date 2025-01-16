@@ -52,7 +52,38 @@ export class ReportService {
                 },
               },
             },
-            Supervision: {},
+            Supervision: {
+              include: {
+                sectionAttributeValues: {
+                  where: {
+                    attribute: {
+                      isForReport: true,
+                    },
+                  },
+                  include: {
+                    attribute: {
+                      include: {
+                        options: true,
+                      },
+                    },
+                  },
+                },
+                globalAttributeValues: {
+                  where: {
+                    attribute: {
+                      isForReport: true,
+                    },
+                  },
+                  include: {
+                    attribute: {
+                      include: {
+                        options: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -61,12 +92,16 @@ export class ReportService {
     const provisionAmountSum = this.sumProvisionAmount(allData);
     const contingencies = this.countBySlug(
       allData,
-      AttributeSlugConfig.contingencyLevel,
+      allData[0].name === "Supervisiones"
+        ? AttributeSlugConfig.supervisionContingencyLevel
+        : AttributeSlugConfig.contingencyLevel,
     );
 
     const criticalProcesses = this.countBySlug(
       allData,
-      AttributeSlugConfig.criticalProcess,
+      allData[0].name === "Supervisiones"
+        ? AttributeSlugConfig.supervisionCriticalProcess
+        : AttributeSlugConfig.criticalProcess,
     );
 
     const matters = await this.getMattersReport(moduleId);
@@ -119,7 +154,13 @@ export class ReportService {
       reportTodos.push({ ...detail, todo });
     }
 
-    return this._countTotalStates(reportTodos);
+    const filterTodos = reportTodos.filter(
+      (todo) =>
+        todo.submoduleId === Number(filter.submoduleId) &&
+        todo.submodule.module.id === Number(filter.moduleId),
+    );
+
+    return this._countTotalStates(filterTodos);
   }
 
   async getGenericReportByTabSlug(filter: FilterReportDto) {
@@ -147,7 +188,8 @@ export class ReportService {
     const attributeValues = await this.prisma.sectionAttributeValue.findMany({
       where: { sectionAttributeId: attribute.sectionAttributeId },
       select: {
-        entityReference: true,
+        entityJudicialProcessReference: true,
+        entitySupervisionReference: true,
         value: true,
       },
     });
@@ -155,7 +197,7 @@ export class ReportService {
     const resolvedDetails = await Promise.all(
       attributeValues.map(async (value) => {
         const detail = await this.resolveSubmodule(
-          value.entityReference,
+          value.entityJudicialProcessReference,
           filter,
         );
         return detail ? { ...value, submodule: detail.submodule } : null;
@@ -367,6 +409,14 @@ export class ReportService {
                 cargoStudioId: true,
               },
             },
+            Supervision: {
+              select: {
+                responsibleId: true,
+                responsible: true,
+                authorityId: true,
+                authority: true,
+              },
+            },
           },
         },
       },
@@ -534,6 +584,36 @@ export class ReportService {
             }
           });
         });
+
+        submodule.Supervision.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (
+              attrValue.attribute.slug.startsWith(
+                AttributeSlugConfig.supervisionProvisionAmount,
+              )
+            ) {
+              const value = parseFloat(attrValue.value);
+
+              if (!isNaN(value)) {
+                total += value;
+              }
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (
+              globalAttrValue.attribute.slug.startsWith(
+                AttributeSlugConfig.supervisionProvisionAmount,
+              )
+            ) {
+              const value = parseFloat(globalAttrValue.value);
+
+              if (!isNaN(value)) {
+                total += value;
+              }
+            }
+          });
+        });
       });
     });
 
@@ -596,6 +676,58 @@ export class ReportService {
             }
           });
         });
+
+        submodule.Supervision.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (attrValue.attribute.slug === slug) {
+              const value = attrValue.value;
+
+              const option = attrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                const existing = result.find(
+                  (res) => res.name === option.optionLabel,
+                );
+
+                if (existing) {
+                  existing._count.group += 1;
+                } else {
+                  result.push({
+                    name: option.optionLabel,
+                    _count: { group: 1 },
+                  });
+                }
+              }
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (globalAttrValue.attribute.slug === slug) {
+              const value = globalAttrValue.value;
+
+              const option = globalAttrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                const existing = result.find(
+                  (res) => res.name === option.optionLabel,
+                );
+
+                if (existing) {
+                  existing._count.group += 1;
+                } else {
+                  result.push({
+                    name: option.optionLabel,
+                    _count: { group: 1 },
+                  });
+                }
+              }
+            }
+          });
+        });
       });
     });
 
@@ -603,7 +735,7 @@ export class ReportService {
   }
 
   private async getMattersReport(moduleId: number) {
-    return this.prisma.module.findMany({
+    const report = await this.prisma.module.findMany({
       select: {
         Submodule: {
           where: {
@@ -616,11 +748,14 @@ export class ReportService {
             _count: {
               select: {
                 JudicialProcess: true,
+                Supervision: true,
               },
             },
           },
         },
       },
     });
+
+    return report.filter((matter) => matter.Submodule.length > 0);
   }
 }

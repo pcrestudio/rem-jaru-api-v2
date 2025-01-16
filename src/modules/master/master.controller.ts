@@ -5,6 +5,7 @@ import { CreateMasterOptionDto } from "./dto/create-master-option.dto";
 import { EditMasterOptionDto } from "./dto/edit-master-option.dto";
 import { ToggleMasterOptionDto } from "./dto/toggle-master-option.dto";
 import { AutocompleteFilterDto } from "./dto/autocomplete-filter.dto";
+import { FilterMasterReportDto } from "./dto/filter-master-report.dto";
 
 @Controller("masters")
 export class MasterController {
@@ -21,8 +22,8 @@ export class MasterController {
   }
 
   @Get("report")
-  async getMasterBySlugWithOptions(@Query("slug") slug: string) {
-    return this.masterService.getMasterBySlugWithOptions(slug);
+  async getMasterBySlugWithOptions(@Query() filter: FilterMasterReportDto) {
+    return this.masterService.getMasterBySlugWithOptions(filter);
   }
 
   @Get("options/autocomplete")

@@ -25,11 +25,6 @@ enum RowLayout {
   threeColumns
 }
 
-enum ModelType {
-  JudicialProcess
-  Supervision
-}
-
 model User {
   id                   Int        @id @default(autoincrement())
   email                String     @unique @db.VarChar(50)
@@ -171,15 +166,14 @@ model JudicialProcess {
   isProvisional          Boolean?  @default(false)
   guaranteeLetter        String?   @default("")
 
-  submodule            Submodule     @relation(fields: [submoduleId], references: [id])
-  project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
-  studio               MasterOption? @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
-  responsible          User?         @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
-  secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
-
+  submodule              Submodule               @relation(fields: [submoduleId], references: [id])
+  project                MasterOption?           @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
+  studio                 MasterOption?           @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
+  responsible            User?                   @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
+  secondaryResponsible   User?                   @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
   sectionAttributeValues SectionAttributeValue[] @relation("JudicialProcessSectionAttributeValues")
   stepData               StepData[]              @relation("JudicialProcessStepData")
-  globalAttributeValues  GlobalAttributeValue[]  @relation("JudicialProcessGlobalAttributeValues")
+  globalAttributeValues  GlobalAttributeValue[]
 }
 
 model Supervision {
@@ -196,15 +190,12 @@ model Supervision {
   isProvisional   Boolean?  @default(false)
   guaranteeLetter String?   @default("")
 
-  submodule   Submodule     @relation(fields: [submoduleId], references: [id])
-  project     MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
-  authority   MasterOption? @relation("SupervisionAuthorityRelation", fields: [authorityId], references: [id], map: "fk_supervision_authority_id")
-  situation   MasterOption? @relation("SupervisionSituationRelation", fields: [situationId], references: [id], map: "fk_supervision_situation_id")
-  responsible User?         @relation("SupervisionResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_supervision_responsible_id")
-
-  sectionAttributeValues SectionAttributeValue[] @relation("SupervisionSectionAttributeValues")
-  stepData               StepData[]              @relation("SupervisionStepData")
-  globalAttributeValues  GlobalAttributeValue[]  @relation("SupervisionGlobalAttributeValues")
+  submodule             Submodule               @relation(fields: [submoduleId], references: [id])
+  project               MasterOption?           @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
+  authority             MasterOption?           @relation("SupervisionAuthorityRelation", fields: [authorityId], references: [id], map: "fk_supervision_authority_id")
+  situation             MasterOption?           @relation("SupervisionSituationRelation", fields: [situationId], references: [id], map: "fk_supervision_situation_id")
+  responsible           User?                   @relation("SupervisionResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_supervision_responsible_id")
+  SectionAttributeValue SectionAttributeValue[] @relation("SupervisionSectionAttributeValues")
 }
 
 model Section {
@@ -254,20 +245,18 @@ model SectionAttributeOption {
 }
 
 model SectionAttributeValue {
-  sectionAttributeValueId        Int       @id @default(autoincrement())
-  sectionAttributeId             Int
-  value                          String    @db.LongText
-  createdAt                      DateTime  @default(now())
-  modifiedAt                     DateTime  @updatedAt
-  createdBy                      String
-  modifiedBy                     String
-  modelType                      ModelType
-  entityJudicialProcessReference String?
-  entitySupervisionReference     String?
+  sectionAttributeValueId Int      @id @default(autoincrement())
+  sectionAttributeId      Int
+  value                   String   @db.LongText
+  createdAt               DateTime @default(now())
+  modifiedAt              DateTime @updatedAt
+  createdBy               String
+  modifiedBy              String
+  entityReference         String?
 
   attribute                    SectionAttribute?              @relation(fields: [sectionAttributeId], references: [sectionAttributeId])
-  judicialProcess              JudicialProcess?               @relation("JudicialProcessSectionAttributeValues", fields: [entityJudicialProcessReference], references: [entityReference])
-  supervision                  Supervision?                   @relation("SupervisionSectionAttributeValues", fields: [entitySupervisionReference], references: [entityReference])
+  judicialProcess              JudicialProcess?               @relation("JudicialProcessSectionAttributeValues", fields: [entityReference], references: [entityReference], map: "fk_ju_sc")
+  supervision                  Supervision?                   @relation("SupervisionSectionAttributeValues", fields: [entityReference], references: [entityReference])
   SectionAttributeValueHistory SectionAttributeValueHistory[]
 }
 
@@ -301,19 +290,16 @@ model GlobalAttributeOption {
 }
 
 model GlobalAttributeValue {
-  globalAttributeValueId         Int       @id @default(autoincrement())
-  globalAttributeId              Int
-  value                          String    @db.LongText
-  createdAt                      DateTime  @default(now())
-  modifiedAt                     DateTime  @updatedAt
-  createdBy                      String
-  modifiedBy                     String
-  modelType                      ModelType
-  entityJudicialProcessReference String?
-  entitySupervisionReference     String?
+  globalAttributeValueId Int      @id @default(autoincrement())
+  globalAttributeId      Int
+  value                  String   @db.LongText
+  createdAt              DateTime @default(now())
+  modifiedAt             DateTime @updatedAt
+  createdBy              String
+  modifiedBy             String
+  entityReference        String?
 
-  judicialProcess JudicialProcess? @relation("JudicialProcessGlobalAttributeValues", fields: [entityJudicialProcessReference], references: [entityReference])
-  supervision     Supervision?     @relation("SupervisionGlobalAttributeValues", fields: [entitySupervisionReference], references: [entityReference])
+  judicialProcess JudicialProcess? @relation(fields: [entityReference], references: [entityReference])
   attribute       GlobalAttribute  @relation(fields: [globalAttributeId], references: [globalAttributeId])
 }
 
@@ -388,26 +374,16 @@ model Step {
 }
 
 model StepData {
-  id                             Int       @id @default(autoincrement())
-  comments                       String
-  stepId                         Int
-  modelType                      ModelType
-  entityJudicialProcessReference String?
-  entitySupervisionReference     String?
-  file                           String?
-  fileTwo                        String?
-  fileThree                      String?
-  fileFour                       String?
-  fileFive                       String?
-  choice                         String?
-  resume                         String?
-  dateResume                     String?
-  entityId                       String?   @unique
-  completed                      Boolean?  @default(false)
+  id              Int      @id @default(autoincrement())
+  comments        String
+  stepId          Int
+  entityReference String?
+  file            String?
+  entityId        String?  @unique
+  completed       Boolean? @default(false)
 
   step            Step             @relation(fields: [stepId], references: [id])
-  judicialProcess JudicialProcess? @relation("JudicialProcessStepData", fields: [entityJudicialProcessReference], references: [entityReference])
-  supervision     Supervision?     @relation("SupervisionStepData", fields: [entitySupervisionReference], references: [entityReference])
+  judicialProcess JudicialProcess? @relation("JudicialProcessStepData", fields: [entityReference], references: [entityReference], map: "fk_judicial_process_stepdata_er")
 }
 
 model SectionAttributeValueHistory {

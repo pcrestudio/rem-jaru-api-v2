@@ -50,6 +50,10 @@ const convertDateString = (date: ZonedDateTime) => {
 };
 
 const processDate = (dateExpiration: any): string => {
+  if (!dateExpiration) {
+    return;
+  }
+
   if (dateExpiration instanceof ZonedDateTime) {
     return convertDateString(dateExpiration);
   }

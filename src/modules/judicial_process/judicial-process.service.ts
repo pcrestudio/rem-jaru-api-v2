@@ -95,24 +95,34 @@ export class JudicialProcessService {
       guaranteeLetter = judicialProcess.guaranteeLetter;
     }
 
-    return this.prisma.judicialProcess.update({
-      data: {
-        fileCode: judicialProcess.fileCode,
-        demanded: judicialProcess.demanded,
-        plaintiff: judicialProcess.plaintiff,
-        coDefendant: judicialProcess.coDefendant,
-        controversialMatter: judicialProcess.controversialMatter,
-        isProvisional: judicialProcess.isProvisional === "false" ? false : true,
-        projectId: Number(judicialProcess.projectId),
-        cargoStudioId: Number(judicialProcess.cargoStudioId),
-        responsibleId: Number(judicialProcess.responsibleId),
-        guaranteeLetter,
-        secondaryResponsibleId: Number(judicialProcess.secondaryResponsibleId),
-      },
-      where: {
-        id: Number(judicialProcess.id),
-      },
-    });
+    try {
+      return this.prisma.judicialProcess.update({
+        data: {
+          fileCode: judicialProcess.fileCode,
+          demanded: judicialProcess.demanded,
+          plaintiff: judicialProcess.plaintiff,
+          coDefendant: judicialProcess.coDefendant,
+          controversialMatter: judicialProcess.controversialMatter,
+          isProvisional:
+            judicialProcess.isProvisional === "false" ? false : true,
+          projectId: Number(judicialProcess.projectId),
+          cargoStudioId: Number(judicialProcess.cargoStudioId),
+          responsibleId: Number(judicialProcess.responsibleId),
+          guaranteeLetter,
+          secondaryResponsibleId: Number(
+            judicialProcess.secondaryResponsibleId,
+          ),
+        },
+        where: {
+          id: Number(judicialProcess.id),
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: `Error creating judicial process`,
+        details: error.message,
+      });
+    }
   }
 
   async toggleJudicialProcess(judicialProcess: ToggleJudicialProcessDto) {
