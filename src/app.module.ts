@@ -26,12 +26,17 @@ import { APP_GUARD } from "@nestjs/core";
 import { GlobalJwtAuthGuard } from "./shared/auth/guards/global-jwt.guard";
 import { MailModule } from "./shared/mail/mail.module";
 import { IncidentModule } from "./modules/incident/incident.module";
+import { ServeStaticModule } from "@nestjs/serve-static";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, "..", "public"),
+      serveRoot: "/public",
     }),
     MailModule.register(),
     AuthModule,
