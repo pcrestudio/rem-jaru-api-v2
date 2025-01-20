@@ -15,13 +15,14 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly mail: MailService,
+    private readonly mail: MailService
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
     return this.prisma.user.findUnique({
       where: {
         email: email,
+        isActive: true,
       },
     });
   }
@@ -43,7 +44,7 @@ export class UsersService {
 
     const jaru_generated_password = await hash(
       this.config.get("JARU_PASSWORD"),
-      10,
+      10
     );
 
     try {
@@ -115,7 +116,7 @@ export class UsersService {
         createUserTemplate,
         templateData,
         [userCreated.email],
-        "Nuevo usuario - Jaru Software.",
+        "Nuevo usuario - Jaru Software."
       );
 
       return userCreated;
@@ -128,10 +129,10 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
-  async update(id: number, user: User) {
+  async updateUser(id: number, data) {
     return this.prisma.user.update({
       where: { id: id },
-      data: user,
+      data,
     });
   }
 
@@ -160,7 +161,7 @@ export class UsersService {
             },
           },
         },
-      },
+      }
     );
   }
 }

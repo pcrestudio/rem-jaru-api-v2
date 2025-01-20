@@ -13,7 +13,23 @@ export class CustomPaginationService {
     const skip = (page - 1) * pageSize;
 
     const orConditions = filter.search
-      ? this.buildOrConditions(searchableFields, filter.search)
+      ? searchableFields.map((field) => {
+          if (field.includes(".")) {
+            const [relation, nestedField] = field.split(".");
+            return {
+              [relation]: {
+                [nestedField]: {
+                  contains: filter.search,
+                },
+              },
+            };
+          }
+          return {
+            [field]: {
+              contains: filter.search,
+            },
+          };
+        })
       : undefined;
 
     const whereConditions = filter.whereFields
@@ -21,9 +37,7 @@ export class CustomPaginationService {
           ...filter.whereFields,
           ...(orConditions ? { OR: orConditions } : {}),
         }
-      : orConditions
-        ? { OR: orConditions }
-        : {};
+      : {};
 
     const includeConditions = filter.includeConditions
       ? { ...filter.includeConditions }
@@ -48,74 +62,5 @@ export class CustomPaginationService {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     };
-  }
-
-  static generateSearchCondition(
-    fieldParts: string[],
-    isNoSome: boolean,
-    searchTerm: string,
-  ) {
-    const relation = fieldParts[0];
-    const nestedField = fieldParts.slice(1).join(".");
-
-    if (fieldParts.length > 1) {
-      if (nestedField.includes(".")) {
-        return isNoSome
-          ? {
-              [relation]: {
-                [nestedField.split(".")[0]]: {
-                  [nestedField.slice(nestedField.indexOf(".") + 1)]: {
-                    contains: searchTerm,
-                  },
-                },
-              },
-            }
-          : {
-              [relation]: {
-                some: {
-                  [nestedField.split(".")[0]]: {
-                    [nestedField.slice(nestedField.indexOf(".") + 1)]: {
-                      contains: searchTerm,
-                    },
-                  },
-                },
-              },
-            };
-      }
-
-      return isNoSome
-        ? {
-            [relation]: {
-              [nestedField]: {
-                contains: searchTerm,
-              },
-            },
-          }
-        : {
-            [relation]: {
-              some: {
-                [nestedField]: {
-                  contains: searchTerm,
-                },
-              },
-            },
-          };
-    }
-  }
-
-  static buildOrConditions(searchableFields: string[], searchTerm: string) {
-    return searchableFields
-      .map((field) => {
-        const { isNoSome, fieldParts } = this.getNestedFieldParts(field);
-        return this.generateSearchCondition(fieldParts, isNoSome, searchTerm);
-      })
-      .filter((condition) => condition !== undefined);
-  }
-
-  static getNestedFieldParts(field: string) {
-    const isNoSome = field.includes(".nosome");
-    const cleanField = field.replace(".nosome", "");
-    const fieldParts = cleanField.split(".");
-    return { isNoSome, cleanField, fieldParts };
   }
 }

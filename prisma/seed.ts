@@ -30,22 +30,22 @@ const modulesSeed: CreateModuleDto[] = [
 
 const subModulesSeed: CreateSubmoduleDto[] = [
   {
-    name: "Administrativos",
+    name: "Procesos Judiciales Administrativos",
     order: 1,
     slug: "judicial_process_administrative",
   },
   {
-    name: "Laborales",
+    name: "Procesos Judiciales Laborales",
     order: 2,
     slug: "judicial_process_labor_court",
   },
   {
-    name: "Civiles",
+    name: "Procesos Judiciales Civiles",
     order: 3,
     slug: "judicial_process_civil_court",
   },
   {
-    name: "Penales",
+    name: "Procesos Judiciales Penales",
     order: 4,
     slug: "judicial_process_criminal",
   },
@@ -53,22 +53,22 @@ const subModulesSeed: CreateSubmoduleDto[] = [
 
 const supervisionSubmodulesSeed: CreateSubmoduleDto[] = [
   {
-    name: "OEFA",
+    name: "Supervisiones OEFA",
     order: 1,
     slug: "supervision_oefa",
   },
   {
-    name: "SUNAFIL",
+    name: "Supervisiones SUNAFIL",
     order: 2,
     slug: "supervision_sunafil",
   },
   {
-    name: "OSINERGMIN",
+    name: "Supervisiones OSINERGMIN",
     order: 3,
     slug: "supervision_osinergmin",
   },
   {
-    name: "ANA",
+    name: "Supervisiones ANA",
     order: 4,
     slug: "supervision_ana",
   },
@@ -580,11 +580,10 @@ async function main() {
       },
     });
 
-    // Procesos judiciales secciones para atributos extendidos
     await prisma.section.create({
       data: {
-        label: "Última actuación",
-        order: 1,
+        label: "Datos generales",
+        order: 3,
         collapsable: true,
         moduleId: modulesSet[0].id,
       },
@@ -593,32 +592,11 @@ async function main() {
     await prisma.section.create({
       data: {
         label: "Datos generales",
-        order: 2,
-        collapsable: true,
-        moduleId: modulesSet[0].id,
-      },
-    });
-    // Finaliza procesos judiciales secciones de atributos extendidos
-
-    // Supervisiones secciones para atributos extendidos
-    await prisma.section.create({
-      data: {
-        label: "Última actuación",
         order: 1,
         collapsable: true,
         moduleId: modulesSet[1].id,
       },
     });
-
-    await prisma.section.create({
-      data: {
-        label: "Datos generales",
-        order: 2,
-        collapsable: true,
-        moduleId: modulesSet[1].id,
-      },
-    });
-    // Finaliza supervisiones secciones de atributos extendidos
 
     // Instancias de procesos judiciales
     await prisma.$transaction(async (tx) => {

@@ -44,12 +44,13 @@ export class HttpExceptionFilters implements ExceptionFilter {
     console.log(exception);
     console.log("===============================");
 
-    response.status(status).json({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      message: message,
-    });
+    // response.status(status).json({
+    //   statusCode: status,
+    //   timestamp: new Date().toISOString(),
+    //   path: request.url,
+    //   message: message,
+    // });
+    response.status(status).json(message);
   }
 
   private handleUnknowException(exception: unknown) {

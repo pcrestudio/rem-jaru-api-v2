@@ -1,27 +1,6 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsNumber } from "class-validator";
 
 export class CreateSupervisionDto {
-  @IsString()
-  fileCode: string;
-
-  @IsString()
-  demanded: string;
-
-  @IsString()
-  comment: string;
-
-  @IsString()
-  controversialMatter: string;
-
-  @IsString()
-  plaintiff: string;
-
-  @IsString()
-  coDefendant: string;
-
-  @IsNumber()
-  cargoStudioId: number;
-
   @IsNumber()
   authorityId: number;
 
@@ -33,7 +12,4 @@ export class CreateSupervisionDto {
 
   @IsNumber()
   projectId: number;
-
-  @IsNumber()
-  amount: number;
 }

@@ -1,33 +1,6 @@
 import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class EditSupervisionDto {
-  @IsString()
-  fileCode: string;
-
-  @IsString()
-  demanded: string;
-
-  @IsString()
-  comment: string;
-
-  @IsString()
-  controversialMatter: string;
-
-  @IsNumber()
-  projectId: number;
-
-  @IsNumber()
-  cargoStudioId: number;
-
-  @IsNumber()
-  amount: number;
-
-  @IsString()
-  plaintiff: string;
-
-  @IsString()
-  coDefendant: string;
-
   @IsNumber()
   authorityId: number;
 
@@ -40,6 +13,9 @@ export class EditSupervisionDto {
   @IsString()
   @IsOptional()
   isProvisional: string;
+
+  @IsNumber()
+  projectId: number;
 
   @IsString()
   @IsOptional()
