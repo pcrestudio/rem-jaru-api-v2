@@ -238,6 +238,13 @@ export class InstanceService {
       include: {
         module: true,
         submodule: true,
+        incidences: {
+          include: {
+            instanceIncidenceData: {
+              where: where,
+            },
+          },
+        },
         steps: {
           include: {
             stepData: {
@@ -262,12 +269,14 @@ export class InstanceService {
       },
     });
 
-    if (prefix === Entities.SOEF) {
-      return instances.filter(
-        (instance) =>
-          instance.name === "Etapa inspectiva" ||
-          instance.name === "Etapa sancionadora",
-      );
+    if (prefix === Entities.SNF) {
+      return instances
+        .filter(
+          (instance) =>
+            instance.name === "Etapa inspectiva" ||
+            instance.name === "Etapa sancionadora",
+        )
+        .reverse();
     }
 
     return instances;

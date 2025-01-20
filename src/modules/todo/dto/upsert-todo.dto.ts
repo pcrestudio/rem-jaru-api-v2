@@ -1,4 +1,10 @@
-import { IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+import {
+  IsBoolean,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from "class-validator";
 
 export class UpsertTodoDto {
   @IsString()
@@ -9,6 +15,9 @@ export class UpsertTodoDto {
 
   @IsString()
   entityReference: string;
+
+  @IsBoolean()
+  check: boolean;
 
   @IsString()
   entityStepReference: string;

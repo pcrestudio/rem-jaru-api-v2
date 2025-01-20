@@ -10,6 +10,9 @@ export class UpsertIncidentDataDto {
   @IsString()
   fileCode: string;
 
+  @IsString()
+  entityReference: string;
+
   @IsNumber()
   instanceIncidentId: number;
 

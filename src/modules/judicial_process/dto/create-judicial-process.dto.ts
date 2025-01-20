@@ -16,6 +16,10 @@ export class CreateJudicialProcessDto {
   @IsString()
   controversialMatter: string;
 
+  @IsString()
+  @IsOptional()
+  amount: string;
+
   @IsNumber()
   cargoStudioId: number;
 

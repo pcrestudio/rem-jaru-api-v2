@@ -36,6 +36,7 @@ export class IncidentService {
               fileCode: incident.fileCode,
               comment: incident.comment,
               instanceIncidentId: incident.instanceIncidentId,
+              entityJudicialProcessReference: incident.entityReference,
               headquarters: incident.headquarters,
             },
             update: {
@@ -43,6 +44,7 @@ export class IncidentService {
               comment: incident.comment,
               instanceIncidentId: incident.instanceIncidentId,
               headquarters: incident.headquarters,
+              entityJudicialProcessReference: incident.entityReference,
             },
             where: {
               id: incident?.id ?? 0,
