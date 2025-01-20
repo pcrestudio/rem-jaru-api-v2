@@ -233,7 +233,7 @@ export class JudicialProcessService {
   async exportWord(entityReference: string) {
     try {
       const bufferLogo = readFileSync(
-        `${process.cwd()}/public/img/Anglo_American_Logo_RGB_4C.png`,
+        `${process.cwd()}/dist/public/img/Anglo_American_Logo_RGB_4C.png`,
       );
 
       const judicialProcess = await this.prisma.judicialProcess.findFirst({
