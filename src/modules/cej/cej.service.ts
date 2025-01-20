@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { FilterCejDto } from "./dto/filter-cej.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
@@ -56,16 +56,22 @@ export class CejService {
 
     const filePath = path.join(basePath, fileName);
 
-    if (!fs.existsSync(filePath)) {
-      throw new Error("El archivo no existe");
-    }
-
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        console.error("Error al enviar el archivo:", err);
-        res.status(500).send("Error al descargar el archivo.");
+    try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error("El archivo no existe");
       }
-    });
+
+      res.download(filePath, fileName, (err) => {
+        if (err) {
+          console.error("Error al enviar el archivo:", err);
+          res.status(500).send("Error al descargar el archivo.");
+        }
+      });
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: error.message,
+      });
+    }
   }
 
   private checkDateMessage(stored: Date): {

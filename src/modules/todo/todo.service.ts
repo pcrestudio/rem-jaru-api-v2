@@ -15,6 +15,7 @@ import { MasterTodosStates } from "../../config/master-todos-states.config";
 import { MailService } from "../../shared/mail/mail.service";
 import assignTodoTemplate from "./templates/assign-todo.tpl";
 import { UpsertTodoActivityDto } from "./dto/upsert-todo-activity.dto";
+import { RoleConfig } from "../../config/role.config";
 
 @Injectable()
 export class TodoService {
@@ -152,10 +153,26 @@ export class TodoService {
   }
 
   async getTodos(filter: FilterTodoDto, userId: number) {
+    const isSuperAdminFilter = {
+      creator: {
+        UserRole: {
+          some: {
+            role: {
+              name: RoleConfig["super-admin"],
+            },
+          },
+        },
+      },
+    };
+
     const whereFields = {
       AND: [
         {
-          OR: [{ creator: { id: userId } }, { responsibleId: userId }],
+          OR: [
+            { creator: { id: userId } },
+            { responsibleId: userId },
+            isSuperAdminFilter,
+          ],
         },
         ...(filter.check
           ? [
@@ -202,6 +219,15 @@ export class TodoService {
           includeConditions: {
             responsible: true,
             state: true,
+            creator: {
+              include: {
+                UserRole: {
+                  include: {
+                    role: true,
+                  },
+                },
+              },
+            },
             todoActivities: {
               include: {
                 responsible: true,

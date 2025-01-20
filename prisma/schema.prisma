@@ -31,30 +31,31 @@ enum ModelType {
 }
 
 model User {
-  id                   Int               @id @default(autoincrement())
-  email                String            @unique @db.VarChar(50)
-  firstName            String?           @db.VarChar(50)
-  lastName             String?           @db.VarChar(50)
-  displayName          String?           @db.VarChar(100)
-  authMethod           String            @default("local")
-  password             String?           @db.VarChar(255)
-  passwordChangedAt    DateTime?         @default(now())
-  resetPasswordToken   String?           @unique @db.VarChar(255)
+  id                   Int       @id @default(autoincrement())
+  email                String    @unique @db.VarChar(50)
+  firstName            String?   @db.VarChar(50)
+  lastName             String?   @db.VarChar(50)
+  displayName          String?   @db.VarChar(100)
+  authMethod           String    @default("local")
+  password             String?   @db.VarChar(255)
+  passwordChangedAt    DateTime? @default(now())
+  resetPasswordToken   String?   @unique @db.VarChar(255)
   resetPasswordExpires DateTime?
-  otpSecret            String?           @db.VarChar(255)
+  otpSecret            String?   @db.VarChar(255)
   otpExpires           DateTime?
-  failedOtpAttempts    Int?              @default(0)
+  failedOtpAttempts    Int?      @default(0)
   lastLogon            DateTime?
-  failedLoginAttempts  Int?              @default(0)
-  isLocked             Boolean           @default(false)
+  failedLoginAttempts  Int?      @default(0)
+  isLocked             Boolean   @default(false)
   lockedAt             DateTime?
-  isActive             Boolean           @default(true)
-  createdAt            DateTime?         @default(now())
-  createdBy            String?           @db.VarChar(50)
-  updatedAt            DateTime?         @updatedAt
-  updatedBy            String?           @db.VarChar(50)
-  UserRole             UserRole[]
-  PasswordHistory      PasswordHistory[]
+  isActive             Boolean   @default(true)
+  createdAt            DateTime? @default(now())
+  createdBy            String?   @db.VarChar(50)
+  updatedAt            DateTime? @updatedAt
+  updatedBy            String?   @db.VarChar(50)
+
+  UserRole        UserRole[]
+  PasswordHistory PasswordHistory[]
 
   secondaryResponsible JudicialProcess[] @relation("SecondaryResponsibleRelation")
   responsible          JudicialProcess[] @relation("ResponsibleRelation")
