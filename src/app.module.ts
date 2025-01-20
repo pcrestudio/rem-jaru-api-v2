@@ -20,12 +20,12 @@ import { diskStorage } from "multer";
 import { SupervisionModule } from "./modules/supervision/supervision.module";
 import { CejModule } from "./modules/cej/cej.module";
 import { ReportModule } from "./modules/report/report.module";
-import { OtpModule } from "./shared/otp/otp.module";
 import { UsersModule } from "./shared/users/users.module";
 import { APP_GUARD } from "@nestjs/core";
 import { GlobalJwtAuthGuard } from "./shared/auth/guards/global-jwt.guard";
 import { MailModule } from "./shared/mail/mail.module";
-import { IncidentModule } from "./modules/incident/incident.module";
+import { AssetsModule } from "./common/assets/assets.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -33,9 +33,9 @@ import { IncidentModule } from "./modules/incident/incident.module";
       isGlobal: true,
       envFilePath: ".env",
     }),
+    ScheduleModule.forRoot(),
     MailModule.register(),
     AuthModule,
-    OtpModule,
     UsersModule,
     RolesModule,
     ModuleModule,
@@ -48,7 +48,6 @@ import { IncidentModule } from "./modules/incident/incident.module";
     MasterModule,
     TodoModule,
     InstanceModule,
-    IncidentModule,
     MulterModule.register({
       storage: diskStorage({
         destination: (req, file, cb) => {
@@ -69,6 +68,7 @@ import { IncidentModule } from "./modules/incident/incident.module";
       }),
       inject: [ConfigService],
     }),
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [

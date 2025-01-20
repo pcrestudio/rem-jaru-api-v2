@@ -31,34 +31,49 @@ enum ModelType {
 }
 
 model User {
-  id                   Int        @id @default(autoincrement())
-  email                String     @unique @db.VarChar(50)
-  firstName            String?    @db.VarChar(50)
-  lastName             String?    @db.VarChar(50)
-  displayName          String?    @db.VarChar(100)
-  authMethod           String     @default("local")
-  password             String?    @db.VarChar(255)
-  resetPasswordToken   String?    @unique @db.VarChar(255)
+  id        Int        @id @default(autoincrement())
+  email     String     @db.VarChar(50) @unique
+  firstName String?     @db.VarChar(50)
+  lastName  String?     @db.VarChar(50)
+  displayName String?  @db.VarChar(100)
+  authMethod String     @default("local")
+  password  String?     @db.VarChar(255)
+  passwordChangedAt DateTime? @default(now())
+  resetPasswordToken String? @db.VarChar(255) @unique
   resetPasswordExpires DateTime?
-  otpSecret            String?    @db.VarChar(255)
-  otpExpires           DateTime?
-  lastLogon            DateTime?
-  isActive             Boolean    @default(true)
-  createdAt            DateTime?  @default(now())
-  createdBy            String?    @db.VarChar(50)
-  updatedAt            DateTime?  @updatedAt
-  updatedBy            String?    @db.VarChar(50)
-  UserRole             UserRole[]
+  otpSecret String?     @db.VarChar(255)
+  otpExpires DateTime?
+  failedOtpAttempts Int? @default(0)
+  lastLogon DateTime?
+  failedLoginAttempts Int? @default(0)
+  isLocked  Boolean    @default(false)
+  lockedAt DateTime?
+  isActive  Boolean    @default(true)
+  createdAt DateTime?  @default(now())
+  createdBy String?    @db.VarChar(50)
+  updatedAt DateTime?  @updatedAt
+  updatedBy String?    @db.VarChar(50)
+  UserRole  UserRole[]
+  PasswordHistory PasswordHistory[]
 
   secondaryResponsible JudicialProcess[] @relation("SecondaryResponsibleRelation")
   responsible          JudicialProcess[] @relation("ResponsibleRelation")
 
-  supervisionResponsible          Supervision[] @relation("SupervisionResponsibleRelation")
-  supervisionsecondaryResponsible Supervision[] @relation("SupervisionSecondaryResponsibleRelation")
+  supervisionResponsible Supervision[] @relation("SupervisionResponsibleRelation")
 
-  creatorToDo     ToDo[]         @relation("UserCreator")
-  responsibleToDo ToDo[]         @relation("UserResponsible")
-  activitiesTodo  TodoActivity[] @relation("TodoResponsible")
+  creatorToDo     ToDo[] @relation("UserCreator")
+  responsibleToDo ToDo[] @relation("UserResponsible")
+}
+
+model PasswordHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  password  String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model Role {
@@ -143,11 +158,10 @@ model MasterOption {
   updatedAt DateTime? @updatedAt
   isActive  Boolean   @default(true)
 
-  master             Master            @relation(fields: [masterId], references: [id])
-  judicialProjects   JudicialProcess[] @relation("ProjectRelation")
-  judicialStudios    JudicialProcess[] @relation("StudioRelation")
-  supervisionStudios Supervision[]     @relation("SupervisionStudioRelation")
-  ToDo               ToDo[]
+  master           Master            @relation(fields: [masterId], references: [id])
+  judicialProjects JudicialProcess[] @relation("ProjectRelation")
+  judicialStudios  JudicialProcess[] @relation("StudioRelation")
+  ToDo             ToDo[]
 
   supervisionProjects    Supervision[] @relation("SupervisionProjectRelation")
   supervisionAuthorities Supervision[] @relation("SupervisionAuthorityRelation")
@@ -156,10 +170,10 @@ model MasterOption {
 
 model JudicialProcess {
   id                     Int       @id @default(autoincrement())
-  fileCode               String    @db.LongText
-  demanded               String    @db.LongText
-  plaintiff              String    @db.LongText
-  coDefendant            String    @db.LongText
+  fileCode               String    @db.VarChar(50)
+  demanded               String    @db.VarChar(50)
+  plaintiff              String    @db.VarChar(50)
+  coDefendant            String    @db.VarChar(50)
   entityReference        String?   @unique
   submoduleId            Int
   cargoStudioId          Int?
@@ -173,55 +187,41 @@ model JudicialProcess {
   amount                 Float?    @default(0)
   isProvisional          Boolean?  @default(false)
   guaranteeLetter        String?   @default("")
-  comment                String?   @default("")
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
   studio               MasterOption? @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
   responsible          User?         @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
-  secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_supervision_creator_id")
+  secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
 
   sectionAttributeValues SectionAttributeValue[] @relation("JudicialProcessSectionAttributeValues")
   stepData               StepData[]              @relation("JudicialProcessStepData")
-  instanceIncidentData   InstanceIncidentData[]  @relation("JudicialProcessInstanceIncidentData")
   globalAttributeValues  GlobalAttributeValue[]  @relation("JudicialProcessGlobalAttributeValues")
 }
 
 model Supervision {
-  id                     Int       @id @default(autoincrement())
-  fileCode               String    @db.LongText
-  demanded               String    @db.LongText
-  plaintiff              String    @db.LongText
-  coDefendant            String    @db.LongText
-  entityReference        String?   @unique
-  submoduleId            Int
-  cargoStudioId          Int?
-  projectId              Int?      @map("project_id")
-  responsibleId          Int?      @map("responsible_id")
-  secondaryResponsibleId Int?      @map("secondary_responsible_id")
-  authorityId            Int?      @map("authority_id")
-  situationId            Int?      @map("situation_id")
-  createdAt              DateTime? @default(now())
-  updatedAt              DateTime? @updatedAt
-  isActive               Boolean   @default(true)
-  controversialMatter    String?   @default("")
-  amount                 Float?    @default(0)
-  isProvisional          Boolean?  @default(false)
-  guaranteeLetter        String?   @default("")
-  comment                String?   @default("")
+  id              Int       @id @default(autoincrement())
+  entityReference String?   @unique
+  submoduleId     Int
+  projectId       Int?      @map("project_id")
+  responsibleId   Int?      @map("responsible_id")
+  authorityId     Int?      @map("authority_id")
+  situationId     Int?      @map("situation_id")
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
+  isActive        Boolean   @default(true)
+  isProvisional   Boolean?  @default(false)
+  guaranteeLetter String?   @default("")
 
-  submodule            Submodule     @relation(fields: [submoduleId], references: [id])
-  project              MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
-  studio               MasterOption? @relation("SupervisionStudioRelation", fields: [cargoStudioId], references: [id], map: "fk_supervision_studio_id")
-  authority            MasterOption? @relation("SupervisionAuthorityRelation", fields: [authorityId], references: [id], map: "fk_supervision_authority_id")
-  situation            MasterOption? @relation("SupervisionSituationRelation", fields: [situationId], references: [id], map: "fk_supervision_situation_id")
-  responsible          User?         @relation("SupervisionResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_supervision_responsible_id")
-  secondaryResponsible User?         @relation("SupervisionSecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_creator_id")
+  submodule   Submodule     @relation(fields: [submoduleId], references: [id])
+  project     MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
+  authority   MasterOption? @relation("SupervisionAuthorityRelation", fields: [authorityId], references: [id], map: "fk_supervision_authority_id")
+  situation   MasterOption? @relation("SupervisionSituationRelation", fields: [situationId], references: [id], map: "fk_supervision_situation_id")
+  responsible User?         @relation("SupervisionResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_supervision_responsible_id")
 
   sectionAttributeValues SectionAttributeValue[] @relation("SupervisionSectionAttributeValues")
   stepData               StepData[]              @relation("SupervisionStepData")
   globalAttributeValues  GlobalAttributeValue[]  @relation("SupervisionGlobalAttributeValues")
-  instanceIncidentData   InstanceIncidentData[]  @relation("SupervisionInstanceIncidentData")
 }
 
 model Section {
@@ -286,16 +286,6 @@ model SectionAttributeValue {
   judicialProcess              JudicialProcess?               @relation("JudicialProcessSectionAttributeValues", fields: [entityJudicialProcessReference], references: [entityReference])
   supervision                  Supervision?                   @relation("SupervisionSectionAttributeValues", fields: [entitySupervisionReference], references: [entityReference])
   SectionAttributeValueHistory SectionAttributeValueHistory[]
-}
-
-model SectionAttributeValueHistory {
-  id                      Int      @id @default(autoincrement())
-  sectionAttributeValueId Int
-  oldValue                String?  @db.LongText
-  changeDate              DateTime @default(now())
-  changedBy               String?
-
-  sectionAttribute SectionAttributeValue @relation(fields: [sectionAttributeValueId], references: [sectionAttributeValueId])
 }
 
 model GlobalAttribute {
@@ -383,23 +373,9 @@ model ToDo {
   entityReference     String?
   entityStepReference String?
 
-  creator        User           @relation("UserCreator", fields: [creatorId], references: [id])
-  responsible    User           @relation("UserResponsible", fields: [responsibleId], references: [id])
-  state          MasterOption   @relation(fields: [todoStateId], references: [id])
-  todoActivities TodoActivity[]
-}
-
-model TodoActivity {
-  id            Int       @id @default(autoincrement())
-  todoId        Int
-  activity      String
-  file          String?   @default("")
-  createdAt     DateTime? @default(now())
-  updatedAt     DateTime? @updatedAt
-  responsibleId Int
-
-  responsible User  @relation("TodoResponsible", fields: [responsibleId], references: [id])
-  todo        ToDo? @relation(fields: [todoId], references: [id])
+  creator     User         @relation("UserCreator", fields: [creatorId], references: [id])
+  responsible User         @relation("UserResponsible", fields: [responsibleId], references: [id])
+  state       MasterOption @relation(fields: [todoStateId], references: [id])
 }
 
 model Instance {
@@ -411,37 +387,9 @@ model Instance {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  submodule  Submodule?         @relation(fields: [submoduleId], references: [id])
-  module     Module?            @relation(fields: [moduleId], references: [id])
-  steps      Step[]
-  incidences InstanceIncident[]
-}
-
-model InstanceIncident {
-  id         Int      @id @default(autoincrement())
-  instanceId Int
-  name       String   @db.LongText
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  instance              Instance               @relation(fields: [instanceId], references: [id])
-  instanceIncidenceData InstanceIncidentData[]
-}
-
-model InstanceIncidentData {
-  id                             Int      @id @default(autoincrement())
-  instanceIncidentId             Int
-  headquarters                   String   @db.LongText
-  comment                        String   @db.LongText
-  fileCode                       String   @db.LongText
-  createdAt                      DateTime @default(now())
-  updatedAt                      DateTime @updatedAt
-  entityJudicialProcessReference String?
-  entitySupervisionReference     String?
-
-  instanceIncidence InstanceIncident @relation(fields: [instanceIncidentId], references: [id])
-  judicialProcess   JudicialProcess? @relation("JudicialProcessInstanceIncidentData", fields: [entityJudicialProcessReference], references: [entityReference])
-  supervision       Supervision?     @relation("SupervisionInstanceIncidentData", fields: [entitySupervisionReference], references: [entityReference])
+  submodule Submodule? @relation(fields: [submoduleId], references: [id])
+  module    Module?    @relation(fields: [moduleId], references: [id])
+  steps     Step[]
 }
 
 model Step {
@@ -477,6 +425,16 @@ model StepData {
   step            Step             @relation(fields: [stepId], references: [id])
   judicialProcess JudicialProcess? @relation("JudicialProcessStepData", fields: [entityJudicialProcessReference], references: [entityReference])
   supervision     Supervision?     @relation("SupervisionStepData", fields: [entitySupervisionReference], references: [entityReference])
+}
+
+model SectionAttributeValueHistory {
+  id                      Int      @id @default(autoincrement())
+  sectionAttributeValueId Int
+  oldValue                String?
+  changeDate              DateTime @default(now())
+  changedBy               String?
+
+  sectionAttribute SectionAttributeValue @relation(fields: [sectionAttributeValueId], references: [sectionAttributeValueId])
 }
 
 model CEJ_Expedientes {

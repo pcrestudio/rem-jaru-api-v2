@@ -79,18 +79,18 @@ export class PrismaService extends PrismaClient {
           upsert: async ({ model, query, args }) => {
             const result = await query(args);
 
-            const entityId = `ISD${result.id.toString().padStart(8, "0")}`;
+            const entityReference = `ISD${result.id.toString().padStart(8, "0")}`;
 
             await this[model].update({
               data: {
-                entityId: entityId,
+                entityId: entityReference,
               },
               where: {
                 id: result.id,
               },
             });
 
-            return { result, entityId };
+            return { result, entityReference };
           },
         },
       },

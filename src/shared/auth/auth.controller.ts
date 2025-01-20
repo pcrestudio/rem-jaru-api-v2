@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
   Post,
   Req,
   Request,
@@ -15,6 +16,7 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { AzureAdAuthGuard } from "./guards";
 import { ConfigService } from "@nestjs/config";
 import { Public } from "./decorators/public.decorator";
+import { UsersService } from "../users/users.service";
 
 @Controller("auth")
 export class AuthController {
@@ -23,6 +25,7 @@ export class AuthController {
   constructor(
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
+    private readonly userService: UsersService
   ) {
     this.cookiesConfig = {
       httpOnly: true,
@@ -38,12 +41,21 @@ export class AuthController {
     };
   }
 
+  @Public()
+  @Get("method/:email")
+  async checkAuthMetod(@Param("email") email: string) {
+    const user = await this.userService.findByEmail(email);
+
+    return user.authMethod || "password";
+  }
+
   // Local authentication endpoint
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post("login")
   async login(@Request() req, @Res() res) {
     const user = req.user;
+
     const token = await this.authService.login(user);
 
     res.cookie("token", token, this.cookiesConfig);
@@ -54,10 +66,18 @@ export class AuthController {
 
   @Post("logout")
   @HttpCode(200)
-  logout(@Res() res) {
+  logout(@Request() req, @Res() res) {
     // Clear the HttpOnly cookie
     res.clearCookie("token", this.cookiesConfig);
-    return res.json({ message: "Logged out successfully" });
+
+    // Destroy the Express session (the data used by passport-azure-ad)
+    req.session.destroy((err) => {
+      if (err) {
+        // handle error
+        console.error("Session destruction error:", err);
+      }
+      return res.json({ message: "Logged out successfully" });
+    });
   }
 
   // Protected route example
@@ -94,7 +114,7 @@ export class AuthController {
 
     // Redirect with the token *and* the original redirect path
     return res.redirect(
-      `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`,
+      `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`
     );
   }
 
@@ -108,8 +128,30 @@ export class AuthController {
   @Post("reset-password")
   async resetPassword(
     @Body("token") token: string,
-    @Body("password") password: string,
+    @Body("password") password: string
   ) {
     return this.authService.resetPassword(token, password);
+  }
+
+  @Public()
+  @Post("generate-otp")
+  async generateOtp(@Body("email") email: string) {
+    return this.authService.generateOtp(email);
+  }
+
+  @Public()
+  @Post("validate-otp")
+  async validateOtp(@Body() body: any, @Res() res) {
+    const { email, token } = body;
+    const tokenResponse = await this.authService.validateOtp(email, token);
+
+    res.cookie("token", tokenResponse, this.cookiesConfig);
+    return res.json(tokenResponse);
+  }
+
+  @Public()
+  @Post("enable-mfa")
+  async enableMfa(@Request() req, @Body("email") email: string) {
+    return this.authService.enableMfa(email);
   }
 }

@@ -10,9 +10,6 @@ export class EditJudicialProcessDto {
   @IsNumber()
   cargoStudioId: number;
 
-  @IsNumber()
-  amount: number;
-
   @IsString()
   @IsOptional()
   isProvisional: string;
@@ -39,10 +36,6 @@ export class EditJudicialProcessDto {
 
   @IsString()
   coDefendant: string;
-
-  @IsString()
-  @IsOptional()
-  comment: string;
 
   @IsNumber()
   id: number;
