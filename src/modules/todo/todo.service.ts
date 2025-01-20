@@ -190,6 +190,8 @@ export class TodoService {
       ],
     };
 
+    const searchableFields = ["title", "description"];
+
     const { results, total, page, pageSize, totalPages } =
       await CustomPaginationService._getPaginationModel(
         this.prisma,
@@ -207,7 +209,9 @@ export class TodoService {
             },
           },
           whereFields: whereFields,
+          search: filter.search,
         },
+        searchableFields,
       );
 
     const processedResults = await Promise.all(
