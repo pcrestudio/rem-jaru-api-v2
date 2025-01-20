@@ -201,6 +201,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       displayName: user.displayName,
+      id: user.id,
       role: user.UserRole.length > 0 ? user.UserRole[0].role.name : "",
     };
 

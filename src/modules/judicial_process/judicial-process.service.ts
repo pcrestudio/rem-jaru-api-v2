@@ -19,7 +19,10 @@ import {
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { ExportablesService } from "../exportables/exportables.service";
-import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
+import {
+  EntityReferenceModel,
+  ModelType,
+} from "../../common/utils/entity_reference_mapping";
 import { readFileSync } from "fs";
 import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import AngloTableCell from "../../common/utils/anglo_table_cell";
@@ -30,6 +33,7 @@ import AngloMultipleTableHeaderCell from "../../common/utils/anglo_table_header_
 import AngloSingleTableHeaderCell from "../../common/utils/anglo_table_single_header_cell";
 import { ExtendedAttributeConfig } from "../../config/extended-attribute.config";
 import { DataType } from "@prisma/client";
+import { searchableFields } from "../../config/submodule_searchableFields";
 
 @Injectable()
 export class JudicialProcessService {
@@ -54,6 +58,7 @@ export class JudicialProcessService {
         controversialMatter: judicialProcess.controversialMatter,
         projectId: judicialProcess.projectId,
         cargoStudioId: judicialProcess.cargoStudioId,
+        amount: judicialProcess.amount,
         responsibleId: judicialProcess.responsibleId,
         secondaryResponsibleId: judicialProcess.secondaryResponsibleId,
         submoduleId: submodule.id,
@@ -103,9 +108,11 @@ export class JudicialProcessService {
           plaintiff: judicialProcess.plaintiff,
           coDefendant: judicialProcess.coDefendant,
           controversialMatter: judicialProcess.controversialMatter,
+          comment: judicialProcess?.comment,
           isProvisional:
             judicialProcess.isProvisional === "false" ? false : true,
           projectId: Number(judicialProcess.projectId),
+          amount: Number(judicialProcess.amount),
           cargoStudioId: Number(judicialProcess.cargoStudioId),
           responsibleId: Number(judicialProcess.responsibleId),
           guaranteeLetter,
@@ -149,17 +156,6 @@ export class JudicialProcessService {
       },
     });
 
-    const searchableFields = [
-      "fileCode",
-      "demanded",
-      "plaintiff",
-      "coDefendant",
-      "responsible.firstName",
-      "responsible.displayName",
-      "project.name",
-      "studio.name",
-    ];
-
     const whereFields = {
       submoduleId: submodule?.id,
     };
@@ -172,7 +168,18 @@ export class JudicialProcessService {
       whereFields["projectId"] = Number(filter.projectId);
     }
 
+    if (filter.responsibleId) {
+      whereFields["responsibleId"] = Number(filter.responsibleId);
+    }
+
     const includeConditions: any = {
+      project: filter.projectId
+        ? {
+            where: {
+              id: Number(filter.projectId),
+            },
+          }
+        : true,
       responsible: filter.responsibleId
         ? {
             where: {
@@ -181,13 +188,6 @@ export class JudicialProcessService {
           }
         : true,
       secondaryResponsible: true,
-      project: filter.projectId
-        ? {
-            where: {
-              id: Number(filter.projectId),
-            },
-          }
-        : true,
       studio: filter.cargoStudioId
         ? {
             where: {
@@ -197,6 +197,15 @@ export class JudicialProcessService {
         : true,
       sectionAttributeValues: true,
       globalAttributeValues: true,
+      stepData: {
+        include: {
+          step: {
+            include: {
+              instance: true,
+            },
+          },
+        },
+      },
     };
 
     return CustomPaginationService._getPaginationModel(
@@ -226,6 +235,7 @@ export class JudicialProcessService {
       const bufferLogo = readFileSync(
         `${process.cwd()}/public/img/Anglo_American_Logo_RGB_4C.png`,
       );
+
       const judicialProcess = await this.prisma.judicialProcess.findFirst({
         where: {
           entityReference,
@@ -256,6 +266,13 @@ export class JudicialProcessService {
         },
       });
 
+      const historicalVersion =
+        await UtilsService._getHistoricalByEntityReference(
+          this.prisma,
+          entityReference,
+          ModelType.JudicialProcess,
+        );
+
       const lastSituation = UtilsService._getModuleAttributeWithValueBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
         AttributeSlugConfig.lastSituation,
@@ -268,15 +285,27 @@ export class JudicialProcessService {
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
-      const successRate = UtilsService._getModuleAttributeOptionLabelBySlug(
+      const cause = UtilsService._getModuleAttributeOptionLabelBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.successRate,
+        AttributeSlugConfig.cause,
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
-      const actualState = UtilsService._getModuleAttributeOptionLabelBySlug(
+      const sede = UtilsService._getModuleAttributeOptionLabelBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.actualState,
+        AttributeSlugConfig.sede,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const startDate = UtilsService._getModuleAttributeWithValueBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.startDate,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const criticalProcess = UtilsService._getModuleAttributeOptionLabelBySlug(
+        judicialProcess as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.criticalProcess,
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
@@ -306,14 +335,17 @@ export class JudicialProcessService {
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
-      const comments = UtilsService._getModuleAttributeWithValueBySlug(
+      const lawyerEmail = UtilsService._getModuleAttributeWithValueBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.comments,
-        ExtendedAttributeConfig.globalAttributeValues,
+        AttributeSlugConfig.lawyerEmail,
+        ExtendedAttributeConfig.sectionAttributeValues,
       );
 
       const rows = [
         AngloMultipleTableHeaderCell("Criterios claves", "Detalle"),
+        new TableRow({
+          children: AngloTableCell("ID Expediente", judicialProcess.fileCode),
+        }),
         new TableRow({
           children: AngloTableCell(
             "Materia",
@@ -330,13 +362,19 @@ export class JudicialProcessService {
           children: AngloTableCell("Breve resumen del caso", resume),
         }),
         new TableRow({
-          children: AngloTableCell("Estado actual", actualState),
+          children: AngloTableCell("Sede", sede),
         }),
         new TableRow({
           children: AngloTableCell("Último actuado", lastSituation),
         }),
         new TableRow({
-          children: AngloTableCell("Indicador de éxito", successRate),
+          children: AngloTableCell("Causa / Raíz", cause),
+        }),
+        new TableRow({
+          children: AngloTableCell("Fecha de inicio del proceso", startDate),
+        }),
+        new TableRow({
+          children: AngloTableCell("Criticidad del proceso", criticalProcess),
         }),
         new TableRow({
           children: AngloTableCell("Nivel de contingencia", contingencyLevel),
@@ -346,6 +384,9 @@ export class JudicialProcessService {
         }),
         new TableRow({
           children: AngloTableCell("Monto pagado", `S/. ${payAmount}`),
+        }),
+        new TableRow({
+          children: AngloTableCell("Correo de abogado", `${lawyerEmail}`),
         }),
       ];
 
@@ -361,7 +402,11 @@ export class JudicialProcessService {
           new TableRow({
             children: [
               new TableCell({
-                children: [new Paragraph(comments)],
+                children: [
+                  new Paragraph(
+                    judicialProcess ? judicialProcess.comment : "-",
+                  ),
+                ],
               }),
             ],
           }),
@@ -393,6 +438,30 @@ export class JudicialProcessService {
         width: { size: 100, type: WidthType.PERCENTAGE },
       });
 
+      const rowsHistorical = [];
+
+      for (const historical of historicalVersion) {
+        const row = new TableRow({
+          children: AngloTableCell(
+            historical.sectionAttribute.attribute.label,
+            historical.oldValue,
+          ),
+        });
+
+        rowsHistorical.push(row);
+      }
+
+      const rowsVersionHistorical = [
+        AngloSingleTableHeaderCell("Historial de versiones", "347ff6"),
+        ...rowsHistorical,
+      ];
+
+      const tableVersionHistorical = new Table({
+        rows: rowsVersionHistorical,
+        columnWidths: [4505, 4505],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      });
+
       const doc = new Document({
         sections: [
           {
@@ -407,6 +476,7 @@ export class JudicialProcessService {
               table,
               tableComments,
               tablePrincipalSituation,
+              tableVersionHistorical,
             ],
           },
         ],

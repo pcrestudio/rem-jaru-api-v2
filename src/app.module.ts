@@ -25,6 +25,7 @@ import { UsersModule } from "./shared/users/users.module";
 import { APP_GUARD } from "@nestjs/core";
 import { GlobalJwtAuthGuard } from "./shared/auth/guards/global-jwt.guard";
 import { MailModule } from "./shared/mail/mail.module";
+import { IncidentModule } from "./modules/incident/incident.module";
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { MailModule } from "./shared/mail/mail.module";
     MasterModule,
     TodoModule,
     InstanceModule,
+    IncidentModule,
     MulterModule.register({
       storage: diskStorage({
         destination: (req, file, cb) => {

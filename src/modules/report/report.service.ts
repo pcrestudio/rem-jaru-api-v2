@@ -36,6 +36,15 @@ export class ReportService {
                     },
                   },
                 },
+                stepData: {
+                  include: {
+                    step: {
+                      include: {
+                        instance: true,
+                      },
+                    },
+                  },
+                },
                 globalAttributeValues: {
                   where: {
                     attribute: {
@@ -68,6 +77,15 @@ export class ReportService {
                     },
                   },
                 },
+                stepData: {
+                  include: {
+                    step: {
+                      include: {
+                        instance: true,
+                      },
+                    },
+                  },
+                },
                 globalAttributeValues: {
                   where: {
                     attribute: {
@@ -90,6 +108,7 @@ export class ReportService {
     });
 
     const provisionAmountSum = this.sumProvisionAmount(allData);
+
     const contingencies = this.countBySlug(
       allData,
       allData[0].name === "Supervisiones"
@@ -105,6 +124,8 @@ export class ReportService {
     );
 
     const matters = await this.getMattersReport(moduleId);
+
+    const instances = await this.getInstancesReport(allData);
 
     const studios = await this.getReportByStudio(filter);
 
@@ -130,6 +151,9 @@ export class ReportService {
             })),
           },
         ],
+      },
+      instances: {
+        report: instances,
       },
     };
   }
@@ -410,11 +434,15 @@ export class ReportService {
               },
             },
             Supervision: {
+              where: filter.cargoStudioId
+                ? { cargoStudioId: Number(filter.cargoStudioId) }
+                : undefined,
               select: {
                 responsibleId: true,
                 responsible: true,
                 authorityId: true,
                 authority: true,
+                studio: true,
               },
             },
           },
@@ -437,7 +465,10 @@ export class ReportService {
     const result: Record<string, number> = {};
 
     studioData.Submodule.forEach((submodule: any) => {
-      const combinedProcesses = [...submodule.JudicialProcess];
+      const combinedProcesses = [
+        ...submodule.JudicialProcess,
+        ...submodule.Supervision,
+      ];
 
       combinedProcesses.forEach((process: any) => {
         const studio = process.studio;
@@ -757,5 +788,103 @@ export class ReportService {
     });
 
     return report.filter((matter) => matter.Submodule.length > 0);
+  }
+
+  private async getInstancesReport(allData: any) {
+    const instancesReport = [];
+
+    // Conjunto de stepNames posibles (puedes obtenerlos de tu base de datos si es necesario)
+    const allStepNames = new Set<string>();
+
+    for (const report of allData) {
+      for (const submodule of report.Submodule) {
+        // Manejar JudicialProcess
+        if (submodule.JudicialProcess) {
+          for (const jp of submodule.JudicialProcess) {
+            const mayorInstanceJudicial = this.obtenerMayorInstanceId(
+              jp.stepData,
+              "entityJudicialProcessReference",
+            );
+            instancesReport.push(mayorInstanceJudicial);
+
+            jp.stepData.forEach((data) => {
+              allStepNames.add(data.step.instance.name);
+            });
+          }
+        }
+
+        // Manejar Supervision
+        if (submodule.Supervision) {
+          for (const supervision of submodule.Supervision) {
+            const mayorInstanceSupervision = this.obtenerMayorInstanceId(
+              supervision.stepData,
+              "entitySupervisionReference",
+            );
+            instancesReport.push(mayorInstanceSupervision);
+
+            supervision.stepData.forEach((data) =>
+              allStepNames.add(data.step.instance.name),
+            );
+          }
+        }
+      }
+    }
+
+    const contarStepNames = (expedientes) => {
+      const stepCount = expedientes.reduce((acc, expediente) => {
+        const stepData = expediente[Object.keys(expediente)[0]];
+
+        if (stepData && stepData.stepName) {
+          const stepName = stepData.stepName;
+
+          if (!acc[stepName]) {
+            acc[stepName] = 0;
+          }
+
+          acc[stepName] += 1;
+        }
+
+        return acc;
+      }, {});
+
+      // Asegurarse de que todos los stepNames posibles estén presentes
+      allStepNames.forEach((stepName) => {
+        if (!stepCount[stepName]) {
+          stepCount[stepName] = 0;
+        }
+      });
+
+      return stepCount;
+    };
+
+    const transformarConteo = (conteo) => {
+      return Object.entries(conteo).map(([stepName, count]) => ({
+        instanceName: stepName,
+        count,
+      }));
+    };
+
+    return transformarConteo(contarStepNames(instancesReport));
+  }
+
+  private obtenerMayorInstanceId(expedientes, campo) {
+    return expedientes.reduce((acc, expediente) => {
+      const referencia = expediente[campo];
+      const instanceId = expediente.step.instanceId;
+      const stepName = expediente.step.instance.name;
+
+      if (referencia) {
+        if (!acc[referencia]) {
+          acc[referencia] = { instanceId, stepName };
+        } else {
+          // Compara el instanceId y guarda el stepName con el mayor instanceId
+          if (acc[referencia].instanceId < instanceId) {
+            acc[referencia] = { instanceId, stepName };
+          }
+        }
+      }
+
+      return acc;
+    }, {});
   }
 }

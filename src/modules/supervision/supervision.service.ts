@@ -6,7 +6,10 @@ import {
 import { PrismaService } from "../../core/database/prisma.service";
 import { CreateSupervisionDto } from "./dto/create-supervision.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
-import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
+import {
+  EntityReferenceModel,
+  ModelType,
+} from "../../common/utils/entity_reference_mapping";
 import { FilterSupervisionDto } from "./dto/filter-supervision.dto";
 import { EditSupervisionDto } from "./dto/edit-supervision.dto";
 import { readFileSync } from "fs";
@@ -29,6 +32,7 @@ import AngloSingleTableHeaderCell from "../../common/utils/anglo_table_single_he
 import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import { DataType } from "@prisma/client";
 import { ExportablesService } from "../exportables/exportables.service";
+import { searchableFields } from "../../config/submodule_searchableFields";
 
 @Injectable()
 export class SupervisionService {
@@ -43,9 +47,16 @@ export class SupervisionService {
 
     return this.prisma.$extended.supervision.create({
       data: {
+        fileCode: supervision.fileCode,
+        demanded: supervision.demanded,
+        plaintiff: supervision.plaintiff,
+        coDefendant: supervision.coDefendant,
+        controversialMatter: supervision.controversialMatter,
         authorityId: supervision.authorityId,
         situationId: supervision.situationId,
+        cargoStudioId: supervision.cargoStudioId,
         projectId: supervision.projectId,
+        amount: Number(supervision.amount),
         responsibleId: supervision.responsibleId,
         submoduleId: submodule.id,
       },
@@ -81,7 +92,15 @@ export class SupervisionService {
     try {
       return this.prisma.supervision.update({
         data: {
+          fileCode: supervision.fileCode,
+          demanded: supervision.demanded,
+          plaintiff: supervision.plaintiff,
+          coDefendant: supervision.coDefendant,
+          controversialMatter: supervision.controversialMatter,
+          comment: supervision.comment,
+          amount: Number(supervision.amount),
           authorityId: Number(supervision.authorityId),
+          cargoStudioId: Number(supervision.cargoStudioId),
           situationId: Number(supervision.situationId),
           responsibleId: Number(supervision.responsibleId),
           projectId: Number(supervision.projectId),
@@ -108,14 +127,20 @@ export class SupervisionService {
       },
     });
 
-    const searchableFields = ["authority.name"];
-
     const whereFields = {
       submoduleId: submodule?.id,
     };
 
+    if (filter.cargoStudioId) {
+      whereFields["cargoStudioId"] = Number(filter.cargoStudioId);
+    }
+
     if (filter.projectId) {
       whereFields["projectId"] = Number(filter.projectId);
+    }
+
+    if (filter.responsibleId) {
+      whereFields["responsibleId"] = Number(filter.responsibleId);
     }
 
     const includeConditions: any = {
@@ -129,9 +154,30 @@ export class SupervisionService {
       sectionAttributeValues: true,
       globalAttributeValues: true,
       authority: true,
-      responsible: true,
+      studio: filter.cargoStudioId
+        ? {
+            where: {
+              id: Number(filter.cargoStudioId),
+            },
+          }
+        : true,
+      responsible: filter.responsibleId
+        ? {
+            where: {
+              id: Number(filter.responsibleId),
+            },
+          }
+        : true,
       situation: true,
-      stepData: true,
+      stepData: {
+        include: {
+          step: {
+            include: {
+              instance: true,
+            },
+          },
+        },
+      },
     };
 
     return CustomPaginationService._getPaginationModel(
@@ -196,8 +242,17 @@ export class SupervisionService {
           },
           project: true,
           responsible: true,
+          studio: true,
+          secondaryResponsible: true,
         },
       });
+
+      const historicalVersion =
+        await UtilsService._getHistoricalByEntityReference(
+          this.prisma,
+          entityReference,
+          ModelType.Supervision,
+        );
 
       const lastSituation = UtilsService._getModuleAttributeWithValueBySlug(
         supervision as unknown as GetModuleAttributeValueDto,
@@ -211,15 +266,27 @@ export class SupervisionService {
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
-      const successRate = UtilsService._getModuleAttributeOptionLabelBySlug(
+      const cause = UtilsService._getModuleAttributeOptionLabelBySlug(
         supervision as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.supervisionSuccessRate,
+        AttributeSlugConfig.supervisionCause,
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
-      const actualState = UtilsService._getModuleAttributeOptionLabelBySlug(
+      const sede = UtilsService._getModuleAttributeOptionLabelBySlug(
         supervision as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.supervisionActualState,
+        AttributeSlugConfig.supervisionSede,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const startDate = UtilsService._getModuleAttributeWithValueBySlug(
+        supervision as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.supervisionStartDate,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const criticalProcess = UtilsService._getModuleAttributeOptionLabelBySlug(
+        supervision as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.supervisionCriticalProcess,
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
@@ -255,19 +322,43 @@ export class SupervisionService {
         ExtendedAttributeConfig.globalAttributeValues,
       );
 
+      const lawyerEmail = UtilsService._getModuleAttributeWithValueBySlug(
+        supervision as unknown as GetModuleAttributeValueDto,
+        AttributeSlugConfig.supervisionLawyerEmail,
+        ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
       const rows = [
         AngloMultipleTableHeaderCell("Criterios claves", "Detalle"),
+        new TableRow({
+          children: AngloTableCell("ID Expediente", supervision.fileCode),
+        }),
+        new TableRow({
+          children: AngloTableCell("Materia", supervision.controversialMatter),
+        }),
+        new TableRow({
+          children: AngloTableCell(
+            "Sujeto demandado",
+            `${supervision.plaintiff} / ${supervision.demanded}`,
+          ),
+        }),
         new TableRow({
           children: AngloTableCell("Breve resumen del caso", resume),
         }),
         new TableRow({
-          children: AngloTableCell("Estado actual", actualState),
+          children: AngloTableCell("Sede", sede),
         }),
         new TableRow({
           children: AngloTableCell("Último actuado", lastSituation),
         }),
         new TableRow({
-          children: AngloTableCell("Indicador de éxito", successRate),
+          children: AngloTableCell("Causa / Raíz", cause),
+        }),
+        new TableRow({
+          children: AngloTableCell("Fecha de inicio del proceso", startDate),
+        }),
+        new TableRow({
+          children: AngloTableCell("Criticidad del proceso", criticalProcess),
         }),
         new TableRow({
           children: AngloTableCell("Nivel de contingencia", contingencyLevel),
@@ -277,6 +368,9 @@ export class SupervisionService {
         }),
         new TableRow({
           children: AngloTableCell("Monto pagado", `S/. ${payAmount}`),
+        }),
+        new TableRow({
+          children: AngloTableCell("Correo de abogado", `${lawyerEmail}`),
         }),
       ];
 
@@ -324,6 +418,30 @@ export class SupervisionService {
         width: { size: 100, type: WidthType.PERCENTAGE },
       });
 
+      const rowsHistorical = [];
+
+      for (const historical of historicalVersion) {
+        const row = new TableRow({
+          children: AngloTableCell(
+            historical.sectionAttribute.attribute.label,
+            historical.oldValue,
+          ),
+        });
+
+        rowsHistorical.push(row);
+      }
+
+      const rowsVersionHistorical = [
+        AngloSingleTableHeaderCell("Historial de versiones", "347ff6"),
+        ...rowsHistorical,
+      ];
+
+      const tableVersionHistorical = new Table({
+        rows: rowsVersionHistorical,
+        columnWidths: [4505, 4505],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      });
+
       const doc = new Document({
         sections: [
           {
@@ -338,6 +456,7 @@ export class SupervisionService {
               table,
               tableComments,
               tablePrincipalSituation,
+              tableVersionHistorical,
             ],
           },
         ],
