@@ -42,6 +42,22 @@ export class EditJudicialProcessDto {
 
   @IsString()
   @IsOptional()
+  contingencyLevel: string;
+
+  @IsString()
+  @IsOptional()
+  contingencyPercentage: string;
+
+  @IsNumber()
+  @IsOptional()
+  provisionContingency: number;
+
+  @IsNumber()
+  @IsOptional()
+  provisionAmount: number;
+
+  @IsString()
+  @IsOptional()
   comment: string;
 
   @IsNumber()

@@ -27,6 +27,8 @@ import { GlobalJwtAuthGuard } from "./shared/auth/guards/global-jwt.guard";
 import { MailModule } from "./shared/mail/mail.module";
 import { IncidentModule } from "./modules/incident/incident.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
+import { ScrapingModule } from "./modules/scraping/scraping.module";
+import { ReclaimsModule } from "./modules/reclaims/reclaims.module";
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
     RolesModule,
     ModuleModule,
     CejModule,
+    ScrapingModule,
     JudicialProcessModule,
     SupervisionModule,
     AttributeValuesModule,
@@ -52,6 +55,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
     ReportModule,
     MasterModule,
     TodoModule,
+    ReclaimsModule,
     InstanceModule,
     IncidentModule,
     MulterModule.register({

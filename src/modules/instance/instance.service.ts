@@ -120,8 +120,9 @@ export class InstanceService {
       });
 
       for (const stepData of stepDataWithFiles) {
-        if (stepData.comments === undefined || stepData.file === undefined)
-          continue;
+        if (!stepData) {
+          return;
+        }
 
         const entityReference =
           instanceStepData.modelType === ModelType.JudicialProcess

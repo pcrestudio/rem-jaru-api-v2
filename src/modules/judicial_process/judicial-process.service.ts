@@ -108,6 +108,10 @@ export class JudicialProcessService {
           plaintiff: judicialProcess.plaintiff,
           coDefendant: judicialProcess.coDefendant,
           controversialMatter: judicialProcess.controversialMatter,
+          contingencyLevel: judicialProcess.contingencyLevel,
+          contingencyPercentage: judicialProcess.contingencyPercentage,
+          provisionAmount: Number(judicialProcess.provisionAmount),
+          provisionContingency: Number(judicialProcess.provisionContingency),
           comment: judicialProcess?.comment,
           isProvisional:
             judicialProcess.isProvisional === "false" ? false : true,
@@ -197,6 +201,7 @@ export class JudicialProcessService {
         : true,
       sectionAttributeValues: true,
       globalAttributeValues: true,
+      reclaims: true,
       stepData: {
         include: {
           step: {
@@ -208,24 +213,56 @@ export class JudicialProcessService {
       },
     };
 
-    return CustomPaginationService._getPaginationModel(
-      this.prisma,
-      EntityReferenceModel.JudicialProcess,
-      {
-        page: filter.page,
-        pageSize: filter.pageSize,
-        whereFields,
-        includeConditions,
-        search: filter.search,
-      },
-      searchableFields,
+    const { results, page, totalPages, total, pageSize } =
+      await CustomPaginationService._getPaginationModel(
+        this.prisma,
+        EntityReferenceModel.JudicialProcess,
+        {
+          page: filter.page,
+          pageSize: filter.pageSize,
+          whereFields,
+          includeConditions,
+          search: filter.search,
+        },
+        searchableFields,
+      );
+
+    const filterJudicialProcess = await Promise.all(
+      results.map(async (judicialProcess) => {
+        const filterIds: number[] =
+          judicialProcess?.plaintiff.split(", ").map((v) => Number(v)) ?? [];
+
+        const plaintiffs = await this.prisma.masterOption.findMany({
+          where: {
+            id: {
+              in: filterIds.map((id) => id),
+            },
+          },
+        });
+
+        return {
+          ...judicialProcess,
+          plaintiff: plaintiffs.map((v) => v.name).join(", "),
+        };
+      }),
     );
+
+    return {
+      results: filterJudicialProcess,
+      page,
+      totalPages,
+      pageSize,
+      total,
+    };
   }
 
   async getJudicialProcess(id: number) {
     return this.prisma.judicialProcess.findFirst({
       where: {
         id,
+      },
+      include: {
+        reclaims: true,
       },
     });
   }

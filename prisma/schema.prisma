@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_PROD_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum DataType {
@@ -192,6 +192,10 @@ model JudicialProcess {
   isProvisional          Boolean?  @default(false)
   guaranteeLetter        String?   @default("")
   comment                String?   @default("")
+  contingencyLevel       String?   @default("") // Nivel de contigencia
+  contingencyPercentage  String?   @default("") // Porcentaje de contingencia estimado
+  provisionContingency   Int?      @default(0) // Provisión estimada
+  provisionAmount        Float?    @default(0) // Monto provisionado
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
@@ -203,6 +207,7 @@ model JudicialProcess {
   stepData               StepData[]              @relation("JudicialProcessStepData")
   instanceIncidentData   InstanceIncidentData[]  @relation("JudicialProcessInstanceIncidentData")
   globalAttributeValues  GlobalAttributeValue[]  @relation("JudicialProcessGlobalAttributeValues")
+  reclaims               Reclaim[]               @relation("JudicialProcessReclaim")
 }
 
 model Supervision {
@@ -227,6 +232,10 @@ model Supervision {
   isProvisional          Boolean?  @default(false)
   guaranteeLetter        String?   @default("")
   comment                String?   @default("")
+  contingencyLevel       String?   @default("") // Nivel de contigencia
+  contingencyPercentage  String?   @default("") // Porcentaje de contingencia estimado
+  provisionContingency   Int?      @default(0) // Provisión estimada
+  provisionAmount        Float?    @default(0) // Monto provisionado
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
@@ -240,6 +249,25 @@ model Supervision {
   stepData               StepData[]              @relation("SupervisionStepData")
   globalAttributeValues  GlobalAttributeValue[]  @relation("SupervisionGlobalAttributeValues")
   instanceIncidentData   InstanceIncidentData[]  @relation("SupervisionInstanceIncidentData")
+  reclaims               Reclaim[]               @relation("SupervisionReclaim")
+}
+
+// Petitorios
+model Reclaim {
+  reclaimId             Int       @id @default(autoincrement())
+  amount                Float     @default(0) // Monto
+  contingencyPercentage Int?      @default(0) // Porcentaje de contingencia estimado
+  contingencyLevel      String?   @default("") // Nivel de contigencia
+  provisionContingency  Int?      @default(0) // Provisión estimada
+  provisionAmount       Float?    @default(0) // Monto provisionado
+  createdAt             DateTime? @default(now())
+  updatedAt             DateTime? @updatedAt
+
+  entityJudicialProcessReference String?
+  entitySupervisionReference     String?
+
+  judicialProcess JudicialProcess? @relation("JudicialProcessReclaim", fields: [entityJudicialProcessReference], references: [entityReference])
+  supervision     Supervision?     @relation("SupervisionReclaim", fields: [entitySupervisionReference], references: [entityReference])
 }
 
 model Section {

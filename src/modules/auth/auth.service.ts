@@ -7,11 +7,11 @@ import { PrismaService } from "src/core/database/prisma.service";
 import { compare } from "bcrypt";
 import { UserAuthDto } from "./dto/user-auth.dto";
 import { GetUserDto } from "./dto/get-user.dto";
-import { sign } from "jsonwebtoken";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { FilterUsersDto } from "./dto/filter-users.dto";
 import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 import { ConfigService } from "@nestjs/config";
+import { sign } from "jsonwebtoken";
 
 @Injectable()
 export class AuthService {
@@ -84,9 +84,7 @@ export class AuthService {
     };
 
     return {
-      token: sign(payload, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-      }),
+      token: sign(payload, process.env.JWT_SECRET, {}),
       user: user_payload,
     };
   }
