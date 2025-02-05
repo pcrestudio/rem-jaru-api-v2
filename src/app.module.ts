@@ -29,6 +29,7 @@ import { IncidentModule } from "./modules/incident/incident.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { ScrapingModule } from "./modules/scraping/scraping.module";
 import { ReclaimsModule } from "./modules/reclaims/reclaims.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ReclaimsModule } from "./modules/reclaims/reclaims.module";
       rootPath: join(__dirname, "..", "public"),
       serveRoot: "/public",
     }),
+    ScheduleModule.forRoot(),
     MailModule.register(),
     AuthModule,
     OtpModule,
