@@ -296,6 +296,7 @@ model SectionAttribute {
   isActive           Boolean?  @default(true)
   isRequired         Boolean?  @default(true)
   isForReport        Boolean?  @default(false)
+  isMultiple         Boolean?  @default(false)
 
   section      Section                  @relation(fields: [sectionId], references: [sectionId])
   module       Module?                  @relation(fields: [moduleId], references: [id])
@@ -356,6 +357,7 @@ model GlobalAttribute {
   isActive          Boolean?  @default(true)
   isRequired        Boolean?  @default(true)
   isForReport       Boolean?  @default(false)
+  isMultiple        Boolean?  @default(false)
   conditionalRender Boolean?  @default(false)
 
   module    Module?                 @relation(fields: [moduleId], references: [id])

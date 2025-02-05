@@ -75,6 +75,7 @@ export class AttributeValuesService {
               moduleId: section.moduleId ?? undefined,
               submoduleId: section.submoduleId ?? undefined,
               isForReport: attribute.isForReport ?? false,
+              isMultiple: attribute.isMultiple ?? false,
               sectionId: section.sectionId,
             },
           });
@@ -140,6 +141,7 @@ export class AttributeValuesService {
         moduleId: section.moduleId ?? undefined,
         submoduleId: section.submoduleId ?? undefined,
         isForReport: sectionAttribute.isForReport ?? false,
+        isMultiple: sectionAttribute.isMultiple ?? false,
       },
     });
   }
@@ -327,6 +329,12 @@ export class AttributeValuesService {
                 : null;
 
             attribute.value = file ? file.filename : null;
+          } else if (attribute.type === DataType.LIST) {
+            const isArray = Array.isArray(attribute.value);
+
+            attribute.value = isArray
+              ? attribute.value.join(", ")
+              : attribute.value;
           }
 
           const attributeFind = await tx.sectionAttribute.findFirst({

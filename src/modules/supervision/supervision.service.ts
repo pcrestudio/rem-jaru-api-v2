@@ -97,6 +97,10 @@ export class SupervisionService {
           plaintiff: supervision.plaintiff,
           coDefendant: supervision.coDefendant,
           controversialMatter: supervision.controversialMatter,
+          contingencyLevel: supervision.contingencyLevel,
+          contingencyPercentage: supervision.contingencyPercentage,
+          provisionAmount: Number(supervision.provisionAmount),
+          provisionContingency: Number(supervision.provisionContingency),
           comment: supervision.comment,
           amount: Number(supervision.amount),
           authorityId: Number(supervision.authorityId),
@@ -151,8 +155,25 @@ export class SupervisionService {
             },
           }
         : true,
-      sectionAttributeValues: true,
-      globalAttributeValues: true,
+      sectionAttributeValues: {
+        include: {
+          attribute: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      },
+      globalAttributeValues: {
+        include: {
+          attribute: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      },
+      reclaims: true,
       authority: true,
       studio: filter.cargoStudioId
         ? {
@@ -180,24 +201,56 @@ export class SupervisionService {
       },
     };
 
-    return CustomPaginationService._getPaginationModel(
-      this.prisma,
-      EntityReferenceModel.Supervision,
-      {
-        page: filter.page,
-        pageSize: filter.pageSize,
-        whereFields,
-        includeConditions,
-        search: filter.search,
-      },
-      searchableFields,
+    const { results, page, totalPages, total, pageSize } =
+      await CustomPaginationService._getPaginationModel(
+        this.prisma,
+        EntityReferenceModel.Supervision,
+        {
+          page: filter.page,
+          pageSize: filter.pageSize,
+          whereFields,
+          includeConditions,
+          search: filter.search,
+        },
+        searchableFields,
+      );
+
+    const filterSupervision = await Promise.all(
+      results.map(async (supervision) => {
+        const filterIds: number[] =
+          supervision?.plaintiff.split(", ").map((v) => Number(v)) ?? [];
+
+        const plaintiffs = await this.prisma.masterOption.findMany({
+          where: {
+            id: {
+              in: filterIds.map((id) => id),
+            },
+          },
+        });
+
+        return {
+          ...supervision,
+          plaintiff: plaintiffs.map((v) => v.name).join(", "),
+        };
+      }),
     );
+
+    return {
+      results: filterSupervision,
+      page,
+      totalPages,
+      pageSize,
+      total,
+    };
   }
 
   async getSupervision(id: number) {
     return this.prisma.supervision.findFirst({
       where: {
         id,
+      },
+      include: {
+        reclaims: true,
       },
     });
   }
@@ -549,7 +602,7 @@ export class SupervisionService {
 
     const flattenedProcesses = supervisions.map((process) =>
       headers.reduce((acc, { key }) => {
-        acc[key] = this.getNestedValue(process, key);
+        acc[key] = UtilsService.getNestedValue(process, key);
         return acc;
       }, {}),
     );
@@ -559,25 +612,5 @@ export class SupervisionService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
-  }
-
-  private getNestedValue(obj: any, key: string) {
-    return key.split(".").reduce((o, k) => {
-      if (k.includes("[") && k.includes("]")) {
-        const [arrayKey, index] = k.split(/[\[\]]/).filter(Boolean);
-
-        if (arrayKey === "attribute" && o?.[arrayKey]?.options) {
-          const option = o[arrayKey].options.find(
-            (option: any) => option.optionValue === o?.value,
-          );
-
-          return option ? option.optionLabel : "";
-        }
-
-        return o?.[arrayKey]?.[parseInt(index, 10)] ?? "";
-      }
-
-      return o?.[k] ?? "";
-    }, obj);
   }
 }

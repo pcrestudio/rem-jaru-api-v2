@@ -42,6 +42,8 @@ export class ReclaimsService {
           });
         }
       });
+
+      return "upsert";
     } catch (error) {
       throw new InternalServerErrorException({
         message: `Failed to upsert a reclaim`,

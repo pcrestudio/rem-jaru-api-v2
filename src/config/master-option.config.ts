@@ -7,4 +7,6 @@ export enum MasterOptionConfig {
   todoEstados = "todo-estados",
   autoridad = "autoridad",
   tabs = "reportes-tabs",
+  "nivel-contingencia" = "nivel-contingencia",
+  demandantes = "demandantes",
 }

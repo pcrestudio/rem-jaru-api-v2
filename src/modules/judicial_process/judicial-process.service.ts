@@ -199,8 +199,24 @@ export class JudicialProcessService {
             },
           }
         : true,
-      sectionAttributeValues: true,
-      globalAttributeValues: true,
+      sectionAttributeValues: {
+        include: {
+          attribute: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      },
+      globalAttributeValues: {
+        include: {
+          attribute: {
+            include: {
+              options: true,
+            },
+          },
+        },
+      },
       reclaims: true,
       stepData: {
         include: {
@@ -608,7 +624,7 @@ export class JudicialProcessService {
 
     const flattenedProcesses = judicialProcesses.map((process) =>
       headers.reduce((acc, { key }) => {
-        acc[key] = this.getNestedValue(process, key);
+        acc[key] = UtilsService.getNestedValue(process, key);
         return acc;
       }, {}),
     );
@@ -618,25 +634,5 @@ export class JudicialProcessService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
-  }
-
-  private getNestedValue(obj: any, key: string) {
-    return key.split(".").reduce((o, k) => {
-      if (k.includes("[") && k.includes("]")) {
-        const [arrayKey, index] = k.split(/[\[\]]/).filter(Boolean);
-
-        if (arrayKey === "attribute" && o?.[arrayKey]?.options) {
-          const option = o[arrayKey].options.find(
-            (option: any) => option.optionValue === o?.value,
-          );
-
-          return option ? option.optionLabel : "";
-        }
-
-        return o?.[arrayKey]?.[parseInt(index, 10)] ?? "";
-      }
-
-      return o?.[k] ?? "";
-    }, obj);
   }
 }

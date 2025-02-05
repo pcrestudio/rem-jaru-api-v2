@@ -43,7 +43,23 @@ export class EditSupervisionDto {
 
   @IsString()
   @IsOptional()
-  guaranteeLetter?: string;
+  contingencyLevel: string;
+
+  @IsString()
+  @IsOptional()
+  contingencyPercentage: string;
+
+  @IsNumber()
+  @IsOptional()
+  provisionContingency: number;
+
+  @IsNumber()
+  @IsOptional()
+  provisionAmount: number;
+
+  @IsString()
+  @IsOptional()
+  guaranteeLetter: string;
 
   @IsNumber()
   id: number;

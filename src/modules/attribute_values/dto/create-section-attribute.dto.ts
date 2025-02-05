@@ -41,6 +41,10 @@ export class CreateSectionAttributeDto {
 
   @IsBoolean()
   @IsOptional()
+  isMultiple?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
   conditionalRender?: boolean;
 
   @IsNumber()

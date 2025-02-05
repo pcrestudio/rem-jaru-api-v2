@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { FilterReportDto } from "./dto/filter-report.dto";
-import { getModelByEntityReference } from "../../common/utils/entity_reference_mapping";
+import {
+  EntityReferenceModel,
+  getModelByEntityReference,
+} from "../../common/utils/entity_reference_mapping";
 import { MasterTodosStates } from "../../config/master-todos-states.config";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
+import { MasterOptionConfig } from "../../config/master-option.config";
 
 @Injectable()
 export class ReportService {
@@ -109,12 +113,7 @@ export class ReportService {
 
     const provisionAmountSum = this.sumProvisionAmount(allData);
 
-    const contingencies = this.countBySlug(
-      allData,
-      allData[0].name === "Supervisiones"
-        ? AttributeSlugConfig.supervisionContingencyLevel
-        : AttributeSlugConfig.contingencyLevel,
-    );
+    const contingencies = await this.getContingenciesLevel(allData);
 
     const criticalProcesses = this.countBySlug(
       allData,
@@ -587,182 +586,16 @@ export class ReportService {
     data.forEach((item) => {
       item.Submodule.forEach((submodule) => {
         submodule.JudicialProcess.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (
-              attrValue.attribute.slug.startsWith(
-                AttributeSlugConfig.provisionAmount,
-              )
-            ) {
-              const value = parseFloat(attrValue.value);
-
-              if (!isNaN(value)) {
-                total += value;
-              }
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (
-              globalAttrValue.attribute.slug.startsWith(
-                AttributeSlugConfig.provisionAmount,
-              )
-            ) {
-              const value = parseFloat(globalAttrValue.value);
-
-              if (!isNaN(value)) {
-                total += value;
-              }
-            }
-          });
+          total += parseFloat(process.provisionAmount);
         });
 
         submodule.Supervision.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (
-              attrValue.attribute.slug.startsWith(
-                AttributeSlugConfig.supervisionProvisionAmount,
-              )
-            ) {
-              const value = parseFloat(attrValue.value);
-
-              if (!isNaN(value)) {
-                total += value;
-              }
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (
-              globalAttrValue.attribute.slug.startsWith(
-                AttributeSlugConfig.supervisionProvisionAmount,
-              )
-            ) {
-              const value = parseFloat(globalAttrValue.value);
-
-              if (!isNaN(value)) {
-                total += value;
-              }
-            }
-          });
+          total += parseFloat(process.provisionAmount);
         });
       });
     });
 
     return total;
-  }
-
-  private countBySlug(data: any, slug: string) {
-    const result = [];
-
-    data.forEach((item) => {
-      item.Submodule.forEach((submodule) => {
-        submodule.JudicialProcess.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (attrValue.attribute.slug === slug) {
-              const value = attrValue.value;
-
-              const option = attrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                const existing = result.find(
-                  (res) => res.name === option.optionLabel,
-                );
-
-                if (existing) {
-                  existing._count.group += 1;
-                } else {
-                  result.push({
-                    name: option.optionLabel,
-                    _count: { group: 1 },
-                  });
-                }
-              }
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (globalAttrValue.attribute.slug === slug) {
-              const value = globalAttrValue.value;
-
-              const option = globalAttrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                const existing = result.find(
-                  (res) => res.name === option.optionLabel,
-                );
-
-                if (existing) {
-                  existing._count.group += 1;
-                } else {
-                  result.push({
-                    name: option.optionLabel,
-                    _count: { group: 1 },
-                  });
-                }
-              }
-            }
-          });
-        });
-
-        submodule.Supervision.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (attrValue.attribute.slug === slug) {
-              const value = attrValue.value;
-
-              const option = attrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                const existing = result.find(
-                  (res) => res.name === option.optionLabel,
-                );
-
-                if (existing) {
-                  existing._count.group += 1;
-                } else {
-                  result.push({
-                    name: option.optionLabel,
-                    _count: { group: 1 },
-                  });
-                }
-              }
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (globalAttrValue.attribute.slug === slug) {
-              const value = globalAttrValue.value;
-
-              const option = globalAttrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                const existing = result.find(
-                  (res) => res.name === option.optionLabel,
-                );
-
-                if (existing) {
-                  existing._count.group += 1;
-                } else {
-                  result.push({
-                    name: option.optionLabel,
-                    _count: { group: 1 },
-                  });
-                }
-              }
-            }
-          });
-        });
-      });
-    });
-
-    return result;
   }
 
   private async getMattersReport(moduleId: number) {
@@ -791,100 +624,204 @@ export class ReportService {
   }
 
   private async getInstancesReport(allData: any) {
-    const instancesReport = [];
+    const id = allData[0].id;
 
-    // Conjunto de stepNames posibles (puedes obtenerlos de tu base de datos si es necesario)
-    const allStepNames = new Set<string>();
+    const instances = await this.prisma.instance.findMany({
+      where: {
+        moduleId: id,
+      },
+    });
 
+    const instanceCounts = instances.reduce((acc, instance) => {
+      acc[instance.name] = 0;
+      return acc;
+    }, {});
+
+    console.log(instanceCounts);
+    // Step 3: Count occurrences of each instance name
     for (const report of allData) {
       for (const submodule of report.Submodule) {
-        // Manejar JudicialProcess
         if (submodule.JudicialProcess) {
-          for (const jp of submodule.JudicialProcess) {
-            const mayorInstanceJudicial = this.obtenerMayorInstanceId(
-              jp.stepData,
-              "entityJudicialProcessReference",
-            );
-            instancesReport.push(mayorInstanceJudicial);
-
+          submodule.JudicialProcess.forEach((jp) => {
             jp.stepData.forEach((data) => {
-              allStepNames.add(data.step.instance.name);
+              const instanceName = data.step.instance.name;
+              if (instanceCounts.hasOwnProperty(instanceName)) {
+                instanceCounts[instanceName]++;
+              }
             });
-          }
+          });
         }
 
-        // Manejar Supervision
         if (submodule.Supervision) {
-          for (const supervision of submodule.Supervision) {
-            const mayorInstanceSupervision = this.obtenerMayorInstanceId(
-              supervision.stepData,
-              "entitySupervisionReference",
-            );
-            instancesReport.push(mayorInstanceSupervision);
-
-            supervision.stepData.forEach((data) =>
-              allStepNames.add(data.step.instance.name),
-            );
-          }
+          submodule.Supervision.forEach((supervision) => {
+            supervision.stepData.forEach((data) => {
+              const instanceName = data.step.instance.name;
+              if (instanceCounts.hasOwnProperty(instanceName)) {
+                instanceCounts[instanceName]++;
+              }
+            });
+          });
         }
       }
     }
 
-    const contarStepNames = (expedientes) => {
-      const stepCount = expedientes.reduce((acc, expediente) => {
-        const stepData = expediente[Object.keys(expediente)[0]];
-
-        if (stepData && stepData.stepName) {
-          const stepName = stepData.stepName;
-
-          if (!acc[stepName]) {
-            acc[stepName] = 0;
-          }
-
-          acc[stepName] += 1;
-        }
-
-        return acc;
-      }, {});
-
-      // Asegurarse de que todos los stepNames posibles estén presentes
-      allStepNames.forEach((stepName) => {
-        if (!stepCount[stepName]) {
-          stepCount[stepName] = 0;
-        }
-      });
-
-      return stepCount;
-    };
-
-    const transformarConteo = (conteo) => {
-      return Object.entries(conteo).map(([stepName, count]) => ({
-        instanceName: stepName,
-        count,
-      }));
-    };
-
-    return transformarConteo(contarStepNames(instancesReport));
+    // Step 4: Format the result
+    return Object.entries(instanceCounts).map(([instanceName, count]) => ({
+      instanceName,
+      count,
+    }));
   }
 
-  private obtenerMayorInstanceId(expedientes, campo) {
-    return expedientes.reduce((acc, expediente) => {
-      const referencia = expediente[campo];
-      const instanceId = expediente.step.instanceId;
-      const stepName = expediente.step.instance.name;
+  private countBySlug(data: any, slug: string) {
+    // Step 1: Initialize a counter object
+    const counter = {};
 
-      if (referencia) {
-        if (!acc[referencia]) {
-          acc[referencia] = { instanceId, stepName };
-        } else {
-          // Compara el instanceId y guarda el stepName con el mayor instanceId
-          if (acc[referencia].instanceId < instanceId) {
-            acc[referencia] = { instanceId, stepName };
+    // Step 2: Get all optionLabel and initialize counts to 0
+    data.forEach((item) => {
+      item.Submodule.forEach((submodule) => {
+        submodule.JudicialProcess.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (attrValue.attribute.slug === slug) {
+              attrValue.attribute.options.forEach((option) => {
+                counter[option.optionLabel] = 0; // Initialize counts to 0
+              });
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (globalAttrValue.attribute.slug === slug) {
+              globalAttrValue.attribute.options.forEach((option) => {
+                counter[option.optionLabel] = 0; // Initialize counts to 0
+              });
+            }
+          });
+        });
+
+        submodule.Supervision.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (attrValue.attribute.slug === slug) {
+              attrValue.attribute.options.forEach((option) => {
+                counter[option.optionLabel] = 0; // Initialize counts to 0
+              });
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (globalAttrValue.attribute.slug === slug) {
+              globalAttrValue.attribute.options.forEach((option) => {
+                counter[option.optionLabel] = 0; // Initialize counts to 0
+              });
+            }
+          });
+        });
+      });
+    });
+
+    // Step 3: Count matches
+    data.forEach((item) => {
+      item.Submodule.forEach((submodule) => {
+        submodule.JudicialProcess.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (attrValue.attribute.slug === slug) {
+              const value = attrValue.value;
+
+              const option = attrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                counter[option.optionLabel]++;
+              }
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (globalAttrValue.attribute.slug === slug) {
+              const value = globalAttrValue.value;
+
+              const option = globalAttrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                counter[option.optionLabel]++;
+              }
+            }
+          });
+        });
+
+        submodule.Supervision.forEach((process) => {
+          process.sectionAttributeValues.forEach((attrValue) => {
+            if (attrValue.attribute.slug === slug) {
+              const value = attrValue.value;
+
+              const option = attrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                counter[option.optionLabel]++;
+              }
+            }
+          });
+
+          process.globalAttributeValues.forEach((globalAttrValue) => {
+            if (globalAttrValue.attribute.slug === slug) {
+              const value = globalAttrValue.value;
+
+              const option = globalAttrValue.attribute.options.find(
+                (option) => option.optionValue === value,
+              );
+
+              if (option) {
+                counter[option.optionLabel]++;
+              }
+            }
+          });
+        });
+      });
+    });
+
+    // Step 4: Format the result
+    return Object.keys(counter).map((optionLabel) => ({
+      name: optionLabel,
+      _count: { group: counter[optionLabel] },
+    }));
+  }
+
+  private async getContingenciesLevel(data: any) {
+    const masterOptions = await this.prisma.masterOption.findMany({
+      where: {
+        master: {
+          slug: MasterOptionConfig["nivel-contingencia"],
+        },
+      },
+    });
+
+    const counter = {};
+    masterOptions.forEach((option) => {
+      counter[option.slug] = 0;
+    });
+
+    data.forEach((item) => {
+      const name =
+        item.name === "Supervisiones"
+          ? EntityReferenceModel.Supervision
+          : EntityReferenceModel.JudicialProcess;
+
+      item.Submodule.forEach((process) => {
+        return process[`${name}`].forEach((v) => {
+          if (counter.hasOwnProperty(v.contingencyLevel)) {
+            counter[v.contingencyLevel]++;
           }
-        }
-      }
+        });
+      });
+    });
 
-      return acc;
-    }, {});
+    return masterOptions.map((option) => ({
+      name: option.name,
+      slug: option.slug,
+      count: counter[option.slug] || 0,
+    }));
   }
 }
