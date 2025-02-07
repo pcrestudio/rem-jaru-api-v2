@@ -23,6 +23,13 @@ export class ReportService {
       },
       include: {
         Submodule: {
+          where: {
+            name: {
+              not: {
+                contains: "Penales",
+              },
+            },
+          },
           include: {
             JudicialProcess: {
               include: {
@@ -642,7 +649,16 @@ export class ReportService {
       },
     });
 
-    return report.filter((matter) => matter.Submodule.length > 0);
+    const matters = report.filter((matter) => matter.Submodule.length > 0);
+
+    return matters.map((matter) => {
+      const Submodule = matter["Submodule"].filter((v) => v.name !== "Penales");
+
+      return {
+        ...matter,
+        Submodule,
+      };
+    });
   }
 
   private async getInstancesReport(allData: any) {

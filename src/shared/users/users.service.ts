@@ -15,7 +15,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly mail: MailService
+    private readonly mail: MailService,
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -44,8 +44,10 @@ export class UsersService {
 
     const jaru_generated_password = await hash(
       this.config.get("JARU_PASSWORD"),
-      10
+      10,
     );
+
+    console.log(jaru_generated_password);
 
     try {
       const userCreated = await this.prisma.user.upsert({
@@ -112,12 +114,12 @@ export class UsersService {
         password: this.config.get("JARU_PASSWORD"),
       };
 
-      await this.mail.sendWithTemplate(
+      /*await this.mail.sendWithTemplate(
         createUserTemplate,
         templateData,
         [userCreated.email],
         "Nuevo usuario - Jaru Software."
-      );
+      );*/
 
       return userCreated;
     } catch (error) {
@@ -161,7 +163,7 @@ export class UsersService {
             },
           },
         },
-      }
+      },
     );
   }
 }

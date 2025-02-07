@@ -30,6 +30,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { ScrapingModule } from "./modules/scraping/scraping.module";
 import { ReclaimsModule } from "./modules/reclaims/reclaims.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { ExchangeModule } from "./modules/exchange/exchange.module";
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     ReclaimsModule,
     InstanceModule,
     IncidentModule,
+    ExchangeModule,
     MulterModule.register({
       storage: diskStorage({
         destination: (req, file, cb) => {

@@ -567,3 +567,10 @@ model CEJ_ExpedientesActuaciones {
   updated_at         DateTime         @default(now())
   idProcesoUltimo    Int?
 }
+
+model Exchange {
+  id        Int      @id @default(autoincrement())
+  value     Float?   @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
