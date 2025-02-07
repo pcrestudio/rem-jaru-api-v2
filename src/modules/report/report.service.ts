@@ -112,6 +112,7 @@ export class ReportService {
     });
 
     const provisionAmountSum = this.sumProvisionAmount(allData);
+    const amountSum = this.sumAmount(allData);
 
     const contingencies = await this.getContingenciesLevel(allData);
 
@@ -131,6 +132,9 @@ export class ReportService {
     return {
       provisionAmount: {
         report: provisionAmountSum,
+      },
+      amountSum: {
+        report: amountSum,
       },
       contingencies: {
         report: contingencies,
@@ -598,6 +602,24 @@ export class ReportService {
     return total;
   }
 
+  private sumAmount(data) {
+    let total = 0;
+
+    data.forEach((item) => {
+      item.Submodule.forEach((submodule) => {
+        submodule.JudicialProcess.forEach((process) => {
+          total += parseFloat(process.amount);
+        });
+
+        submodule.Supervision.forEach((process) => {
+          total += parseFloat(process.amount);
+        });
+      });
+    });
+
+    return total;
+  }
+
   private async getMattersReport(moduleId: number) {
     const report = await this.prisma.module.findMany({
       select: {
@@ -626,40 +648,44 @@ export class ReportService {
   private async getInstancesReport(allData: any) {
     const id = allData[0].id;
 
+    // Step 1: Fetch all instances for the module
     const instances = await this.prisma.instance.findMany({
       where: {
         moduleId: id,
       },
     });
 
+    // Step 2: Initialize counts for each instance
     const instanceCounts = instances.reduce((acc, instance) => {
       acc[instance.name] = 0;
       return acc;
     }, {});
 
-    console.log(instanceCounts);
-    // Step 3: Count occurrences of each instance name
+    // Step 3: Track the latest step and instance for each record
     for (const report of allData) {
       for (const submodule of report.Submodule) {
         if (submodule.JudicialProcess) {
           submodule.JudicialProcess.forEach((jp) => {
-            jp.stepData.forEach((data) => {
-              const instanceName = data.step.instance.name;
-              if (instanceCounts.hasOwnProperty(instanceName)) {
-                instanceCounts[instanceName]++;
-              }
-            });
+            // Assume stepData is ordered by time (latest step is last)
+            const latestStepData = jp.stepData[jp.stepData.length - 1];
+            const instanceName = latestStepData?.step.instance.name;
+
+            if (instanceCounts.hasOwnProperty(instanceName)) {
+              instanceCounts[instanceName]++;
+            }
           });
         }
 
         if (submodule.Supervision) {
           submodule.Supervision.forEach((supervision) => {
-            supervision.stepData.forEach((data) => {
-              const instanceName = data.step.instance.name;
-              if (instanceCounts.hasOwnProperty(instanceName)) {
-                instanceCounts[instanceName]++;
-              }
-            });
+            // Assume stepData is ordered by time (latest step is last)
+            const latestStepData =
+              supervision.stepData[supervision.stepData.length - 1];
+            const instanceName = latestStepData?.step.instance.name;
+
+            if (instanceCounts.hasOwnProperty(instanceName)) {
+              instanceCounts[instanceName]++;
+            }
           });
         }
       }
