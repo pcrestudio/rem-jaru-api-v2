@@ -46,6 +46,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "docx": "^9.0.3",
+    "exceljs": "^4.4.0",
     "express-session": "^1.18.1",
     "jimp": "^1.6.0",
     "jsonwebtoken": "^9.0.2",
@@ -66,7 +67,8 @@
     "speakeasy": "^2.0.0",
     "tesseract.js": "^6.0.0",
     "user-agents": "^1.1.431",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-style": "^0.8.13"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
