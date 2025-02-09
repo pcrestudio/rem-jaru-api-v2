@@ -43,6 +43,28 @@ export class UsersService {
     });
   }
 
+  async creteAzureADUser(payload: any) {
+    try {
+      const userCreated = await this.prisma.user.create({
+        data: {
+          email: payload.email,
+          //firstName: payload.given_name,
+          //lastName: payload.family_name,
+          authMethod: "azure-ad",
+          displayName: payload.displayName,
+        },
+      });
+
+      await this.prisma.userRole.create({
+        data: { userId: userCreated.id, roleId: 1 }, // Default role: 2 - admin (Administrator)
+      });
+
+      return userCreated;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
   async create(payload: UpsertRegisterDto) {
     try {
       const userCreated = await this.prisma.user.upsert({

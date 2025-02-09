@@ -31,6 +31,7 @@ import { ScrapingModule } from "./modules/scraping/scraping.module";
 import { ReclaimsModule } from "./modules/reclaims/reclaims.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ExchangeModule } from "./modules/exchange/exchange.module";
+import {AssetsModule} from "./common/assets/assets.module";
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { ExchangeModule } from "./modules/exchange/exchange.module";
       }),
       inject: [ConfigService],
     }),
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -20,39 +20,44 @@ export class OtpAuthService {
   private readonly maxFailedAttempts = 5;
 
   async generateOtp(email: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) throw new Error("User not found");
+    try {
+      const user = await this.usersService.findByEmail(email);
 
-    if (user.failedOtpAttempts >= this.maxFailedAttempts) {
-      throw new UnauthorizedException(
-        "Account locked due to too many failed OTP attempts"
-      );
-    }
+      if (!user) throw new Error("User not found");
 
-    if (!user.otpSecret)
+      if (user.failedOtpAttempts >= this.maxFailedAttempts) {
+        throw new UnauthorizedException(
+          "Account locked due to too many failed OTP attempts"
+        );
+      }
+
+      //if (!user.otpSecret)
       user.otpSecret = speakeasy.generateSecret({ length: 20 }).base32;
 
-    const token = speakeasy.totp({
-      secret: user.otpSecret,
-      encoding: "base32",
-      step: this.otpExpiryTime,
-    });
+      const token = speakeasy.totp({
+        secret: user.otpSecret,
+        encoding: "base32",
+        step: this.otpExpiryTime,
+      });
 
-    await this.usersService.updateOtpSecret(user.id, user.otpSecret);
+      await this.usersService.updateOtpSecret(user.id, user.otpSecret);
 
-    const templateData = {
-      displayName: user.firstName,
-      otpCode: token,
-    };
+      const templateData = {
+        displayName: user.firstName,
+        otpCode: token,
+      };
 
-    await this.mailService.sendWithTemplate(
-      otpTemplate,
-      templateData,
-      [email],
-      "Código de Verificación"
-    );
+      await this.mailService.sendWithTemplate(
+        otpTemplate,
+        templateData,
+        [email],
+        "Código de Verificación"
+      );
 
-    return { message: "Código de verificación enviado" };
+      return { message: "Código de verificación enviado" };
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async validateOtp(email: string, token: string) {
