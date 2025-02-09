@@ -33,6 +33,7 @@ import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import { DataType } from "@prisma/client";
 import { ExportablesService } from "../exportables/exportables.service";
 import { searchableFields } from "../../config/submodule_searchableFields";
+import { ToggleJudicialProcessDto } from "../judicial_process/dto/toggle-judicial-process.dto";
 
 @Injectable()
 export class SupervisionService {
@@ -133,6 +134,7 @@ export class SupervisionService {
 
     const whereFields = {
       submoduleId: submodule?.id,
+      isActive: true,
     };
 
     if (filter.cargoStudioId) {
@@ -234,6 +236,8 @@ export class SupervisionService {
         };
       }),
     );
+
+    console.log(filterSupervision);
 
     return {
       results: filterSupervision,
@@ -523,6 +527,9 @@ export class SupervisionService {
 
   async exportExcel() {
     const supervisions = await this.prisma.supervision.findMany({
+      where: {
+        isActive: true,
+      },
       include: {
         responsible: true,
         project: true,
@@ -612,5 +619,22 @@ export class SupervisionService {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  async toggleSupervision(supervision: ToggleJudicialProcessDto) {
+    if (!supervision.id) {
+      throw new BadRequestException(
+        "Debe ingresar un ID correspondiente, para la activación o desactivación del expediente.",
+      );
+    }
+
+    return this.prisma.supervision.update({
+      data: {
+        isActive: !supervision.isActive,
+      },
+      where: {
+        id: supervision.id,
+      },
+    });
   }
 }

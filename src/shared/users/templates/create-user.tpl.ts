@@ -1,5 +1,6 @@
 import headerTemplate from "src/common/templates/headerTemplate";
 import footerTemplate from "src/common/templates/footerTemplate";
+import buttonTemplate from "../../../common/templates/buttonTemplate";
 
 const frontendUrl = process.env.FRONTEND_URL;
 
@@ -48,8 +49,7 @@ const createUserTemplate = (obj) => `${headerTemplate}
                         <div style="font-family: sans-serif">
                           <div class="" style="font-size: 12px; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
                             <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 21px;">
-                              Para que puedas ingresar a la plataforma, se te ha generado una contraseña temporal. <span style="font-weight: bold;">${obj.password}</span>, 
-                              puedes cambiarla en cualquier momento.
+                              Por motivos de seguridad e ingreso a la plataforma es necesario que crees una nueva contraseña.
                               <span style="word-break: break-word; color: #a8bf6f; font-size: 14px;">
                                 <strong>
                                   <br/>
@@ -90,7 +90,10 @@ const createUserTemplate = (obj) => `${headerTemplate}
                         font-family: 'Montserrat', Arial, sans-serif;
                       "
                     >
-                      <a href="${frontendUrl}">Ir a Jaru Software</a>
+                     ${buttonTemplate({
+                       label: "CREAR CONTRASEÑA",
+                       url: `${frontendUrl}/auth/reset-password?token=${obj.token}`,
+                     })}
                     </td>
                   </tr>
                 </table>

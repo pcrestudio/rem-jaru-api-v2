@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -17,12 +19,13 @@ import { PasswordAuthService } from "./password-auth.service";
 export class AuthService {
   constructor(
     private readonly config: ConfigService,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly passwordAuthService: PasswordAuthService,
     private readonly azureAdAuthService: AzureAdAuthService,
     private readonly otpAuthService: OtpAuthService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   validateKey(apiKey: string) {
@@ -85,7 +88,8 @@ export class AuthService {
   // Validate or create user from Azure AD profile
   async validateAzureAdUser(profile: any): Promise<any> {
     const email = profile._json.preferred_username;
-    let user: GetUserDto = await this.usersService.findByEmail(email);
+    const user: GetUserDto = await this.usersService.findByEmail(email);
+
     if (!user) {
       throw new UnauthorizedException("Access denied");
     }

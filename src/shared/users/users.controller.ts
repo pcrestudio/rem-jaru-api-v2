@@ -62,4 +62,10 @@ export class UsersController {
   async getUsers(@Query() filter: FilterUsersDto): Promise<any> {
     return this.usersService.getUsers(filter);
   }
+
+  @Get("toggle/:id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async toggleLockedUser(@Param("id") id: string) {
+    return this.usersService.toggleLockedUser(Number(id));
+  }
 }

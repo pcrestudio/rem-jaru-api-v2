@@ -24,7 +24,7 @@ export class ExchangeService {
           value: data["conversion_rates"]["PEN"],
         },
         where: {
-          id: id ?? 0,
+          id: id ? id : 0,
         },
       });
 

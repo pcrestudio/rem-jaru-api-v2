@@ -18,7 +18,7 @@ export class PasswordAuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     private readonly userService: UsersService,
-    private readonly passwordService: PasswordService
+    private readonly passwordService: PasswordService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -106,6 +106,7 @@ export class PasswordAuthService {
 
     return {
       message: "Mensaje enviado, por favor revisa tu correo electrónico",
+      token: resetToken,
     };
   }
 
@@ -121,7 +122,7 @@ export class PasswordAuthService {
       passwordResetTemplate,
       templateData,
       to,
-      subject
+      subject,
     );
   }
 }

@@ -75,22 +75,29 @@ export class PrismaService extends PrismaClient {
             return { result };
           },
         },
+        toDo: {
+          upsert: async ({ operation, query, args }) => {
+            const result = await query(args);
+
+            return { result, operation };
+          },
+        },
         stepData: {
           upsert: async ({ model, query, args }) => {
             const result = await query(args);
 
-            const entityReference = `ISD${result.id.toString().padStart(8, "0")}`;
+            const entityId = `ISD${result.id.toString().padStart(8, "0")}`;
 
             await this[model].update({
               data: {
-                entityId: entityReference,
+                entityId: entityId,
               },
               where: {
                 id: result.id,
               },
             });
 
-            return { result, entityReference };
+            return { result, entityId };
           },
         },
       },

@@ -9,7 +9,7 @@ export class PasswordService {
   private minPasswordLength = 12;
   private passwordComplexity = true;
   private passwordHistory = 5;
-  private minimumPasswordAge = 1;
+  private minimumPasswordAge = 0;
   private maximumPasswordAge = 90;
 
   private validatePasswordComplexity(password: string): void {
@@ -18,14 +18,14 @@ export class PasswordService {
 
     if (password.length < this.minPasswordLength) {
       throw new BadRequestException(
-        `Password must be at least ${this.minPasswordLength} characters long`
+        `Password must be at least ${this.minPasswordLength} characters long`,
       );
     }
 
     if (this.passwordComplexity) {
       if (!complexityRegex.test(password)) {
         throw new BadRequestException(
-          "Password must include uppercase, lowercase, number, and special character"
+          "Password must include uppercase, lowercase, number, and special character",
         );
       }
     }
@@ -38,7 +38,7 @@ export class PasswordService {
 
   async checkPasswordHistory(
     userId: number,
-    newPassword: string
+    newPassword: string,
   ): Promise<void> {
     const previousPasswords = await this.prisma.passwordHistory.findMany({
       where: { userId },
@@ -50,7 +50,7 @@ export class PasswordService {
       const isMatch = await bcrypt.compare(newPassword, record.password);
       if (isMatch) {
         throw new BadRequestException(
-          `New password cannot be the same as any of the last ${this.passwordHistory} passwords`
+          `New password cannot be the same as any of the last ${this.passwordHistory} passwords`,
         );
       }
     }
@@ -73,7 +73,7 @@ export class PasswordService {
 
     if (passwordAge < this.minimumPasswordAge) {
       throw new BadRequestException(
-        `Password must be at least ${this.minimumPasswordAge} day old before changing`
+        `Password must be at least ${this.minimumPasswordAge} day old before changing`,
       );
     }
   }
@@ -86,7 +86,7 @@ export class PasswordService {
 
     if (passwordAge > this.maximumPasswordAge) {
       throw new BadRequestException(
-        `Password must be changed every ${this.maximumPasswordAge} days`
+        `Password must be changed every ${this.maximumPasswordAge} days`,
       );
     }
   }

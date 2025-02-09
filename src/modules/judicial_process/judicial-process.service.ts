@@ -162,6 +162,7 @@ export class JudicialProcessService {
 
     const whereFields = {
       submoduleId: submodule?.id,
+      isActive: true,
     };
 
     if (filter.cargoStudioId) {
@@ -543,6 +544,9 @@ export class JudicialProcessService {
 
   async exportExcel() {
     const judicialProcesses = await this.prisma.judicialProcess.findMany({
+      where: {
+        isActive: true,
+      },
       include: {
         responsible: true,
         studio: true,

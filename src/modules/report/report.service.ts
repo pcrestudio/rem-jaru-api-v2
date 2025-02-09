@@ -397,22 +397,43 @@ export class ReportService {
 
     const result: Record<string, number> = {};
 
-    processData.Submodule.forEach((submodule: any) => {
+    for (const submodule of processData.Submodule) {
       const combinedProcesses = [
         ...submodule.JudicialProcess,
         ...submodule.Supervision,
       ];
 
-      combinedProcesses.forEach((process: any) => {
+      for (const process of combinedProcesses) {
         const person = process[`${slug}`];
 
-        if (result[person]) {
-          result[person]++;
+        const filterIds: number[] =
+          person?.split(", ").map((v) => Number(v)) ?? [];
+
+        if (filterIds) {
+          const plaintiffs = await this.prisma.masterOption.findMany({
+            where: {
+              id: {
+                in: filterIds,
+              },
+            },
+          });
+
+          const personNames = plaintiffs.map((p) => p.name).join(", ");
+
+          if (result[personNames]) {
+            result[personNames]++;
+          } else {
+            result[personNames] = 1;
+          }
         } else {
-          result[person] = 1;
+          if (result[person]) {
+            result[person]++;
+          } else {
+            result[person] = 1;
+          }
         }
-      });
-    });
+      }
+    }
 
     return Object.entries(result).map(([name, count]) => ({
       name,

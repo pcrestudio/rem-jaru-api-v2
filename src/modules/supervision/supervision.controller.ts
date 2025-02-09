@@ -17,6 +17,7 @@ import { EditSupervisionDto } from "./dto/edit-supervision.dto";
 import { AnyFilesInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from "../../config/multer.config";
 import { Response } from "express";
+import { ToggleJudicialProcessDto } from "../judicial_process/dto/toggle-judicial-process.dto";
 
 @Controller("supervisions")
 export class SupervisionController {
@@ -77,5 +78,10 @@ export class SupervisionController {
     res.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
 
     return res.send(document);
+  }
+
+  @Patch("toggle")
+  async toggleSupervision(@Body() supervision: ToggleJudicialProcessDto) {
+    return this.supervisionService.toggleSupervision(supervision);
   }
 }

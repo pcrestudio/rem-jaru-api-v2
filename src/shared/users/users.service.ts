@@ -1,14 +1,20 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from "@nestjs/common";
 import { User } from "@prisma/client";
 import { PrismaService } from "src/core/database/prisma.service";
 import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 import { CustomPaginationService } from "../../modules/custom_pagination/custom_pagination.service";
 import { FilterUsersDto } from "../../modules/auth/dto/filter-users.dto";
 import { UpsertRegisterDto } from "../../modules/auth/dto/user-register.dto";
-import { hash } from "bcrypt";
 import { ConfigService } from "@nestjs/config";
 import { MailService } from "../mail/mail.service";
 import createUserTemplate from "./templates/create-user.tpl";
+import { AuthService } from "../auth/auth.service";
+import { MessagesConfig } from "../../config/messages.config";
 
 @Injectable()
 export class UsersService {
@@ -16,6 +22,8 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -36,26 +44,10 @@ export class UsersService {
   }
 
   async create(payload: UpsertRegisterDto) {
-    let encrypt_password = "";
-
-    if (payload.password) {
-      encrypt_password = await hash(payload.password, 10);
-    }
-
-    const jaru_generated_password = await hash(
-      this.config.get("JARU_PASSWORD"),
-      10,
-    );
-
-    console.log(jaru_generated_password);
-
     try {
       const userCreated = await this.prisma.user.upsert({
         create: {
           email: payload.email,
-          password: payload.password
-            ? encrypt_password
-            : jaru_generated_password,
           firstName: payload.firstName,
           lastName: payload.lastName,
           authMethod: payload.authMethod,
@@ -109,17 +101,21 @@ export class UsersService {
         });
       }
 
+      const { token } = await this.authService.requestPasswordReset(
+        userCreated.email,
+      );
+
       const templateData = {
         displayName: userCreated.displayName,
-        password: this.config.get("JARU_PASSWORD"),
+        token,
       };
 
-      /*await this.mail.sendWithTemplate(
+      await this.mail.sendWithTemplate(
         createUserTemplate,
         templateData,
         [userCreated.email],
-        "Nuevo usuario - Jaru Software."
-      );*/
+        MessagesConfig.userCreate,
+      );
 
       return userCreated;
     } catch (error) {
@@ -165,5 +161,19 @@ export class UsersService {
         },
       },
     );
+  }
+
+  async toggleLockedUser(id: number) {
+    return this.prisma.user.updateMany({
+      where: {
+        isLocked: true,
+        id,
+      },
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        failedLoginAttempts: 0,
+      },
+    });
   }
 }

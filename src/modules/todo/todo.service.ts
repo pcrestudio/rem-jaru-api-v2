@@ -16,6 +16,9 @@ import { MailService } from "../../shared/mail/mail.service";
 import assignTodoTemplate from "./templates/assign-todo.tpl";
 import { UpsertTodoActivityDto } from "./dto/upsert-todo-activity.dto";
 import { RoleConfig } from "../../config/role.config";
+import { MessagesConfig } from "../../config/messages.config";
+import editTodoTemplate from "./templates/edit-todo.tpl";
+import { GetTodoDto } from "./dto/get-todo.dto";
 
 @Injectable()
 export class TodoService {
@@ -55,22 +58,10 @@ export class TodoService {
         },
       });
 
-      const { email, displayName } = await this.prisma.user.findFirst({
-        where: {
-          id: todoUpsert.responsibleId,
-        },
-      });
-
-      const templateData = {
-        displayName: displayName,
-        title: todoUpsert.title,
-      };
-
-      await this.mail.sendWithTemplate(
-        assignTodoTemplate,
-        templateData,
-        [email],
-        "To-Do asignado.",
+      await this.sendTodoEmail(
+        todoUpsert,
+        editTodoTemplate,
+        MessagesConfig.todoEdit,
       );
 
       return todoUpsert;
@@ -153,62 +144,46 @@ export class TodoService {
   }
 
   async getTodos(filter: FilterTodoDto, userId: number) {
-    const isSuperAdminFilter = {
-      creator: {
+    // Verificamos si el usuario es un superadmin
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
         UserRole: {
-          some: {
-            role: {
-              name: RoleConfig["super-admin"],
-            },
+          include: {
+            role: true,
           },
         },
       },
-    };
+    });
 
-    const whereFields = {
-      AND: [
-        {
-          OR: [
-            { creator: { id: userId } },
-            { responsibleId: userId },
-            isSuperAdminFilter,
+    const isSuperAdmin = user?.UserRole?.some(
+      (userRole) => userRole.role.name === RoleConfig["super-admin"],
+    );
+
+    // Si es superadmin, puede ver todos los to-dos
+    const whereFields = isSuperAdmin
+      ? {} // No se filtra nada, ve todo
+      : {
+          AND: [
+            {
+              OR: [
+                { creator: { id: userId } }, // To-dos creados por el usuario
+                { responsibleId: userId }, // To-dos asignados al usuario
+              ],
+            },
+            ...(filter.check ? [{ check: filter.check === "true" }] : []),
+            ...(filter.alert ? [{ alert: filter.alert === "true" }] : []),
+            ...(filter.state ? [{ todoStateId: Number(filter.state) }] : []),
+            ...(filter.responsibleId
+              ? [{ responsible: { id: Number(filter.responsibleId) } }]
+              : []),
           ],
-        },
-        ...(filter.check
-          ? [
-              {
-                check: filter.check === "true",
-              },
-            ]
-          : []),
-        ...(filter.alert
-          ? [
-              {
-                alert: filter.alert === "true",
-              },
-            ]
-          : []),
-        ...(filter.state
-          ? [
-              {
-                todoStateId: Number(filter.state),
-              },
-            ]
-          : []),
-        ...(filter.responsibleId
-          ? [
-              {
-                responsible: {
-                  id: Number(filter.responsibleId),
-                },
-              },
-            ]
-          : []),
-      ],
-    };
+        };
 
+    // Campos a buscar
     const searchableFields = ["title", "description"];
 
+    // Obtener los to-dos con paginación
     const { results, total, page, pageSize, totalPages } =
       await CustomPaginationService._getPaginationModel(
         this.prisma,
@@ -234,12 +209,13 @@ export class TodoService {
               },
             },
           },
-          whereFields: whereFields,
+          whereFields,
           search: filter.search,
         },
         searchableFields,
       );
 
+    // Procesamos los resultados
     const processedResults = await Promise.all(
       results.map(async (todo: any) => {
         try {
@@ -255,9 +231,7 @@ export class TodoService {
 
           if (match?.[0] === Entities.ISD) {
             const entity = await this.prisma[`${model}`].findFirst({
-              where: {
-                entityReference: todo.entityReference,
-              },
+              where: { entityReference: todo.entityReference },
             });
 
             if (!entity) {
@@ -267,18 +241,12 @@ export class TodoService {
               return { ...todo, submodule: null };
             }
 
-            const detail = await this.resolveSubmodule(
-              entity.entityReference,
-              filter,
-            );
+            const detail = await this.resolveSubmodule(entity.entityReference);
 
             return { ...todo, detail };
           }
 
-          const detail = await this.resolveSubmodule(
-            todo.entityReference,
-            filter,
-          );
+          const detail = await this.resolveSubmodule(todo.entityReference);
 
           return { ...todo, detail };
         } catch (error) {
@@ -318,37 +286,45 @@ export class TodoService {
     userId: number,
   ) {
     try {
-      for (const todo of todos) {
-        const dateExpiration = processDate(todo.dateExpiration);
-        const masterOption = await this._getTodoState(dateExpiration);
+      await Promise.all(
+        todos.map(async (todo) => {
+          const dateExpiration = processDate(todo.dateExpiration);
+          const masterOption = await this._getTodoState(dateExpiration);
 
-        await this.prisma.toDo.upsert({
-          create: {
-            title: todo.title,
-            description: todo.description,
-            creatorId: userId,
-            responsibleId: todo.responsibleId,
-            entityReference: todo.entityReference,
-            entityStepReference: entityId,
-            dateExpiration: dateExpiration,
-            todoStateId: masterOption.id,
-          },
-          update: {
-            title: todo.title,
-            description: todo.description,
-            creatorId: userId,
-            responsibleId: todo.responsibleId,
-            todoStateId: masterOption.id,
-            dateExpiration: dateExpiration,
-          },
-          where: {
-            id: todo.id ?? 0,
-            entityReference: todo.entityReference,
-          },
-        });
-      }
+          const todoUpsert = await this.prisma.toDo.upsert({
+            create: {
+              title: todo.title,
+              description: todo.description,
+              creatorId: userId,
+              responsibleId: todo.responsibleId,
+              entityReference: todo.entityReference,
+              entityStepReference: entityId,
+              dateExpiration: dateExpiration,
+              todoStateId: masterOption.id,
+            },
+            update: {
+              title: todo.title,
+              description: todo.description,
+              creatorId: userId,
+              responsibleId: todo.responsibleId,
+              todoStateId: masterOption.id,
+              dateExpiration: dateExpiration,
+            },
+            where: {
+              id: todo.id ?? 0,
+              entityReference: todo.entityReference,
+            },
+          });
 
-      return "Todo added";
+          await this.sendTodoEmail(
+            todoUpsert,
+            assignTodoTemplate,
+            MessagesConfig.todoCreate,
+          );
+        }),
+      );
+
+      return "Todos added";
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -449,10 +425,7 @@ export class TodoService {
     });
   }
 
-  private async resolveSubmodule(
-    entityReference: string,
-    filter?: FilterTodoDto,
-  ) {
+  private async resolveSubmodule(entityReference: string) {
     const model = getModelByEntityReference(entityReference);
 
     if (!model) {
@@ -504,5 +477,24 @@ export class TodoService {
         slug: masterSlug,
       },
     });
+  }
+
+  private async sendTodoEmail(
+    todo: GetTodoDto,
+    template: any,
+    message: string,
+  ) {
+    const { email, displayName } = await this.prisma.user.findFirst({
+      where: {
+        id: todo.responsibleId,
+      },
+    });
+
+    const templateData = {
+      displayName: displayName,
+      title: todo.title,
+    };
+
+    return this.mail.sendWithTemplate(template, templateData, [email], message);
   }
 }

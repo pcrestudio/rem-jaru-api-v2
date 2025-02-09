@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { PassportModule } from "@nestjs/passport";
 import { AzureAdStrategy } from "./strategies";
 import { AuthService } from "./auth.service";
@@ -19,7 +19,7 @@ import { UnlockUsersTask } from "./tasks/unlock-users.task";
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     PassportModule.register({ session: true }),
     JwtModule.register({
       secret: "your_jwt_secret",

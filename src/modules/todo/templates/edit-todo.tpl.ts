@@ -1,10 +1,9 @@
 import headerTemplate from "src/common/templates/headerTemplate";
 import footerTemplate from "src/common/templates/footerTemplate";
-import buttonTemplate from "src/common/templates/buttonTemplate";
 
 const frontendUrl = process.env.FRONTEND_URL;
 
-const passwordResetTemplate = (obj) => `${headerTemplate}
+const editTodoTemplate = (obj) => `${headerTemplate}
   <table align="center" border="0" cellpadding="0" cellspacing="0" class="row row-3" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;" width="100%">
     <tbody>
       <tr>
@@ -24,7 +23,7 @@ const passwordResetTemplate = (obj) => `${headerTemplate}
                               </strong>
                             </span>
                             <br/>
-                            <span style="word-break: break-word;">Cambio de contraseña</span>
+                            <span style="word-break: break-word;">El To-Do con el asunto: "${obj.title}" fue editado. Por favor verificalo antes de completarlo.</span>
                           </p>
                         </div>
                       </td>
@@ -49,7 +48,7 @@ const passwordResetTemplate = (obj) => `${headerTemplate}
                         <div style="font-family: sans-serif">
                           <div class="" style="font-size: 12px; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
                             <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 21px;">
-                              Hemos recibido una solicitud de cambio de contraseña.
+                              Verifica esta tarea en el siguiente enlace.
                               <span style="word-break: break-word; color: #a8bf6f; font-size: 14px;">
                                 <strong>
                                   <br/>
@@ -61,30 +60,43 @@ const passwordResetTemplate = (obj) => `${headerTemplate}
                       </td>
                     </tr>
                   </table>
-
-                  <table border="0" cellpadding="0" cellspacing="0" class="paragraph_block block-4" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;" width="100%">
-                    <tr>
-                      <td class="pad" style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:20px;">
-                        <div style="color:#0D0D0D;font-family:'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;font-size:14px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
-                          <p style="margin: 0; word-break: break-word;">ESTABLECE UNA CONTRASEÑA SEGURA</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
-                          
+                           
                   <table border="0" cellpadding="0" cellspacing="0" class="button_block block-5" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;" width="100%">
                     <tr>
                       <td class="pad" style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:25px;text-align:center;">
                         <div align="center" class="alignment">
-                          ${buttonTemplate({
-                            label: "RESTABLECER CONTRASEÑA",
-                            url: obj.resetUrl,
-                          })}
+                           <table
+                  align="center"
+                  border="0"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="
+                    background-color: #f8f8f8;
+                    border-radius: 4px;
+                    padding: 20px;
+                    margin: 0 auto 20px;
+                    max-width: 200px;
+                  "
+                >
+                  <tr>
+                    <td
+                      style="
+                        font-size: 28px;
+                        font-weight: 700;
+                        line-height: 1.2;
+                        color: #17293c;
+                        text-align: center;
+                        font-family: 'Montserrat', Arial, sans-serif;
+                      "
+                    >
+                      <a href="${frontendUrl}/admin/todos">Ir a Jaru Software</a>
+                    </td>
+                  </tr>
+                </table>
                         </div>
                       </td>
                     </tr>
                   </table>
-
                   <div class="spacer_block block-6" style="height:40px;line-height:40px;font-size:1px;"> </div>
                 </td>
               </tr>
@@ -97,4 +109,4 @@ const passwordResetTemplate = (obj) => `${headerTemplate}
 ${footerTemplate}
 `;
 
-export default passwordResetTemplate;
+export default editTodoTemplate;
