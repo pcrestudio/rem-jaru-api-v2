@@ -508,9 +508,7 @@ export class SupervisionService {
             headers: {
               default: angloDocHeader(bufferLogo),
             },
-            children: [],
-          },
-          {
+
             children: [
               tableTitle,
               table,

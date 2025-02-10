@@ -527,9 +527,6 @@ export class JudicialProcessService {
             headers: {
               default: angloDocHeader(bufferLogo),
             },
-            children: [],
-          },
-          {
             children: [
               tableTitle,
               table,
