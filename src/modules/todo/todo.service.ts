@@ -268,8 +268,8 @@ export class TodoService {
         : true;
 
       const matchesFileCode = filter.search
-        ? result.detail?.fileCode === filter.search
-        : true; // Esto permite que el filtro no afecte si no hay búsqueda
+        ? result.detail?.fileCode.includes(filter.search)
+        : true;
 
       return matchesModuleId && matchesSubmoduleId && matchesFileCode;
     });

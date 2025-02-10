@@ -1,8 +1,11 @@
-import { Paragraph, TableCell, TextRun, WidthType } from "docx";
+import { Paragraph, TableCell, TextRun, VerticalAlign, WidthType } from "docx";
 
 const AngloTableCell = (label: string, value: string) => [
   new TableCell({
     children: [new Paragraph(label)],
+    verticalAlign: VerticalAlign.CENTER,
+    width: { size: 4505, type: WidthType.DXA },
+    margins: { top: 200, bottom: 200, left: 200, right: 200 },
   }),
   new TableCell({
     children: [
@@ -11,7 +14,9 @@ const AngloTableCell = (label: string, value: string) => [
         alignment: "center",
       }),
     ],
-    width: { size: 50, type: WidthType.PERCENTAGE },
+    verticalAlign: VerticalAlign.CENTER,
+    width: { size: 4505, type: WidthType.DXA },
+    margins: { top: 200, bottom: 200, left: 200, right: 200 },
   }),
 ];
 
