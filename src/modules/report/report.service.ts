@@ -407,9 +407,12 @@ export class ReportService {
         const person = process[`${slug}`];
 
         const filterIds: number[] =
-          person?.split(", ").map((v) => Number(v)) ?? [];
+          person
+            ?.split(", ")
+            .map((v) => Number(v))
+            .filter((num) => !Number.isNaN(num)) ?? [];
 
-        if (filterIds) {
+        if (filterIds.length > 0) {
           const plaintiffs = await this.prisma.masterOption.findMany({
             where: {
               id: {

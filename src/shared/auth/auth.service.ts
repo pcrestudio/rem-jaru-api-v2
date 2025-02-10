@@ -32,8 +32,8 @@ export class AuthService {
     return this.config.get("APP_API_KEY") === apiKey;
   }
 
-  async requestPasswordReset(email: string) {
-    return this.passwordAuthService.requestPasswordReset(email);
+  async requestPasswordReset(email: string, authMethod?: string) {
+    return this.passwordAuthService.requestPasswordReset(email, authMethod);
   }
 
   async resetPassword(token: string, password: string) {

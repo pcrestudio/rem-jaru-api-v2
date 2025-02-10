@@ -24,7 +24,9 @@ import {
   Paragraph,
   Table,
   TableCell,
+  TableLayoutType,
   TableRow,
+  VerticalAlign,
   WidthType,
 } from "docx";
 import AngloTableCell from "../../common/utils/anglo_table_cell";
@@ -34,6 +36,7 @@ import { DataType } from "@prisma/client";
 import { ExportablesService } from "../exportables/exportables.service";
 import { searchableFields } from "../../config/submodule_searchableFields";
 import { ToggleJudicialProcessDto } from "../judicial_process/dto/toggle-judicial-process.dto";
+import capitalize from "../../utils/capitalize";
 
 @Injectable()
 export class SupervisionService {
@@ -237,8 +240,6 @@ export class SupervisionService {
       }),
     );
 
-    console.log(filterSupervision);
-
     return {
       results: filterSupervision,
       page,
@@ -354,25 +355,6 @@ export class SupervisionService {
           ExtendedAttributeConfig.sectionAttributeValues,
         );
 
-      const contingencyLevel =
-        UtilsService._getModuleAttributeOptionLabelBySlug(
-          supervision as unknown as GetModuleAttributeValueDto,
-          AttributeSlugConfig.supervisionContingencyLevel,
-          ExtendedAttributeConfig.sectionAttributeValues,
-        );
-
-      const provisionAmount = UtilsService._getModuleAttributeWithValueBySlug(
-        supervision as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.supervisionProvisionAmount,
-        ExtendedAttributeConfig.globalAttributeValues,
-      );
-
-      const payAmount = UtilsService._getModuleAttributeWithValueBySlug(
-        supervision as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.supervisionPayAmount,
-        ExtendedAttributeConfig.sectionAttributeValues,
-      );
-
       const comments = UtilsService._getModuleAttributeWithValueBySlug(
         supervision as unknown as GetModuleAttributeValueDto,
         AttributeSlugConfig.supervisionComments,
@@ -383,6 +365,11 @@ export class SupervisionService {
         supervision as unknown as GetModuleAttributeValueDto,
         AttributeSlugConfig.supervisionLawyerEmail,
         ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const plaintiffs = await UtilsService.getPlaintiffs(
+        supervision?.plaintiff,
+        this.prisma,
       );
 
       const rows = [
@@ -396,7 +383,7 @@ export class SupervisionService {
         new TableRow({
           children: AngloTableCell(
             "Sujeto demandado",
-            `${supervision.plaintiff} / ${supervision.demanded}`,
+            `${plaintiffs} / ${supervision.demanded}`,
           ),
         }),
         new TableRow({
@@ -418,13 +405,22 @@ export class SupervisionService {
           children: AngloTableCell("Criticidad del proceso", criticalProcess),
         }),
         new TableRow({
-          children: AngloTableCell("Nivel de contingencia", contingencyLevel),
+          children: AngloTableCell(
+            "Nivel de contingencia",
+            capitalize(supervision.contingencyLevel),
+          ),
         }),
         new TableRow({
-          children: AngloTableCell("Monto demandado", `S/. ${provisionAmount}`),
+          children: AngloTableCell(
+            "Monto demandado",
+            `S/. ${supervision.amount}`,
+          ),
         }),
         new TableRow({
-          children: AngloTableCell("Monto pagado", `S/. ${payAmount}`),
+          children: AngloTableCell(
+            "Monto pagado",
+            `S/. ${supervision.provisionAmount}`,
+          ),
         }),
         new TableRow({
           children: AngloTableCell("Correo de abogado", `${lawyerEmail}`),
@@ -435,6 +431,7 @@ export class SupervisionService {
         rows: rows,
         columnWidths: [4505, 4505],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const tableComments = new Table({
@@ -444,12 +441,15 @@ export class SupervisionService {
             children: [
               new TableCell({
                 children: [new Paragraph(comments)],
+                verticalAlign: VerticalAlign.CENTER,
+                margins: { top: 100, bottom: 100 },
               }),
             ],
           }),
         ],
         columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const tablePrincipalSituation = new Table({
@@ -465,6 +465,7 @@ export class SupervisionService {
         ],
         columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const tableTitle = new Table({
@@ -473,6 +474,7 @@ export class SupervisionService {
         ],
         columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const rowsHistorical = [];
@@ -497,6 +499,7 @@ export class SupervisionService {
         rows: rowsVersionHistorical,
         columnWidths: [4505, 4505],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const doc = new Document({

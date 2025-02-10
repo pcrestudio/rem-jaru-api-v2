@@ -7,6 +7,7 @@ import { GetHistoricalValueDto } from "./dto/get-historical-value.dto";
 import { AttributeSlugConfig } from "../config/attribute-slug.config";
 import { PrismaClient } from "@prisma/client";
 import { ModelType } from "../common/utils/entity_reference_mapping";
+import { isArray } from "class-validator";
 
 export class UtilsService {
   static _getModuleAttributeWithValueBySlug(
@@ -36,6 +37,17 @@ export class UtilsService {
 
     if (!findAttribute) {
       return "";
+    }
+
+    const shouldBeArray = isArray(findAttribute.value.split(", "));
+
+    if (shouldBeArray) {
+      const options = findAttribute.attribute.options;
+
+      return options
+        .filter((option) => findAttribute.value.includes(option.optionValue))
+        .map((option) => option.optionLabel)
+        .join(", ");
     }
 
     const option = findAttribute.attribute.options.find(
@@ -177,5 +189,23 @@ export class UtilsService {
 
       return o?.[k] ?? "";
     }, obj);
+  }
+
+  static async getPlaintiffs(plaintiff: string, prisma: PrismaClient) {
+    const filterIds: number[] =
+      plaintiff
+        ?.split(", ")
+        .map((v) => Number(v))
+        .filter((num) => !Number.isNaN(num)) ?? [];
+
+    const plaintiffs = await prisma.masterOption.findMany({
+      where: {
+        id: {
+          in: filterIds,
+        },
+      },
+    });
+
+    return plaintiffs.map((p) => p.name).join(", ");
   }
 }

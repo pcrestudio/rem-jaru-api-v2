@@ -15,6 +15,7 @@ import { MailService } from "../mail/mail.service";
 import createUserTemplate from "./templates/create-user.tpl";
 import { AuthService } from "../auth/auth.service";
 import { MessagesConfig } from "../../config/messages.config";
+import { AuthMethod } from "../../config/auth-method.config";
 
 @Injectable()
 export class UsersService {
@@ -123,8 +124,12 @@ export class UsersService {
         });
       }
 
+      if (userCreated.authMethod === AuthMethod.otp && payload.id)
+        return userCreated;
+
       const { token } = await this.authService.requestPasswordReset(
         userCreated.email,
+        userCreated.authMethod,
       );
 
       const templateData = {

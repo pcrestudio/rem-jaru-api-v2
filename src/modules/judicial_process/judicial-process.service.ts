@@ -13,7 +13,9 @@ import {
   Paragraph,
   Table,
   TableCell,
+  TableLayoutType,
   TableRow,
+  VerticalAlign,
   WidthType,
 } from "docx";
 import { FilterJudicialProcessDto } from "./dto/filter-judicial-process.dto";
@@ -34,6 +36,7 @@ import AngloSingleTableHeaderCell from "../../common/utils/anglo_table_single_he
 import { ExtendedAttributeConfig } from "../../config/extended-attribute.config";
 import { DataType } from "@prisma/client";
 import { searchableFields } from "../../config/submodule_searchableFields";
+import capitalize from "../../utils/capitalize";
 
 @Injectable()
 export class JudicialProcessService {
@@ -370,29 +373,15 @@ export class JudicialProcessService {
           ExtendedAttributeConfig.sectionAttributeValues,
         );
 
-      const contingencyLevel =
-        UtilsService._getModuleAttributeOptionLabelBySlug(
-          judicialProcess as unknown as GetModuleAttributeValueDto,
-          AttributeSlugConfig.contingencyLevel,
-          ExtendedAttributeConfig.sectionAttributeValues,
-        );
-
-      const provisionAmount = UtilsService._getModuleAttributeWithValueBySlug(
-        judicialProcess as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.provisionAmount,
-        ExtendedAttributeConfig.globalAttributeValues,
-      );
-
-      const payAmount = UtilsService._getModuleAttributeWithValueBySlug(
-        judicialProcess as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.payAmount,
-        ExtendedAttributeConfig.sectionAttributeValues,
-      );
-
       const lawyerEmail = UtilsService._getModuleAttributeWithValueBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
         AttributeSlugConfig.lawyerEmail,
         ExtendedAttributeConfig.sectionAttributeValues,
+      );
+
+      const plaintiffs = await UtilsService.getPlaintiffs(
+        judicialProcess?.plaintiff,
+        this.prisma,
       );
 
       const rows = [
@@ -409,7 +398,7 @@ export class JudicialProcessService {
         new TableRow({
           children: AngloTableCell(
             "Sujeto demandado",
-            `${judicialProcess.plaintiff} / ${judicialProcess.demanded}`,
+            `${plaintiffs} / ${judicialProcess.demanded}`,
           ),
         }),
         new TableRow({
@@ -431,13 +420,22 @@ export class JudicialProcessService {
           children: AngloTableCell("Criticidad del proceso", criticalProcess),
         }),
         new TableRow({
-          children: AngloTableCell("Nivel de contingencia", contingencyLevel),
+          children: AngloTableCell(
+            "Nivel de contingencia",
+            capitalize(judicialProcess.contingencyLevel),
+          ),
         }),
         new TableRow({
-          children: AngloTableCell("Monto demandado", `S/. ${provisionAmount}`),
+          children: AngloTableCell(
+            "Monto demandado",
+            `S/. ${judicialProcess.amount}`,
+          ),
         }),
         new TableRow({
-          children: AngloTableCell("Monto pagado", `S/. ${payAmount}`),
+          children: AngloTableCell(
+            "Monto provisionado",
+            `S/. ${judicialProcess.provisionAmount}`,
+          ),
         }),
         new TableRow({
           children: AngloTableCell("Correo de abogado", `${lawyerEmail}`),
@@ -448,6 +446,7 @@ export class JudicialProcessService {
         rows: rows,
         columnWidths: [4505, 4505],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const tableComments = new Table({
@@ -461,12 +460,15 @@ export class JudicialProcessService {
                     judicialProcess ? judicialProcess.comment : "-",
                   ),
                 ],
+                verticalAlign: VerticalAlign.CENTER,
+                margins: { top: 100, bottom: 100 },
               }),
             ],
           }),
         ],
         columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const tablePrincipalSituation = new Table({
@@ -482,6 +484,7 @@ export class JudicialProcessService {
         ],
         columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const tableTitle = new Table({
@@ -490,6 +493,7 @@ export class JudicialProcessService {
         ],
         columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const rowsHistorical = [];
@@ -514,6 +518,7 @@ export class JudicialProcessService {
         rows: rowsVersionHistorical,
         columnWidths: [4505, 4505],
         width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT,
       });
 
       const doc = new Document({

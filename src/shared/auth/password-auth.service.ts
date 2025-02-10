@@ -11,6 +11,7 @@ import { User } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
 import { MailService } from "../mail/mail.service";
 import passwordResetTemplate from "./templates/password-reset.tpl";
+import { AuthMethod } from "../../config/auth-method.config";
 
 @Injectable()
 export class PasswordAuthService {
@@ -78,7 +79,7 @@ export class PasswordAuthService {
     return { message: "Password has been reset successfully" };
   }
 
-  async requestPasswordReset(email: string) {
+  async requestPasswordReset(email: string, authMethod?: string) {
     const user = await this.userService.findByEmail(email);
     if (!user) {
       // For security, you might NOT throw an error here,
@@ -100,6 +101,11 @@ export class PasswordAuthService {
 
     // 4. Save user
     await this.userService.updateUser(user.id, user);
+
+    if (authMethod === AuthMethod.otp)
+      return {
+        message: "",
+      };
 
     // 5. Send email with reset link
     await this.sendResetEmail(user, resetToken);
