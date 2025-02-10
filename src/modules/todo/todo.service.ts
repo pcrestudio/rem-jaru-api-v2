@@ -157,10 +157,12 @@ export class TodoService {
     });
 
     const isSuperAdmin = user?.UserRole?.some(
-      (userRole) => userRole.role.name === RoleConfig["super-admin"],
+      (userRole) =>
+        userRole.role.name === RoleConfig["super-admin"] ||
+        userRole.role.name === RoleConfig.admin,
     );
 
-    // Si es superadmin, puede ver todos los to-dos
+    // Si es superadmin o admin puede ver todos los to-dos
     const whereFields = isSuperAdmin
       ? {} // No se filtra nada, ve todo
       : {
@@ -179,9 +181,6 @@ export class TodoService {
               : []),
           ],
         };
-
-    // Campos a buscar
-    const searchableFields = ["title", "description"];
 
     // Obtener los to-dos con paginación
     const { results, total, page, pageSize, totalPages } =
@@ -210,9 +209,7 @@ export class TodoService {
             },
           },
           whereFields,
-          search: filter.search,
         },
-        searchableFields,
       );
 
     // Procesamos los resultados
@@ -259,6 +256,8 @@ export class TodoService {
       }),
     );
 
+    console.log(filter);
+
     const filteredResults = processedResults.filter((result) => {
       const matchesModuleId = filter.moduleId
         ? result?.detail?.submodule?.module?.id === Number(filter.moduleId)
@@ -268,7 +267,11 @@ export class TodoService {
         ? result?.detail?.submodule?.id === Number(filter.submoduleId)
         : true;
 
-      return matchesModuleId && matchesSubmoduleId;
+      const matchesFileCode = filter.search
+        ? result.detail?.fileCode === filter.search
+        : true; // Esto permite que el filtro no afecte si no hay búsqueda
+
+      return matchesModuleId && matchesSubmoduleId && matchesFileCode;
     });
 
     return {
