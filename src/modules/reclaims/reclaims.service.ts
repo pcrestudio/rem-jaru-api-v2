@@ -27,10 +27,12 @@ export class ReclaimsService {
               contingencyPercentage: Number(reclaim.contingencyPercentage),
               provisionAmount: Number(reclaim.provisionAmount),
               provisionContingency: Number(reclaim.provisionContingency),
+              concept: reclaim.concept,
               ...additionalPayload,
             },
             update: {
               amount: Number(reclaim.amount),
+              concept: reclaim.concept,
               contingencyLevel: reclaim.contingencyLevel,
               contingencyPercentage: Number(reclaim.contingencyPercentage),
               provisionAmount: Number(reclaim.provisionAmount),

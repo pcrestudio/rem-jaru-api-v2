@@ -31,7 +31,10 @@ import AngloTableCell from "../../common/utils/anglo_table_cell";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
 import { UtilsService } from "../../utils/utils.service";
 import { GetModuleAttributeValueDto } from "../../utils/dto/get-module-attribute.value.dto";
-import AngloMultipleTableHeaderCell from "../../common/utils/anglo_table_header_cell";
+import AngloMultipleTableHeaderCell, {
+  tablePrincipalSituation,
+  tableTitle,
+} from "../../common/utils/anglo_table_header_cell";
 import AngloSingleTableHeaderCell from "../../common/utils/anglo_table_single_header_cell";
 import { ExtendedAttributeConfig } from "../../config/extended-attribute.config";
 import { DataType } from "@prisma/client";
@@ -233,47 +236,18 @@ export class JudicialProcessService {
       },
     };
 
-    const { results, page, totalPages, total, pageSize } =
-      await CustomPaginationService._getPaginationModel(
-        this.prisma,
-        EntityReferenceModel.JudicialProcess,
-        {
-          page: filter.page,
-          pageSize: filter.pageSize,
-          whereFields,
-          includeConditions,
-          search: filter.search,
-        },
-        searchableFields,
-      );
-
-    const filterJudicialProcess = await Promise.all(
-      results.map(async (judicialProcess) => {
-        const filterIds: number[] =
-          judicialProcess?.plaintiff.split(", ").map((v) => Number(v)) ?? [];
-
-        const plaintiffs = await this.prisma.masterOption.findMany({
-          where: {
-            id: {
-              in: filterIds.map((id) => id),
-            },
-          },
-        });
-
-        return {
-          ...judicialProcess,
-          plaintiff: plaintiffs.map((v) => v.name).join(", "),
-        };
-      }),
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      EntityReferenceModel.JudicialProcess,
+      {
+        page: filter.page,
+        pageSize: filter.pageSize,
+        whereFields,
+        includeConditions,
+        search: filter.search,
+      },
+      searchableFields,
     );
-
-    return {
-      results: filterJudicialProcess,
-      page,
-      totalPages,
-      pageSize,
-      total,
-    };
   }
 
   async getJudicialProcess(id: number) {
@@ -320,6 +294,7 @@ export class JudicialProcessService {
           project: true,
           secondaryResponsible: true,
           responsible: true,
+          submodule: true,
         },
       });
 
@@ -379,26 +354,36 @@ export class JudicialProcessService {
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
-      const plaintiffs = await UtilsService.getPlaintiffs(
-        judicialProcess?.plaintiff,
-        this.prisma,
-      );
-
       const rows = [
         AngloMultipleTableHeaderCell("Criterios claves", "Detalle"),
         new TableRow({
           children: AngloTableCell("ID Expediente", judicialProcess.fileCode),
         }),
         new TableRow({
+          children: AngloTableCell("Materia", judicialProcess.submodule.name),
+        }),
+        new TableRow({
           children: AngloTableCell(
-            "Materia",
+            "Moneda",
             judicialProcess.controversialMatter,
           ),
         }),
         new TableRow({
           children: AngloTableCell(
+            "Sujeto demandante",
+            `${judicialProcess.plaintiff}`,
+          ),
+        }),
+        new TableRow({
+          children: AngloTableCell(
             "Sujeto demandado",
-            `${plaintiffs} / ${judicialProcess.demanded}`,
+            `${judicialProcess.demanded}`,
+          ),
+        }),
+        new TableRow({
+          children: AngloTableCell(
+            "Co-demandado",
+            `${judicialProcess.coDefendant}`,
           ),
         }),
         new TableRow({
@@ -471,47 +456,9 @@ export class JudicialProcessService {
         layout: TableLayoutType.AUTOFIT,
       });
 
-      const tablePrincipalSituation = new Table({
-        rows: [
-          AngloSingleTableHeaderCell("Principales Actuados", "347ff6"),
-          new TableRow({
-            children: [
-              new TableCell({
-                children: [new Paragraph(principalSituation)],
-              }),
-            ],
-          }),
-        ],
-        columnWidths: [9010],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT,
-      });
-
-      const tableTitle = new Table({
-        rows: [
-          AngloSingleTableHeaderCell("FICHA DE RESUMEN DE PROCESOS", "031795"),
-        ],
-        columnWidths: [9010],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT,
-      });
-
-      const rowsHistorical = [];
-
-      for (const historical of historicalVersion) {
-        const row = new TableRow({
-          children: AngloTableCell(
-            historical.sectionAttribute.attribute.label,
-            historical.oldValue,
-          ),
-        });
-
-        rowsHistorical.push(row);
-      }
-
       const rowsVersionHistorical = [
         AngloSingleTableHeaderCell("Historial de versiones", "347ff6"),
-        ...rowsHistorical,
+        ...UtilsService.generateHistorical(historicalVersion),
       ];
 
       const tableVersionHistorical = new Table({
@@ -531,7 +478,7 @@ export class JudicialProcessService {
               tableTitle,
               table,
               tableComments,
-              tablePrincipalSituation,
+              tablePrincipalSituation(principalSituation),
               tableVersionHistorical,
             ],
           },

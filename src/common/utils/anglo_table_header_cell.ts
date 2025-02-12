@@ -1,11 +1,37 @@
 import {
   Paragraph,
   ShadingType,
+  Table,
   TableCell,
+  TableLayoutType,
   TableRow,
-  TextRun,
   WidthType,
 } from "docx";
+import AngloSingleTableHeaderCell from "./anglo_table_single_header_cell";
+
+export const tablePrincipalSituation = (principalSituation: string) =>
+  new Table({
+    rows: [
+      AngloSingleTableHeaderCell("Principales Actuados", "347ff6"),
+      new TableRow({
+        children: [
+          new TableCell({
+            children: [new Paragraph(principalSituation)],
+          }),
+        ],
+      }),
+    ],
+    columnWidths: [9010],
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.AUTOFIT,
+  });
+
+export const tableTitle = new Table({
+  rows: [AngloSingleTableHeaderCell("FICHA DE RESUMEN DE PROCESOS", "031795")],
+  columnWidths: [9010],
+  width: { size: 100, type: WidthType.PERCENTAGE },
+  layout: TableLayoutType.AUTOFIT,
+});
 
 const AngloMultipleTableHeaderCell = (
   firstLabel: string,

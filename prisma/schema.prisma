@@ -258,6 +258,7 @@ model Reclaim {
   amount                Float     @default(0) // Monto
   contingencyPercentage Int?      @default(0) // Porcentaje de contingencia estimado
   contingencyLevel      String?   @default("") // Nivel de contigencia
+  concept               String?   @default("") // Concepto
   provisionContingency  Int?      @default(0) // Provisión estimada
   provisionAmount       Float?    @default(0) // Monto provisionado
   createdAt             DateTime? @default(now())

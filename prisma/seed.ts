@@ -144,8 +144,8 @@ const mastersSeed: UpsertMasterDto[] = [
     slug: MasterOptionConfig.proyectos,
   },
   {
-    name: "Materia controvertida",
-    slug: MasterOptionConfig.materia,
+    name: "Moneda",
+    slug: MasterOptionConfig.moneda,
   },
 ];
 
@@ -574,8 +574,16 @@ async function main() {
 
     await prisma.masterOption.create({
       data: {
-        name: "Moneda",
-        slug: "moneda",
+        name: "Soles",
+        slug: "soles",
+        masterId: mastersSet[2].id,
+      },
+    });
+
+    await prisma.masterOption.create({
+      data: {
+        name: "Dólares",
+        slug: "dolares",
         masterId: mastersSet[2].id,
       },
     });

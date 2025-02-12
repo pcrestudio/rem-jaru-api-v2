@@ -10,6 +10,9 @@ export class UpsertReclaimDto {
   @IsString()
   contingencyLevel: string;
 
+  @IsString()
+  concept: string;
+
   @IsNumber()
   provisionContingency: number;
 

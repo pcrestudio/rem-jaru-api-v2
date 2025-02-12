@@ -1,5 +1,5 @@
 export enum MasterOptionConfig {
-  materia = "materia-controvertida",
+  moneda = "moneda",
   estudios = "estudios-a-cargo",
   proyectos = "proyectos",
   proyectosGeneral = "proyecto-general",

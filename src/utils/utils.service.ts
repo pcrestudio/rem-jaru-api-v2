@@ -8,6 +8,8 @@ import { AttributeSlugConfig } from "../config/attribute-slug.config";
 import { PrismaClient } from "@prisma/client";
 import { ModelType } from "../common/utils/entity_reference_mapping";
 import { isArray } from "class-validator";
+import { TableRow } from "docx";
+import AngloTableCell from "../common/utils/anglo_table_cell";
 
 export class UtilsService {
   static _getModuleAttributeWithValueBySlug(
@@ -207,5 +209,22 @@ export class UtilsService {
     });
 
     return plaintiffs.map((p) => p.name).join(", ");
+  }
+
+  static generateHistorical(historicalVersion: any[]) {
+    const rowsHistorical = [];
+
+    for (const historical of historicalVersion) {
+      const row = new TableRow({
+        children: AngloTableCell(
+          historical.sectionAttribute.attribute.label,
+          historical.oldValue,
+        ),
+      });
+
+      rowsHistorical.push(row);
+    }
+
+    return rowsHistorical;
   }
 }
