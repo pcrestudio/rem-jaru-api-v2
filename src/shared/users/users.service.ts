@@ -127,22 +127,12 @@ export class UsersService {
       if (userCreated.authMethod === AuthMethod.otp && payload.id)
         return userCreated;
 
-      const { token } = await this.authService.requestPasswordReset(
-        userCreated.email,
-        userCreated.authMethod,
-      );
-
-      const templateData = {
-        displayName: userCreated.displayName,
-        token,
-      };
-
-      await this.mail.sendWithTemplate(
-        createUserTemplate,
-        templateData,
-        [userCreated.email],
-        MessagesConfig.userCreate,
-      );
+      if (!payload.id) {
+        await this.authService.requestPasswordReset(
+          userCreated.email,
+          userCreated.authMethod,
+        );
+      }
 
       return userCreated;
     } catch (error) {
