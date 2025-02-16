@@ -63,6 +63,7 @@ export class AuthService {
     const valid_user = await this.prisma.user.findFirst({
       where: { email: user.email, isActive: true, isLocked: false },
       include: {
+        studio: true,
         UserRole: {
           include: {
             role: {
@@ -92,11 +93,8 @@ export class AuthService {
     if (!user) {
       user = await this.usersService.creteAzureADUser({
         email: email,
-
         displayName: profile.displayName,
-
         lastLogon: new Date(),
-
         isActive: true,
       });
     } else {
@@ -118,6 +116,8 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       displayName: user.displayName,
+      studioId: user.studioId ?? 0,
+      studio: user.studio ?? null,
       role: user.UserRole.length > 0 ? user.UserRole[0].role.name : "",
     };
 

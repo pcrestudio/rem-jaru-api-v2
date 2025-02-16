@@ -136,10 +136,6 @@ const situationAnaSupervisionSeed: CreateMasterOptionDto[] = [
 
 const mastersSeed: UpsertMasterDto[] = [
   {
-    name: "Estudios a cargo",
-    slug: MasterOptionConfig.estudios,
-  },
-  {
     name: "Proyectos",
     slug: MasterOptionConfig.proyectos,
   },
@@ -374,7 +370,7 @@ const angloamericanStudioSeed: CreateMasterOptionDto[] = [
   },
   {
     name: "Estudio CUATRECASAS",
-    slug: "rem",
+    slug: "cuatrecasas",
   },
   {
     name: "Estudio GRAU",
@@ -531,6 +527,25 @@ async function main() {
       }
     });
 
+    // Empieza la creación de maestro estudios de manera general
+    const studioMaster = await prisma.master.create({
+      data: {
+        name: "Estudios",
+        slug: MasterOptionConfig.estudios,
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const studio of angloamericanStudioSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...studio,
+            masterId: studioMaster.id,
+          },
+        });
+      }
+    });
+
     // Empieza la creación de maestro situación
     const situationMaster = await prisma.master.create({
       data: {
@@ -553,22 +568,11 @@ async function main() {
 
     // finaliza la creación de maestro de situación
 
-    await prisma.$transaction(async (tx) => {
-      for (const studio of angloamericanStudioSeed) {
-        await tx.masterOption.create({
-          data: {
-            ...studio,
-            masterId: mastersSet[0].id,
-          },
-        });
-      }
-    });
-
     await prisma.masterOption.create({
       data: {
         name: "Proyecto #1",
         slug: "proyecto-1",
-        masterId: mastersSet[1].id,
+        masterId: mastersSet[0].id,
       },
     });
 
@@ -576,7 +580,7 @@ async function main() {
       data: {
         name: "Soles",
         slug: "soles",
-        masterId: mastersSet[2].id,
+        masterId: mastersSet[1].id,
       },
     });
 
@@ -584,7 +588,7 @@ async function main() {
       data: {
         name: "Dólares",
         slug: "dolares",
-        masterId: mastersSet[2].id,
+        masterId: mastersSet[1].id,
       },
     });
 

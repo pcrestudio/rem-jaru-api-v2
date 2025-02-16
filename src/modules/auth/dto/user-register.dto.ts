@@ -26,5 +26,9 @@ export class UpsertRegisterDto {
 
   @IsNumber()
   @IsOptional()
+  studioId?: number;
+
+  @IsNumber()
+  @IsOptional()
   id?: number;
 }

@@ -63,7 +63,7 @@ export class JudicialProcessService {
         coDefendant: judicialProcess.coDefendant,
         controversialMatter: judicialProcess.controversialMatter,
         projectId: judicialProcess.projectId,
-        cargoStudioId: judicialProcess.cargoStudioId,
+        cargoStudioId: Number(judicialProcess.cargoStudioId),
         amount: judicialProcess.amount,
         responsibleId: judicialProcess.responsibleId,
         secondaryResponsibleId: judicialProcess.secondaryResponsibleId,

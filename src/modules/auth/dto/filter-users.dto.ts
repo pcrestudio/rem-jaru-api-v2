@@ -2,4 +2,5 @@ import { FilterCustomPaginationDto } from "../../custom_pagination/dto/fiter-cus
 
 export interface FilterUsersDto extends FilterCustomPaginationDto {
   search?: string;
+  studioId?: number;
 }

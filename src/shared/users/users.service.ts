@@ -75,6 +75,7 @@ export class UsersService {
           lastName: payload.lastName,
           authMethod: payload.authMethod,
           displayName: payload.displayName,
+          studioId: payload.studioId ?? null,
         },
         update: {
           email: payload.email,
@@ -82,6 +83,7 @@ export class UsersService {
           lastName: payload.lastName,
           authMethod: payload.authMethod,
           displayName: payload.displayName,
+          studioId: payload.studioId ?? null,
         },
         where: {
           id: payload.id ? Number(payload.id) : 0,
@@ -163,6 +165,14 @@ export class UsersService {
   }
 
   async getUsers(filter: FilterUsersDto) {
+    let whereFields = {};
+
+    if (filter.studioId) {
+      whereFields = {
+        studioId: Number(filter.studioId),
+      };
+    }
+
     return CustomPaginationService._getPaginationModel(
       this.prisma,
       EntityReferenceModel.User,
@@ -170,12 +180,14 @@ export class UsersService {
         page: filter.page,
         pageSize: filter.pageSize,
         includeConditions: {
+          studio: true,
           UserRole: {
             include: {
               role: true,
             },
           },
         },
+        whereFields,
       },
     );
   }

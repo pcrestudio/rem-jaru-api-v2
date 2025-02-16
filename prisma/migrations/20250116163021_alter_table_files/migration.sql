@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE `StepData` ADD COLUMN `fileFive` VARCHAR(191) NULL,
-    ADD COLUMN `fileFour` VARCHAR(191) NULL,
-    ADD COLUMN `fileThree` VARCHAR(191) NULL,
-    ADD COLUMN `fileTwo` VARCHAR(191) NULL;

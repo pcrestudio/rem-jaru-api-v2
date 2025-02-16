@@ -9,4 +9,5 @@ export interface FilterTodoDto extends FilterCustomPaginationDto {
   responsibleId: number;
   submoduleId: number;
   moduleId: number;
+  cargoStudioId?: number;
 }

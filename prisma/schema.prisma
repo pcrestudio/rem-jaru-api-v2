@@ -53,6 +53,9 @@ model User {
   createdBy            String?   @db.VarChar(50)
   updatedAt            DateTime? @updatedAt
   updatedBy            String?   @db.VarChar(50)
+  studioId             Int?
+
+  studio MasterOption? @relation(fields: [studioId], references: [id])
 
   UserRole        UserRole[]
   PasswordHistory PasswordHistory[]
@@ -170,6 +173,7 @@ model MasterOption {
   supervisionProjects    Supervision[] @relation("SupervisionProjectRelation")
   supervisionAuthorities Supervision[] @relation("SupervisionAuthorityRelation")
   supervisionSituation   Supervision[] @relation("SupervisionSituationRelation")
+  user                   User[]
 }
 
 model JudicialProcess {

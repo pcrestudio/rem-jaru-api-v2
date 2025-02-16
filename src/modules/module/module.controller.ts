@@ -27,9 +27,9 @@ export class ModuleController {
     return this.moduleService.getSubmodulesBySlug(slug);
   }
 
-  @Get("submodules/autocomplete/:id")
-  async getSubmodulesById(@Param("id") id: string) {
-    return this.moduleService.getSubmodulesById(Number(id));
+  @Get("submodules/autocomplete/:modelName")
+  async getSubmodulesById(@Param("modelName") modelName: string) {
+    return this.moduleService.getSubmodulesByName(modelName);
   }
 
   @Get("submodules/all")

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `User` MODIFY `passwordChangedAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3);

@@ -1,8 +1,8 @@
 export interface FilterReportDto {
-  moduleId: number;
+  moduleId: string;
   submoduleId: number;
   projectId: number;
   responsibleId: number;
-  cargoStudioId: number;
+  cargoStudioId?: string;
   tabSlug?: string;
 }

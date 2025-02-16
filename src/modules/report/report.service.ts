@@ -14,12 +14,10 @@ export class ReportService {
   constructor(private prisma: PrismaService) {}
 
   async getInitReportByFilter(filter: FilterReportDto) {
-    const moduleId = Number(filter.moduleId ?? 0);
-
     const allData = await this.prisma.module.findMany({
       where: {
-        id: moduleId,
         isActive: true,
+        name: filter.moduleId,
       },
       include: {
         Submodule: {
@@ -32,6 +30,9 @@ export class ReportService {
           },
           include: {
             JudicialProcess: {
+              where: filter.cargoStudioId
+                ? { cargoStudioId: Number(filter.cargoStudioId) }
+                : {},
               include: {
                 sectionAttributeValues: {
                   where: {
@@ -73,6 +74,9 @@ export class ReportService {
               },
             },
             Supervision: {
+              where: filter.cargoStudioId
+                ? { cargoStudioId: Number(filter.cargoStudioId) }
+                : {},
               include: {
                 sectionAttributeValues: {
                   where: {
@@ -130,9 +134,15 @@ export class ReportService {
         : AttributeSlugConfig.criticalProcess,
     );
 
-    const matters = await this.getMattersReport(moduleId);
+    const matters = await this.getMattersReport(
+      filter,
+      Number(filter.cargoStudioId),
+    );
 
-    const instances = await this.getInstancesReport(allData);
+    const instances = await this.getInstancesReport(
+      allData,
+      Number(filter.cargoStudioId),
+    );
 
     const studios = await this.getReportByStudio(filter);
 
@@ -188,11 +198,18 @@ export class ReportService {
       reportTodos.push({ ...detail, todo });
     }
 
-    const filterTodos = reportTodos.filter(
-      (todo) =>
+    const filterTodos = reportTodos.filter((todo) => {
+      const matchesSubmodule =
         todo.submoduleId === Number(filter.submoduleId) &&
-        todo.submodule.module.id === Number(filter.moduleId),
-    );
+        todo.submodule.module.name === filter.moduleId;
+
+      // Filtramos por cargoStudioId solo si existe en el filtro
+      const matchesCargoStudio = filter.cargoStudioId
+        ? todo.cargoStudioId === Number(filter.cargoStudioId)
+        : true;
+
+      return matchesSubmodule && matchesCargoStudio;
+    });
 
     return this._countTotalStates(filterTodos);
   }
@@ -237,6 +254,8 @@ export class ReportService {
         return detail ? { ...value, submodule: detail.submodule } : null;
       }),
     );
+
+    console.log(resolvedDetails);
 
     const validDetails = resolvedDetails.filter(Boolean);
 
@@ -287,41 +306,40 @@ export class ReportService {
   }
 
   async getReportByResponsible(filter: FilterReportDto) {
+    const whereFilters: any = {};
+
+    if (filter.responsibleId) {
+      whereFilters.responsibleId = Number(filter.responsibleId);
+    }
+
+    if (filter.cargoStudioId) {
+      whereFilters.cargoStudioId = Number(filter.cargoStudioId);
+    }
+
     const moduleData = await this.prisma.module.findFirst({
-      where: {
-        id: Number(filter.moduleId),
-      },
+      where: { name: filter.moduleId },
       select: {
         id: true,
         Submodule: {
           where: filter.submoduleId
             ? { id: Number(filter.submoduleId) }
             : undefined,
-          include: {
+          select: {
+            id: true,
             JudicialProcess: {
-              where: filter.responsibleId
-                ? { responsibleId: Number(filter.responsibleId) }
-                : undefined,
-              select: {
-                responsibleId: true,
-                responsible: true,
-              },
+              where: whereFilters, // Filtra por responsable y cargoStudioId
+              select: { responsibleId: true, responsible: true },
             },
             Supervision: {
-              where: filter.responsibleId
-                ? { responsibleId: Number(filter.responsibleId) }
-                : undefined,
-              select: {
-                responsibleId: true,
-                responsible: true,
-              },
+              where: whereFilters, // Filtra por responsable y cargoStudioId
+              select: { responsibleId: true, responsible: true },
             },
           },
         },
       },
     });
 
-    if (!module) {
+    if (!moduleData) {
       throw new NotFoundException(
         `No data found for module with id ${filter.moduleId}`,
       );
@@ -335,28 +353,24 @@ export class ReportService {
 
     const result: Record<string, number> = {};
 
-    moduleData.Submodule.forEach((submodule: any) => {
+    for (const submodule of moduleData.Submodule) {
       const combinedProcesses = [
         ...submodule.JudicialProcess,
         ...submodule.Supervision,
       ];
 
-      combinedProcesses.forEach((process: any) => {
+      for (const process of combinedProcesses) {
         const responsible = process.responsible;
+
+        if (!responsible) continue; // Si no hay responsable, lo ignoramos
+
         const fullName = `${responsible.firstName} ${responsible.lastName}`;
 
-        if (result[fullName]) {
-          result[fullName]++;
-        } else {
-          result[fullName] = 1;
-        }
-      });
-    });
+        result[fullName] = (result[fullName] || 0) + 1;
+      }
+    }
 
-    return Object.entries(result).map(([name, count]) => ({
-      name,
-      count,
-    }));
+    return Object.entries(result).map(([name, count]) => ({ name, count }));
   }
 
   async getReportByDemandedOrPlaintiff(filter: FilterReportDto) {
@@ -364,9 +378,13 @@ export class ReportService {
       .replace("by", "")
       .replace(/^\w/, (c) => c.toLowerCase());
 
+    const whereStudio = filter.cargoStudioId
+      ? { cargoStudioId: Number(filter.cargoStudioId) }
+      : {};
+
     const processData = await this.prisma.module.findFirst({
       where: {
-        id: Number(filter.moduleId),
+        name: filter.moduleId,
       },
       select: {
         id: true,
@@ -376,8 +394,10 @@ export class ReportService {
             : undefined,
           select: {
             id: true,
-            JudicialProcess: true,
-            Supervision: true,
+            JudicialProcess: {
+              where: whereStudio,
+            },
+            Supervision: { where: whereStudio },
           },
         },
       },
@@ -406,34 +426,10 @@ export class ReportService {
       for (const process of combinedProcesses) {
         const person = process[`${slug}`];
 
-        const filterIds: number[] =
-          person
-            ?.split(", ")
-            .map((v) => Number(v))
-            .filter((num) => !Number.isNaN(num)) ?? [];
-
-        if (filterIds.length > 0) {
-          const plaintiffs = await this.prisma.masterOption.findMany({
-            where: {
-              id: {
-                in: filterIds,
-              },
-            },
-          });
-
-          const personNames = plaintiffs.map((p) => p.name).join(", ");
-
-          if (result[personNames]) {
-            result[personNames]++;
-          } else {
-            result[personNames] = 1;
-          }
+        if (result[person]) {
+          result[person]++;
         } else {
-          if (result[person]) {
-            result[person]++;
-          } else {
-            result[person] = 1;
-          }
+          result[person] = 1;
         }
       }
     }
@@ -447,7 +443,7 @@ export class ReportService {
   async getReportByStudio(filter: FilterReportDto) {
     const studioData = await this.prisma.module.findFirst({
       where: {
-        id: Number(filter.moduleId),
+        name: filter.moduleId,
       },
       select: {
         id: true,
@@ -545,7 +541,7 @@ export class ReportService {
 
     if (filter.moduleId) {
       whereClause.AND.push({
-        submodule: { module: { id: Number(filter.moduleId) } },
+        submodule: { module: { name: filter.moduleId } },
       });
     }
 
@@ -651,21 +647,28 @@ export class ReportService {
     return total;
   }
 
-  private async getMattersReport(moduleId: number) {
+  private async getMattersReport(
+    filter?: FilterReportDto,
+    cargoStudioId?: number,
+  ) {
     const report = await this.prisma.module.findMany({
       select: {
         Submodule: {
           where: {
             module: {
-              id: moduleId,
+              name: filter.moduleId,
             },
           },
           select: {
             name: true,
             _count: {
               select: {
-                JudicialProcess: true,
-                Supervision: true,
+                JudicialProcess: cargoStudioId
+                  ? { where: { cargoStudioId } }
+                  : true,
+                Supervision: cargoStudioId
+                  ? { where: { cargoStudioId } }
+                  : true,
               },
             },
           },
@@ -685,7 +688,7 @@ export class ReportService {
     });
   }
 
-  private async getInstancesReport(allData: any) {
+  private async getInstancesReport(allData: any, cargoStudioId?: number) {
     const id = allData[0].id;
 
     // Step 1: Fetch all instances for the module
@@ -701,30 +704,34 @@ export class ReportService {
       return acc;
     }, {});
 
-    // Step 3: Track the latest step and instance for each record
+    // Paso 3: Iterar sobre los datos y contar instancias filtradas por cargoStudioId si existe
     for (const report of allData) {
       for (const submodule of report.Submodule) {
         if (submodule.JudicialProcess) {
           submodule.JudicialProcess.forEach((jp) => {
-            // Assume stepData is ordered by time (latest step is last)
-            const latestStepData = jp.stepData[jp.stepData.length - 1];
-            const instanceName = latestStepData?.step.instance.name;
+            // Filtrar por cargoStudioId si está definido
+            if (!cargoStudioId || jp.cargoStudioId === cargoStudioId) {
+              const latestStepData = jp.stepData[jp.stepData.length - 1];
+              const instanceName = latestStepData?.step.instance.name;
 
-            if (instanceCounts.hasOwnProperty(instanceName)) {
-              instanceCounts[instanceName]++;
+              if (instanceCounts.hasOwnProperty(instanceName)) {
+                instanceCounts[instanceName]++;
+              }
             }
           });
         }
 
         if (submodule.Supervision) {
           submodule.Supervision.forEach((supervision) => {
-            // Assume stepData is ordered by time (latest step is last)
-            const latestStepData =
-              supervision.stepData[supervision.stepData.length - 1];
-            const instanceName = latestStepData?.step.instance.name;
+            // Filtrar por cargoStudioId si está definido
+            if (!cargoStudioId || supervision.cargoStudioId === cargoStudioId) {
+              const latestStepData =
+                supervision.stepData[supervision.stepData.length - 1];
+              const instanceName = latestStepData?.step.instance.name;
 
-            if (instanceCounts.hasOwnProperty(instanceName)) {
-              instanceCounts[instanceName]++;
+              if (instanceCounts.hasOwnProperty(instanceName)) {
+                instanceCounts[instanceName]++;
+              }
             }
           });
         }

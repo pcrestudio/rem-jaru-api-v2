@@ -47,10 +47,10 @@ export class ModuleService {
     });
   }
 
-  async getSubmodulesById(id: number) {
+  async getSubmodulesByName(modelName: string) {
     const module_id = await this.prisma.module.findFirst({
       where: {
-        id: id ?? 0,
+        name: modelName,
       },
     });
 

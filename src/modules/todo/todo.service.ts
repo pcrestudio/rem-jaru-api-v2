@@ -256,8 +256,6 @@ export class TodoService {
       }),
     );
 
-    console.log(filter);
-
     const filteredResults = processedResults.filter((result) => {
       const matchesModuleId = filter.moduleId
         ? result?.detail?.submodule?.module?.id === Number(filter.moduleId)
@@ -271,7 +269,18 @@ export class TodoService {
         ? result.detail?.fileCode.includes(filter.search)
         : true;
 
-      return matchesModuleId && matchesSubmoduleId && matchesFileCode;
+      const matchesStudio = isSuperAdmin
+        ? true
+        : filter.cargoStudioId
+          ? result.detail?.cargoStudioId === Number(filter.cargoStudioId)
+          : false;
+
+      return (
+        matchesModuleId &&
+        matchesSubmoduleId &&
+        matchesFileCode &&
+        matchesStudio
+      );
     });
 
     return {
