@@ -1,6 +1,7 @@
-import { Body, Controller, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { ReclaimsService } from "./reclaims.service";
 import { UpsertReclaimDto } from "./dto/upsert-reclaim.dto";
+import { FilterCustomPaginationDto } from "../custom_pagination/dto/fiter-custom-pagination.dto";
 
 @Controller("reclaims")
 export class ReclaimsController {
@@ -13,5 +14,10 @@ export class ReclaimsController {
     @Query("modelType") modelType: string,
   ) {
     return this.reclaims.upsert(reclaims, entityReference, modelType);
+  }
+
+  @Get("")
+  getReclaims(@Query() filter: FilterCustomPaginationDto) {
+    return this.reclaims.getReclaims(filter);
   }
 }

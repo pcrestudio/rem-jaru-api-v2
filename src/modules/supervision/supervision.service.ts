@@ -505,7 +505,13 @@ export class SupervisionService {
     });
 
     const headers = [
-      { key: "project.name", header: "Proyecto" },
+      { key: "fileCode", header: "Código de judicialProcess" },
+      { key: "demanded", header: "Demandante" },
+      { key: "plaintiff", header: "Demandado" },
+      { key: "coDefendant", header: "Co-demandado" },
+      { key: "responsible.displayName", header: "Responsable" },
+      { key: "project.name", header: "Razón social" },
+      { key: "studio.name", header: "Estudio" },
       { key: "authority.name", header: "Estudio" },
       { key: "situation.name", header: "Situación" },
       { key: "responsible.displayName", header: "Responsable" },

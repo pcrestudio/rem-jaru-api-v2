@@ -26,6 +26,7 @@ export class EditSupervisionDto {
   plaintiff: string;
 
   @IsString()
+  @IsOptional()
   coDefendant: string;
 
   @IsNumber()

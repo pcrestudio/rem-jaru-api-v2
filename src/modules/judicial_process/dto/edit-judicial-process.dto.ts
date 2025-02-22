@@ -38,6 +38,7 @@ export class EditJudicialProcessDto {
   plaintiff: string;
 
   @IsString()
+  @IsOptional()
   coDefendant: string;
 
   @IsString()

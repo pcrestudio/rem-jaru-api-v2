@@ -144,7 +144,10 @@ export class AttributeValuesController {
 
   @Get("sections")
   async getSections(@Query() query: SectionQuery) {
-    return this.attributeValuesService.getSections(Number(query.moduleId));
+    return this.attributeValuesService.getSections(
+      Number(query.moduleId),
+      Number(query.submoduleId),
+    );
   }
 
   @Get("section/attributes")

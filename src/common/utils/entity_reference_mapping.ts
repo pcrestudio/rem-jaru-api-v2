@@ -7,6 +7,7 @@ export enum EntityReferenceModel {
   Roles = "UserRole",
   Role = "Role",
   CEJ_ACTUACIONES = "cEJ_ExpedientesActuaciones",
+  Reclaim = "Reclaim",
 }
 
 export enum ModelType {

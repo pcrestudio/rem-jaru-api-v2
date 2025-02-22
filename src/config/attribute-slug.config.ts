@@ -16,6 +16,7 @@ export enum AttributeSlugConfig {
   lastDate = "lastDate", //fecha de actualizacion
   lastSituation = "lastSituation", //ultimo actuado
   nextSituation = "nextSituation", // proxima acción
+  internalSpecialist = "internalSpecialist",
   supervisionAmount = "supervisionAmount",
   supervisionProvisionContingency = "supervisionProvisionContingency",
   supervisionProvisionAmount = "supervisionProvisionAmount",
@@ -34,4 +35,5 @@ export enum AttributeSlugConfig {
   supervisionLastDate = "supervisionLastDate", //fecha de actualizacion
   supervisionLastSituation = "supervisionLastSituation", //ultimo actuado
   supervisionNextSituation = "supervisionNextSituation", // proxima acción
+  supervisionInternalSpecialist = "supervisionInternalSpecialist",
 }

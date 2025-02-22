@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { FilterReportDto } from "./dto/filter-report.dto";
 import {
@@ -21,13 +25,6 @@ export class ReportService {
       },
       include: {
         Submodule: {
-          where: {
-            name: {
-              not: {
-                contains: "Penales",
-              },
-            },
-          },
           include: {
             JudicialProcess: {
               where: filter.cargoStudioId
@@ -127,11 +124,16 @@ export class ReportService {
 
     const contingencies = await this.getContingenciesLevel(allData);
 
-    const criticalProcesses = this.countBySlug(
+    const criticalProcesses = await this.getTotalByAttributeOptionSlug(
       allData,
       allData[0].name === "Supervisiones"
         ? AttributeSlugConfig.supervisionCriticalProcess
         : AttributeSlugConfig.criticalProcess,
+    );
+
+    const internalSpecialists = await this.getTotalValueBySlug(
+      allData,
+      AttributeSlugConfig.internalSpecialist,
     );
 
     const matters = await this.getMattersReport(
@@ -152,6 +154,9 @@ export class ReportService {
       },
       amountSum: {
         report: amountSum,
+      },
+      internalSpecialists: {
+        report: internalSpecialists,
       },
       contingencies: {
         report: contingencies,
@@ -254,8 +259,6 @@ export class ReportService {
         return detail ? { ...value, submodule: detail.submodule } : null;
       }),
     );
-
-    console.log(resolvedDetails);
 
     const validDetails = resolvedDetails.filter(Boolean);
 
@@ -679,11 +682,8 @@ export class ReportService {
     const matters = report.filter((matter) => matter.Submodule.length > 0);
 
     return matters.map((matter) => {
-      const Submodule = matter["Submodule"].filter((v) => v.name !== "Penales");
-
       return {
         ...matter,
-        Submodule,
       };
     });
   }
@@ -745,117 +745,71 @@ export class ReportService {
     }));
   }
 
-  private countBySlug(data: any, slug: string) {
-    // Step 1: Initialize a counter object
+  private async getTotalValueBySlug(data: any, slug: string) {
+    const values = await this.prisma.sectionAttributeValue.findMany({
+      where: { attribute: { slug: slug } },
+    });
+
     const counter = {};
 
-    // Step 2: Get all optionLabel and initialize counts to 0
+    if (values.length < 1) {
+      throw new BadRequestException({
+        message: "Insufficient attribute count",
+      });
+    }
+
+    values.forEach((option) => {
+      counter[option.value] = 0;
+    });
+
+    values.forEach(({ value }) => {
+      if (value) {
+        counter[value]++;
+      }
+    });
+
+    return Object.keys(counter).map((optionLabel) => ({
+      name: optionLabel,
+      _count: { group: counter[optionLabel] },
+    }));
+  }
+
+  private async getTotalByAttributeOptionSlug(data: any, slug: string) {
+    const options = await this.prisma.sectionAttributeOption.findMany({
+      where: { attribute: { slug: slug } },
+    });
+
+    const counter = {};
+    options.forEach((option) => {
+      counter[option.optionLabel] = 0;
+    });
+
     data.forEach((item) => {
       item.Submodule.forEach((submodule) => {
-        submodule.JudicialProcess.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (attrValue.attribute.slug === slug) {
-              attrValue.attribute.options.forEach((option) => {
-                counter[option.optionLabel] = 0; // Initialize counts to 0
-              });
-            }
-          });
+        [submodule.JudicialProcess, submodule.Supervision].forEach(
+          (processList) => {
+            processList.forEach((process) => {
+              [
+                ...process.sectionAttributeValues,
+                ...process.globalAttributeValues,
+              ].forEach((attrValue) => {
+                if (attrValue.attribute.slug === slug) {
+                  const option = attrValue.attribute.options.find(
+                    (opt) => opt.optionValue === attrValue.value,
+                  );
 
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (globalAttrValue.attribute.slug === slug) {
-              globalAttrValue.attribute.options.forEach((option) => {
-                counter[option.optionLabel] = 0; // Initialize counts to 0
+                  if (option) {
+                    counter[option.optionLabel]++;
+                  }
+                }
               });
-            }
-          });
-        });
-
-        submodule.Supervision.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (attrValue.attribute.slug === slug) {
-              attrValue.attribute.options.forEach((option) => {
-                counter[option.optionLabel] = 0; // Initialize counts to 0
-              });
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (globalAttrValue.attribute.slug === slug) {
-              globalAttrValue.attribute.options.forEach((option) => {
-                counter[option.optionLabel] = 0; // Initialize counts to 0
-              });
-            }
-          });
-        });
+            });
+          },
+        );
       });
     });
 
-    // Step 3: Count matches
-    data.forEach((item) => {
-      item.Submodule.forEach((submodule) => {
-        submodule.JudicialProcess.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (attrValue.attribute.slug === slug) {
-              const value = attrValue.value;
-
-              const option = attrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                counter[option.optionLabel]++;
-              }
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (globalAttrValue.attribute.slug === slug) {
-              const value = globalAttrValue.value;
-
-              const option = globalAttrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                counter[option.optionLabel]++;
-              }
-            }
-          });
-        });
-
-        submodule.Supervision.forEach((process) => {
-          process.sectionAttributeValues.forEach((attrValue) => {
-            if (attrValue.attribute.slug === slug) {
-              const value = attrValue.value;
-
-              const option = attrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                counter[option.optionLabel]++;
-              }
-            }
-          });
-
-          process.globalAttributeValues.forEach((globalAttrValue) => {
-            if (globalAttrValue.attribute.slug === slug) {
-              const value = globalAttrValue.value;
-
-              const option = globalAttrValue.attribute.options.find(
-                (option) => option.optionValue === value,
-              );
-
-              if (option) {
-                counter[option.optionLabel]++;
-              }
-            }
-          });
-        });
-      });
-    });
-
-    // Step 4: Format the result
+    // Formatear resultado
     return Object.keys(counter).map((optionLabel) => ({
       name: optionLabel,
       _count: { group: counter[optionLabel] },

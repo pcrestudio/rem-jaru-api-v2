@@ -527,7 +527,7 @@ export class JudicialProcessService {
       { key: "plaintiff", header: "Demandado" },
       { key: "coDefendant", header: "Co-demandado" },
       { key: "responsible.displayName", header: "Responsable" },
-      { key: "project.name", header: "Proyecto" },
+      { key: "project.name", header: "Razón social" },
       { key: "studio.name", header: "Estudio" },
     ];
 

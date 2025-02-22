@@ -1,17 +1,19 @@
-# backend/Dockerfile
-
 # Stage 1: Build the application
+FROM mcr.microsoft.com/playwright:v1.40.0 as playwright-base
+
 FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache openssl
-# RUN apk add --no-cache python3 make g++
-
-# Create a symbolic link if it doesn’t exist
-# RUN ln -sf /usr/bin/python3 /usr/bin/python
+# Instalar dependencias del sistema necesarias para Playwright
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # Install Yarn
 RUN corepack enable
@@ -23,12 +25,9 @@ RUN yarn install
 # Copy the rest of the application code
 COPY . .
 
-# Generate Prisma Client
-RUN yarn prisma generate
-#RUN yarn prisma
-
-# Build the NestJS application
-RUN yarn build
+# Instalar Playwright y sus navegadores
+RUN yarn add playwright
+RUN npx playwright install --with-deps
 
 # Stage 2: Production image
 FROM node:20-alpine
@@ -36,12 +35,14 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache openssl
-# RUN apk add --no-cache python3 make g++
-
-# Create a symbolic link if it doesn’t exist
-# RUN ln -sf /usr/bin/python3 /usr/bin/python
+# Instalar dependencias del sistema necesarias para Playwright en producción
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # Install Yarn
 RUN corepack enable
@@ -50,22 +51,10 @@ RUN corepack enable
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/yarn.lock ./
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-
-# Install only production dependencies
-RUN yarn install --production
-
-# Copy Prisma Client
-COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
-#COPY --from=builder /app/node_modules/@prisma-remtrack/client ./node_modules/@prisma-remtrack/client
-#COPY --from=builder /app/node_modules/@prisma-imanage/client ./node_modules/@prisma-imanage/client
+COPY --from=builder /app/node_modules ./node_modules
 
 # Expose the port NestJS app runs on
 EXPOSE 3000
 
 # Start the NestJS application
 CMD ["node", "dist/src/main.js"]
-
-# Start the NestJS application with NODE_OPTIONS
-#CMD ["sh", "-c", "NODE_OPTIONS=--openssl-legacy-provider node dist/main.js"]

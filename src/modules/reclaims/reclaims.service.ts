@@ -2,6 +2,9 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { UpsertReclaimDto } from "./dto/upsert-reclaim.dto";
 import { ModelType } from "@prisma/client";
+import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
+import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
+import { FilterCustomPaginationDto } from "../custom_pagination/dto/fiter-custom-pagination.dto";
 
 @Injectable()
 export class ReclaimsService {
@@ -27,6 +30,8 @@ export class ReclaimsService {
               contingencyPercentage: Number(reclaim.contingencyPercentage),
               provisionAmount: Number(reclaim.provisionAmount),
               provisionContingency: Number(reclaim.provisionContingency),
+              posibleAmount: Number(reclaim.posibleAmount),
+              remoteAmount: Number(reclaim.remoteAmount),
               concept: reclaim.concept,
               ...additionalPayload,
             },
@@ -36,6 +41,8 @@ export class ReclaimsService {
               contingencyLevel: reclaim.contingencyLevel,
               contingencyPercentage: Number(reclaim.contingencyPercentage),
               provisionAmount: Number(reclaim.provisionAmount),
+              posibleAmount: Number(reclaim.posibleAmount),
+              remoteAmount: Number(reclaim.remoteAmount),
               provisionContingency: Number(reclaim.provisionContingency),
             },
             where: {
@@ -52,5 +59,14 @@ export class ReclaimsService {
         error: error.message,
       });
     }
+  }
+
+  getReclaims(filter: FilterCustomPaginationDto) {
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      EntityReferenceModel.Reclaim,
+      filter,
+      [],
+    );
   }
 }

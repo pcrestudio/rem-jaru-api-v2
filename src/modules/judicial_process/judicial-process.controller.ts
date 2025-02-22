@@ -6,7 +6,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   Res,
   UploadedFiles,
   UseInterceptors,

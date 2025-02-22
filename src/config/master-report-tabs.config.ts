@@ -4,4 +4,5 @@ export enum MasterReportTabs {
   byDemanded = "byDemanded",
   byPlaintiff = "byPlaintiff",
   byStudio = "byStudio",
+  byInternalSpecialist = "byInternalSpecialist",
 }

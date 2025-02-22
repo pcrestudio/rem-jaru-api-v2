@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateSupervisionDto {
   @IsString()
@@ -17,6 +17,7 @@ export class CreateSupervisionDto {
   plaintiff: string;
 
   @IsString()
+  @IsOptional()
   coDefendant: string;
 
   @IsNumber()

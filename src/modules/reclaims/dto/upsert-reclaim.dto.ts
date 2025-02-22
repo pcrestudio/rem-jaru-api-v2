@@ -21,5 +21,13 @@ export class UpsertReclaimDto {
 
   @IsNumber()
   @IsOptional()
+  remoteAmount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  posibleAmount?: number;
+
+  @IsNumber()
+  @IsOptional()
   reclaimId?: number;
 }

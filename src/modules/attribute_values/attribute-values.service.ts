@@ -189,6 +189,8 @@ export class AttributeValuesService {
       },
     });
 
+    console.log(sectionAttributeOption);
+
     if (globalAttribute) {
       if (globalAttribute.dataType !== DataType.LIST) {
         throw new BadRequestException(

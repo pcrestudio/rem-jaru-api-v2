@@ -22,6 +22,11 @@ export class ModuleController {
     return this.moduleService.getModules();
   }
 
+  @Get("settings")
+  async getSettingsModules() {
+    return this.moduleService.getSettingsModules();
+  }
+
   @Get("submodules")
   async getSubmodulesBySlug(@Query("slug") slug: string) {
     return this.moduleService.getSubmodulesBySlug(slug);

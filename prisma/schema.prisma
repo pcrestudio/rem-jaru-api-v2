@@ -181,7 +181,7 @@ model JudicialProcess {
   fileCode               String    @db.LongText
   demanded               String    @db.LongText
   plaintiff              String    @db.LongText
-  coDefendant            String    @db.LongText
+  coDefendant            String?   @db.LongText
   entityReference        String?   @unique
   submoduleId            Int
   cargoStudioId          Int?
@@ -219,7 +219,7 @@ model Supervision {
   fileCode               String    @db.LongText
   demanded               String    @db.LongText
   plaintiff              String    @db.LongText
-  coDefendant            String    @db.LongText
+  coDefendant            String?   @db.LongText
   entityReference        String?   @unique
   submoduleId            Int
   cargoStudioId          Int?
@@ -265,6 +265,8 @@ model Reclaim {
   concept               String?   @default("") // Concepto
   provisionContingency  Int?      @default(0) // Provisión estimada
   provisionAmount       Float?    @default(0) // Monto provisionado
+  posibleAmount         Float?    @default(0) // Monto posible
+  remoteAmount          Float?    @default(0) // Monto remoto
   createdAt             DateTime? @default(now())
   updatedAt             DateTime? @updatedAt
 

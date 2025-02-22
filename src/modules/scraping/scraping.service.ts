@@ -34,6 +34,46 @@ export class ScrapingService {
     }
   }
 
+  private async resolveCatpcha(
+    dossier: GetCejDossierDto,
+    browserContext: BrowserContext,
+    page: Page,
+    currentUrl: string,
+    min: number,
+    max: number,
+  ) {
+    try {
+      await this.randomWait(page, min, max);
+
+      const captchaContainer = await page.$(".h-captcha");
+      const captchaSiteKey =
+        await captchaContainer.getAttribute("data-sitekey");
+
+      const { data } = await axios.post(this.config.get("CAPTCHA_URL"), {
+        key: this.config.get("CAPTCHA_KEY"),
+        method: "hcaptcha",
+        sitekey: captchaSiteKey,
+        pageurl: currentUrl,
+      });
+
+      if (!data.startsWith("OK|")) {
+        console.error("Error al resolver el captcha:", data);
+        await browserContext.close();
+        return;
+      }
+
+      const captchaToken = data.split("|")[1];
+
+      console.log(captchaToken);
+
+      return;
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: error.message,
+      });
+    }
+  }
+
   private async main(dossier: GetCejDossierDto) {
     let browser: Browser;
     const min: number = 1000;
@@ -55,16 +95,14 @@ export class ScrapingService {
       const currentUrl = page.url();
 
       if (currentUrl.includes("perfdrive")) {
-        const { data } = await axios.post(this.config.get("CAPTCHA_URL"), {
-          key: this.config.get("CAPTCHA_KEY"),
-          method: "hcaptcha",
-          sitekey: currentUrl,
-          pageurl: url,
-        });
-
-        console.log(data);
-
-        return;
+        return this.resolveCatpcha(
+          dossier,
+          context,
+          page,
+          currentUrl,
+          min,
+          max,
+        );
       }
 
       await this.randomWait(page, min, max);
@@ -429,8 +467,6 @@ export class ScrapingService {
       const pathFile = path.join(this.config.get("CEJ_PATH"), fileName);
 
       const escritor = fs.createWriteStream(pathFile);
-
-      console.log(`Archivo descargado y guardado en: ${pathFile}`);
 
       response.data.pipe(escritor);
 

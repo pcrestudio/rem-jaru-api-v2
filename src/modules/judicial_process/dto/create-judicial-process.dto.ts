@@ -11,6 +11,7 @@ export class CreateJudicialProcessDto {
   plaintiff: string;
 
   @IsString()
+  @IsOptional()
   coDefendant: string;
 
   @IsString()

@@ -192,10 +192,6 @@ const todoEstadosSeed: CreateMasterOptionDto[] = [
 
 const reportTabsSeed: CreateMasterOptionDto[] = [
   {
-    name: "Total de to-do's y alertas",
-    slug: MasterReportTabs.byTodos,
-  },
-  {
     name: "Por responsables",
     slug: MasterReportTabs.byResponsible,
   },
@@ -210,6 +206,14 @@ const reportTabsSeed: CreateMasterOptionDto[] = [
   {
     name: "Por estudio a cargo",
     slug: MasterReportTabs.byStudio,
+  },
+  {
+    name: "Total de to-do's y alertas",
+    slug: MasterReportTabs.byTodos,
+  },
+  {
+    name: "Por especialista interno",
+    slug: MasterReportTabs.byInternalSpecialist,
   },
 ];
 
@@ -378,6 +382,21 @@ const angloamericanStudioSeed: CreateMasterOptionDto[] = [
   },
 ];
 
+const contingenciesSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Probable",
+    slug: "probable",
+  },
+  {
+    name: "Posible",
+    slug: "posible",
+  },
+  {
+    name: "Remoto",
+    slug: "remoto",
+  },
+];
+
 async function main() {
   const password = await hash("admin", 9);
 
@@ -541,6 +560,25 @@ async function main() {
           data: {
             ...studio,
             masterId: studioMaster.id,
+          },
+        });
+      }
+    });
+
+    // Empieza la creación de maestro estudios de manera general
+    const contingencyMaster = await prisma.master.create({
+      data: {
+        name: "Nivel de contingencia",
+        slug: MasterOptionConfig["nivel-contingencia"],
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const studio of contingenciesSeed) {
+        await tx.masterOption.create({
+          data: {
+            ...studio,
+            masterId: contingencyMaster.id,
           },
         });
       }
