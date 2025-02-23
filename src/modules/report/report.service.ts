@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../core/database/prisma.service";
 import { FilterReportDto } from "./dto/filter-report.dto";
 import {
@@ -131,9 +127,18 @@ export class ReportService {
         : AttributeSlugConfig.criticalProcess,
     );
 
+    const causes = await this.getTotalByAttributeOptionSlug(
+      allData,
+      allData[0].name === "Supervisiones"
+        ? AttributeSlugConfig.supervisionCause
+        : AttributeSlugConfig.cause,
+    );
+
     const internalSpecialists = await this.getTotalValueBySlug(
       allData,
-      AttributeSlugConfig.internalSpecialist,
+      allData[0].name === "Supervisiones"
+        ? AttributeSlugConfig.supervisionInternalSpecialist
+        : AttributeSlugConfig.internalSpecialist,
     );
 
     const matters = await this.getMattersReport(
@@ -157,6 +162,9 @@ export class ReportService {
       },
       internalSpecialists: {
         report: internalSpecialists,
+      },
+      causes: {
+        report: causes,
       },
       contingencies: {
         report: contingencies,
@@ -752,12 +760,6 @@ export class ReportService {
 
     const counter = {};
 
-    if (values.length < 1) {
-      throw new BadRequestException({
-        message: "Insufficient attribute count",
-      });
-    }
-
     values.forEach((option) => {
       counter[option.value] = 0;
     });
@@ -793,7 +795,25 @@ export class ReportService {
                 ...process.sectionAttributeValues,
                 ...process.globalAttributeValues,
               ].forEach((attrValue) => {
-                if (attrValue.attribute.slug === slug) {
+                if (
+                  attrValue.attribute.slug === slug &&
+                  attrValue.attribute.isMultiple
+                ) {
+                  const valuesArray = attrValue.value
+                    .split(", ")
+                    .map((v) => v.trim());
+
+                  attrValue.attribute.options.forEach((option) => {
+                    if (valuesArray.includes(option.optionValue)) {
+                      counter[option.optionLabel] += 1;
+                    }
+                  });
+                }
+
+                if (
+                  attrValue.attribute.slug === slug &&
+                  !attrValue.attribute.isMultiple
+                ) {
                   const option = attrValue.attribute.options.find(
                     (opt) => opt.optionValue === attrValue.value,
                   );
