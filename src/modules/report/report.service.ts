@@ -117,6 +117,7 @@ export class ReportService {
 
     const provisionAmountSum = this.sumProvisionAmount(allData);
     const amountSum = this.sumAmount(allData);
+    const savingAmount = this.savingAmount(allData);
 
     const contingencies = await this.getContingenciesLevel(allData);
 
@@ -155,10 +156,13 @@ export class ReportService {
 
     return {
       provisionAmount: {
-        report: provisionAmountSum,
+        report: Number(provisionAmountSum).toFixed(2),
       },
       amountSum: {
-        report: amountSum,
+        report: Number(amountSum).toFixed(2),
+      },
+      savingAmount: {
+        report: Number(savingAmount).toFixed(2),
       },
       internalSpecialists: {
         report: internalSpecialists,
@@ -651,6 +655,24 @@ export class ReportService {
 
         submodule.Supervision.forEach((process) => {
           total += parseFloat(process.amount);
+        });
+      });
+    });
+
+    return total;
+  }
+
+  private savingAmount(data) {
+    let total = 0;
+
+    data.forEach((item) => {
+      item.Submodule.forEach((submodule) => {
+        submodule.JudicialProcess.forEach((process) => {
+          total += parseFloat(process.savingAmount);
+        });
+
+        submodule.Supervision.forEach((process) => {
+          total += parseFloat(process.savingAmount);
         });
       });
     });

@@ -71,5 +71,9 @@ export class EditJudicialProcessDto {
 
   @IsNumber()
   @IsOptional()
+  statusId: number;
+
+  @IsNumber()
+  @IsOptional()
   savingAmount: number;
 }

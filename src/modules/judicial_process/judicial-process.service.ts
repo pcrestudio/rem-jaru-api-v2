@@ -128,6 +128,7 @@ export class JudicialProcessService {
           projectId: Number(judicialProcess.projectId),
           amount: Number(judicialProcess.amount),
           cargoStudioId: Number(judicialProcess.cargoStudioId),
+          statusId: Number(judicialProcess.statusId),
           responsibleId: Number(judicialProcess.responsibleId),
           guaranteeLetter,
           secondaryResponsibleId: Number(
@@ -187,6 +188,10 @@ export class JudicialProcessService {
       whereFields["responsibleId"] = Number(filter.responsibleId);
     }
 
+    if (filter.statusId) {
+      whereFields["statusId"] = Number(filter.statusId);
+    }
+
     const includeConditions: any = {
       project: filter.projectId
         ? {
@@ -228,6 +233,13 @@ export class JudicialProcessService {
           },
         },
       },
+      status: filter.statusId
+        ? {
+            where: {
+              id: Number(filter.statusId),
+            },
+          }
+        : true,
       reclaims: true,
       stepData: {
         include: {
@@ -586,6 +598,7 @@ export class JudicialProcessService {
         studio: true,
         project: true,
         submodule: true,
+        status: true,
         sectionAttributeValues: {
           include: {
             attribute: {
@@ -612,7 +625,11 @@ export class JudicialProcessService {
         key: "submodule.name",
         header: "Materia",
       },
-      { key: "fileCode", header: "Código de judicialProcess" },
+      {
+        key: "status.name",
+        header: "Status",
+      },
+      { key: "fileCode", header: "Código de expediente" },
       { key: "demanded", header: "Demandante" },
       { key: "plaintiff", header: "Demandado" },
       { key: "coDefendant", header: "Co-demandado" },
@@ -627,6 +644,12 @@ export class JudicialProcessService {
       },
       { key: "project.name", header: "Razón social" },
       { key: "studio.name", header: "Estudio" },
+      { key: "contingencyLevel", header: "Nivel de contingencia" },
+      { key: "contingencyPercentage", header: "% de contingencia" },
+      { key: "amount", header: "Monto demandado" },
+      { key: "provisionAmount", header: "Monto de provisión" },
+      { key: "paidAmount", header: "Monto pagado" },
+      { key: "savingAmount", header: "Ahorro generado" },
     ];
 
     for (const item of judicialProcesses) {

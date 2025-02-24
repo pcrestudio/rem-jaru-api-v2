@@ -164,16 +164,20 @@ model MasterOption {
   updatedAt DateTime? @updatedAt
   isActive  Boolean   @default(true)
 
-  master             Master            @relation(fields: [masterId], references: [id])
-  judicialProjects   JudicialProcess[] @relation("ProjectRelation")
-  judicialStudios    JudicialProcess[] @relation("StudioRelation")
-  supervisionStudios Supervision[]     @relation("SupervisionStudioRelation")
-  ToDo               ToDo[]
+  master           Master            @relation(fields: [masterId], references: [id])
+  judicialProjects JudicialProcess[] @relation("ProjectRelation")
+  judicialStudios  JudicialProcess[] @relation("StudioRelation")
+  judicialStatus   JudicialProcess[] @relation("StatusRelation")
 
+  ToDo ToDo[]
+
+  supervisionStudios     Supervision[] @relation("SupervisionStudioRelation")
   supervisionProjects    Supervision[] @relation("SupervisionProjectRelation")
+  supervisionStatus      Supervision[] @relation("SupervisionStatusRelation")
   supervisionAuthorities Supervision[] @relation("SupervisionAuthorityRelation")
   supervisionSituation   Supervision[] @relation("SupervisionSituationRelation")
-  user                   User[]
+
+  user User[]
 }
 
 model JudicialProcess {
@@ -185,6 +189,7 @@ model JudicialProcess {
   entityReference        String?   @unique
   submoduleId            Int
   cargoStudioId          Int?
+  statusId               Int?
   projectId              Int?      @map("project_id")
   responsibleId          Int?      @map("responsible_id")
   secondaryResponsibleId Int?      @map("secondary_responsible_id")
@@ -205,7 +210,8 @@ model JudicialProcess {
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
-  studio               MasterOption? @relation("StudioRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
+  studio               MasterOption? @relation("StatusRelation", fields: [cargoStudioId], references: [id], map: "fk_studio_id")
+  status               MasterOption? @relation("StudioRelation", fields: [statusId], references: [id], map: "fk_status_id")
   responsible          User?         @relation("ResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_responsible_id")
   secondaryResponsible User?         @relation("SecondaryResponsibleRelation", fields: [secondaryResponsibleId], references: [id], map: "fk_supervision_creator_id")
 
@@ -225,6 +231,7 @@ model Supervision {
   entityReference        String?   @unique
   submoduleId            Int
   cargoStudioId          Int?
+  statusId               Int?
   projectId              Int?      @map("project_id")
   responsibleId          Int?      @map("responsible_id")
   secondaryResponsibleId Int?      @map("secondary_responsible_id")
@@ -248,6 +255,7 @@ model Supervision {
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")
   studio               MasterOption? @relation("SupervisionStudioRelation", fields: [cargoStudioId], references: [id], map: "fk_supervision_studio_id")
+  status               MasterOption? @relation("SupervisionStatusRelation", fields: [statusId], references: [id], map: "fk_supervision_status_id")
   authority            MasterOption? @relation("SupervisionAuthorityRelation", fields: [authorityId], references: [id], map: "fk_supervision_authority_id")
   situation            MasterOption? @relation("SupervisionSituationRelation", fields: [situationId], references: [id], map: "fk_supervision_situation_id")
   responsible          User?         @relation("SupervisionResponsibleRelation", fields: [responsibleId], references: [id], map: "fk_supervision_responsible_id")

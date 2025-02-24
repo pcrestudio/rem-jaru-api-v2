@@ -12,9 +12,7 @@ import { FilterUsersDto } from "../../modules/auth/dto/filter-users.dto";
 import { UpsertRegisterDto } from "../../modules/auth/dto/user-register.dto";
 import { ConfigService } from "@nestjs/config";
 import { MailService } from "../mail/mail.service";
-import createUserTemplate from "./templates/create-user.tpl";
 import { AuthService } from "../auth/auth.service";
-import { MessagesConfig } from "../../config/messages.config";
 import { AuthMethod } from "../../config/auth-method.config";
 
 @Injectable()

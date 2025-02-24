@@ -4,5 +4,6 @@ export interface FilterReportDto {
   projectId: number;
   responsibleId: number;
   cargoStudioId?: string;
+  statusId?: number;
   tabSlug?: string;
 }

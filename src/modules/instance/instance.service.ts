@@ -283,6 +283,66 @@ export class InstanceService {
     return instances;
   }
 
+  async getInstancesSettings() {
+    const instances = await this.prisma.instance.findMany({
+      include: {
+        module: true,
+        submodule: true,
+      },
+    });
+
+    const groupedData: Record<string, any[]> = {};
+
+    instances.forEach((item) => {
+      let groupName = "General"; // Categoría por defecto
+
+      if (item.module) {
+        groupName = item.module.name;
+      } else if (item.submodule) {
+        groupName = item.submodule.name;
+      }
+
+      if (!groupedData[groupName]) {
+        groupedData[groupName] = [];
+      }
+
+      groupedData[groupName].push({
+        id: item.id,
+        name: item.name,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        moduleId: item.moduleId,
+        submoduleId: item.submoduleId,
+        module: item.module
+          ? {
+              id: item.module.id,
+              name: item.module.name,
+              isActive: item.module.isActive,
+              order: item.module.order,
+              slug: item.module.slug,
+              createdAt: item.module.createdAt,
+              updatedAt: item.module.updatedAt,
+            }
+          : null,
+        submodule: item.submodule
+          ? {
+              id: item.submodule.id,
+              name: item.submodule.name,
+              isActive: item.submodule.isActive,
+              order: item.submodule.order,
+              slug: item.submodule.slug,
+              moduleId: item.submodule.moduleId,
+              createdAt: item.submodule.createdAt,
+              updatedAt: item.submodule.updatedAt,
+            }
+          : null,
+      });
+    });
+
+    console.log(groupedData);
+    return groupedData;
+  }
+
   async exportDocument(fileName: string) {
     const filePath = path.join(process.cwd(), "upload", fileName);
 

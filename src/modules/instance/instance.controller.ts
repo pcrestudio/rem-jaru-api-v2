@@ -63,6 +63,11 @@ export class InstanceController {
     return this.instanceService.getInstanceSteps(entityReference, modelType);
   }
 
+  @Get("settings")
+  async getInstancesSettings() {
+    return this.instanceService.getInstancesSettings();
+  }
+
   @Get("export")
   async exportDocument(
     @Query("fileName") fileName: string,

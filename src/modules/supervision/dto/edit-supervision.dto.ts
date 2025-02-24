@@ -72,5 +72,9 @@ export class EditSupervisionDto {
 
   @IsNumber()
   @IsOptional()
+  statusId: number;
+
+  @IsNumber()
+  @IsOptional()
   savingAmount: number;
 }

@@ -118,6 +118,7 @@ export class SupervisionService {
           cargoStudioId: Number(supervision.cargoStudioId),
           situationId: Number(supervision.situationId),
           responsibleId: Number(supervision.responsibleId),
+          statusId: Number(supervision.statusId),
           projectId: Number(supervision.projectId),
           isProvisional: supervision.isProvisional === "false" ? false : true,
           guaranteeLetter,
@@ -567,6 +568,7 @@ export class SupervisionService {
         authority: true,
         situation: true,
         submodule: true,
+        status: true,
         sectionAttributeValues: {
           include: {
             attribute: {
@@ -593,7 +595,11 @@ export class SupervisionService {
         key: "submodule.name",
         header: "Materia",
       },
-      { key: "fileCode", header: "Código de judicialProcess" },
+      {
+        key: "status.name",
+        header: "Status",
+      },
+      { key: "fileCode", header: "Código de expediente" },
       { key: "demanded", header: "Demandante" },
       { key: "plaintiff", header: "Demandado" },
       { key: "coDefendant", header: "Co-demandado" },
@@ -610,6 +616,12 @@ export class SupervisionService {
         key: "controversialMatter",
         header: "Moneda",
       },
+      { key: "contingencyLevel", header: "Nivel de contingencia" },
+      { key: "contingencyPercentage", header: "% de contingencia" },
+      { key: "amount", header: "Monto demandado" },
+      { key: "provisionAmount", header: "Monto de provisión" },
+      { key: "paidAmount", header: "Monto pagado" },
+      { key: "savingAmount", header: "Ahorro generado" },
     ];
 
     for (const item of supervisions) {
