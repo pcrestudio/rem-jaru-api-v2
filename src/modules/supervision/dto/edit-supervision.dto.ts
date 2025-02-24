@@ -2,6 +2,7 @@ import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class EditSupervisionDto {
   @IsString()
+  @IsOptional()
   fileCode: string;
 
   @IsString()
@@ -64,4 +65,12 @@ export class EditSupervisionDto {
 
   @IsNumber()
   id: number;
+
+  @IsNumber()
+  @IsOptional()
+  paidAmount: number;
+
+  @IsNumber()
+  @IsOptional()
+  savingAmount: number;
 }

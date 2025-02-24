@@ -2,6 +2,7 @@ import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class EditJudicialProcessDto {
   @IsString()
+  @IsOptional()
   fileCode: string;
 
   @IsNumber()
@@ -63,4 +64,12 @@ export class EditJudicialProcessDto {
 
   @IsNumber()
   id: number;
+
+  @IsNumber()
+  @IsOptional()
+  paidAmount: number;
+
+  @IsNumber()
+  @IsOptional()
+  savingAmount: number;
 }

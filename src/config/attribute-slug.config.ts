@@ -17,6 +17,7 @@ export enum AttributeSlugConfig {
   lastSituation = "lastSituation", //ultimo actuado
   nextSituation = "nextSituation", // proxima acción
   internalSpecialist = "internalSpecialist",
+  commentsForResult = "commentsForResult",
   supervisionAmount = "supervisionAmount",
   supervisionProvisionContingency = "supervisionProvisionContingency",
   supervisionProvisionAmount = "supervisionProvisionAmount",
@@ -36,4 +37,5 @@ export enum AttributeSlugConfig {
   supervisionLastSituation = "supervisionLastSituation", //ultimo actuado
   supervisionNextSituation = "supervisionNextSituation", // proxima acción
   supervisionInternalSpecialist = "supervisionInternalSpecialist",
+  supervisionCommentsForResult = "supervisionCommentsForResult",
 }

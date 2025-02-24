@@ -2,6 +2,7 @@ import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateSupervisionDto {
   @IsString()
+  @IsOptional()
   fileCode: string;
 
   @IsString()

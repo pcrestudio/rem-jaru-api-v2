@@ -15,6 +15,7 @@ import {
   TableCell,
   TableLayoutType,
   TableRow,
+  TextDirection,
   VerticalAlign,
   WidthType,
 } from "docx";
@@ -40,6 +41,7 @@ import { ExtendedAttributeConfig } from "../../config/extended-attribute.config"
 import { DataType } from "@prisma/client";
 import { searchableFields } from "../../config/submodule_searchableFields";
 import capitalize from "../../utils/capitalize";
+import formatDateToLocale from "../../common/utils/format_date";
 
 @Injectable()
 export class JudicialProcessService {
@@ -117,6 +119,8 @@ export class JudicialProcessService {
           contingencyLevel: judicialProcess.contingencyLevel,
           contingencyPercentage: judicialProcess.contingencyPercentage,
           provisionAmount: Number(judicialProcess.provisionAmount),
+          paidAmount: Number(judicialProcess.paidAmount),
+          savingAmount: Number(judicialProcess.savingAmount),
           provisionContingency: Number(judicialProcess.provisionContingency),
           comment: judicialProcess?.comment,
           isProvisional:
@@ -295,6 +299,7 @@ export class JudicialProcessService {
           secondaryResponsible: true,
           responsible: true,
           submodule: true,
+          reclaims: true,
         },
       });
 
@@ -348,9 +353,16 @@ export class JudicialProcessService {
           ExtendedAttributeConfig.sectionAttributeValues,
         );
 
-      const lawyerEmail = UtilsService._getModuleAttributeWithValueBySlug(
+      const internalSpecialist =
+        UtilsService._getModuleAttributeWithValueBySlug(
+          judicialProcess as unknown as GetModuleAttributeValueDto,
+          AttributeSlugConfig.internalSpecialist,
+          ExtendedAttributeConfig.sectionAttributeValues,
+        );
+
+      const commentsForResult = UtilsService._getModuleAttributeWithValueBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
-        AttributeSlugConfig.lawyerEmail,
+        AttributeSlugConfig.commentsForResult,
         ExtendedAttributeConfig.sectionAttributeValues,
       );
 
@@ -399,7 +411,10 @@ export class JudicialProcessService {
           children: AngloTableCell("Causa / Raíz", cause),
         }),
         new TableRow({
-          children: AngloTableCell("Fecha de inicio del proceso", startDate),
+          children: AngloTableCell(
+            "Fecha de inicio del proceso",
+            formatDateToLocale(startDate),
+          ),
         }),
         new TableRow({
           children: AngloTableCell("Criticidad del proceso", criticalProcess),
@@ -423,7 +438,10 @@ export class JudicialProcessService {
           ),
         }),
         new TableRow({
-          children: AngloTableCell("Correo de abogado", `${lawyerEmail}`),
+          children: AngloTableCell(
+            "Especialista interno responsable",
+            `${internalSpecialist}`,
+          ),
         }),
       ];
 
@@ -440,11 +458,7 @@ export class JudicialProcessService {
           new TableRow({
             children: [
               new TableCell({
-                children: [
-                  new Paragraph(
-                    judicialProcess ? judicialProcess.comment : "-",
-                  ),
-                ],
+                children: [new Paragraph(commentsForResult ?? "-")],
                 verticalAlign: VerticalAlign.CENTER,
                 margins: { top: 100, bottom: 100 },
               }),
@@ -463,9 +477,79 @@ export class JudicialProcessService {
 
       const tableVersionHistorical = new Table({
         rows: rowsVersionHistorical,
-        columnWidths: [4505, 4505],
+        columnWidths: [9010],
         width: { size: 100, type: WidthType.PERCENTAGE },
         layout: TableLayoutType.AUTOFIT,
+      });
+
+      const rowsChildProvision = [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph("Petitorio")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+            new TableCell({
+              children: [new Paragraph("Monto")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+            new TableCell({
+              children: [new Paragraph("% de contingencia")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+            new TableCell({
+              children: [new Paragraph("Nv. de contingencia")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+            new TableCell({
+              children: [new Paragraph("Provisión (probable)")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+            new TableCell({
+              children: [new Paragraph("Monto posible")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+            new TableCell({
+              children: [new Paragraph("Monto remoto")],
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+          ],
+        }),
+        ...UtilsService.generateReclaims(judicialProcess?.reclaims),
+      ];
+
+      const tableChildProvision = new Table({
+        rows: rowsChildProvision,
+        columnWidths: [9010],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT, // Permitir ajuste automático
+      });
+
+      const rowsProvision = [
+        AngloSingleTableHeaderCell("Provisiones", "347ff6"),
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [tableChildProvision], // Incluir la tabla correctamente
+              verticalAlign: VerticalAlign.CENTER,
+              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
+            }),
+          ],
+        }),
+      ];
+
+      const tableParentProvision = new Table({
+        rows: rowsProvision,
+        columnWidths: [9010],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.AUTOFIT, // Asegurar ajuste
       });
 
       const doc = new Document({
@@ -477,6 +561,7 @@ export class JudicialProcessService {
             children: [
               tableTitle,
               table,
+              tableParentProvision,
               tableComments,
               tablePrincipalSituation(principalSituation),
               tableVersionHistorical,
@@ -500,6 +585,7 @@ export class JudicialProcessService {
         responsible: true,
         studio: true,
         project: true,
+        submodule: true,
         sectionAttributeValues: {
           include: {
             attribute: {
@@ -522,11 +608,23 @@ export class JudicialProcessService {
     });
 
     const headers = [
+      {
+        key: "submodule.name",
+        header: "Materia",
+      },
       { key: "fileCode", header: "Código de judicialProcess" },
       { key: "demanded", header: "Demandante" },
       { key: "plaintiff", header: "Demandado" },
       { key: "coDefendant", header: "Co-demandado" },
       { key: "responsible.displayName", header: "Responsable" },
+      {
+        key: "secondaryResponsible.displayName",
+        header: "Responsable Secundario",
+      },
+      {
+        key: "controversialMatter",
+        header: "Moneda",
+      },
       { key: "project.name", header: "Razón social" },
       { key: "studio.name", header: "Estudio" },
     ];

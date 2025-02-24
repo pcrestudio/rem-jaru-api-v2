@@ -8,8 +8,10 @@ import { AttributeSlugConfig } from "../config/attribute-slug.config";
 import { PrismaClient } from "@prisma/client";
 import { ModelType } from "../common/utils/entity_reference_mapping";
 import { isArray } from "class-validator";
-import { TableRow } from "docx";
+import { Paragraph, TableCell, TableRow, VerticalAlign } from "docx";
 import AngloTableCell from "../common/utils/anglo_table_cell";
+import { UpsertReclaimDto } from "../modules/reclaims/dto/upsert-reclaim.dto";
+import capitalize from "./capitalize";
 
 export class UtilsService {
   static _getModuleAttributeWithValueBySlug(
@@ -226,5 +228,52 @@ export class UtilsService {
     }
 
     return rowsHistorical;
+  }
+
+  static generateReclaims(reclaims: UpsertReclaimDto[]) {
+    const reclaimsRows = [];
+
+    for (const reclaim of reclaims) {
+      const row = new TableRow({
+        children: [
+          new TableCell({
+            children: [new Paragraph(reclaim.concept)],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            children: [new Paragraph(`S/. ${reclaim.amount.toFixed(2)}`)],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            children: [new Paragraph(`${reclaim.contingencyPercentage}%`)],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            children: [new Paragraph(capitalize(reclaim.contingencyLevel))],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            children: [
+              new Paragraph(`S./ ${reclaim.provisionAmount.toFixed(2)}`),
+            ],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            children: [
+              new Paragraph(`S/. ${reclaim.posibleAmount.toFixed(2)}`),
+            ],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+          new TableCell({
+            children: [new Paragraph(`S/. ${reclaim.remoteAmount.toFixed(2)}`)],
+            verticalAlign: VerticalAlign.CENTER,
+          }),
+        ],
+      });
+
+      reclaimsRows.push(row);
+    }
+
+    return reclaimsRows;
   }
 }
