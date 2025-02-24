@@ -4,7 +4,7 @@ import { UpsertReclaimDto } from "./dto/upsert-reclaim.dto";
 import { ModelType } from "@prisma/client";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
-import { FilterCustomPaginationDto } from "../custom_pagination/dto/fiter-custom-pagination.dto";
+import { FilterReclaimDto } from "./dto/filter-reclaim.dto";
 
 @Injectable()
 export class ReclaimsService {
@@ -61,11 +61,19 @@ export class ReclaimsService {
     }
   }
 
-  getReclaims(filter: FilterCustomPaginationDto) {
+  getReclaims(filter: FilterReclaimDto) {
+    const whereFields =
+      filter.modelType === ModelType.Supervision
+        ? { entitySupervisionReference: filter.entityReference }
+        : { entityJudicialProcessReference: filter.entityReference };
+
     return CustomPaginationService._getPaginationModel(
       this.prisma,
       EntityReferenceModel.Reclaim,
-      filter,
+      {
+        ...filter,
+        whereFields: whereFields,
+      },
       [],
     );
   }
