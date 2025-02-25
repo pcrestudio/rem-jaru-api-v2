@@ -42,10 +42,17 @@ import { DataType } from "@prisma/client";
 import { searchableFields } from "../../config/submodule_searchableFields";
 import capitalize from "../../utils/capitalize";
 import formatDateToLocale from "../../common/utils/format_date";
+import { MailService } from "../../shared/mail/mail.service";
+import createJudicialProcessTemplate from "./templates/create-judicial-process.tpl";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class JudicialProcessService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
+  ) {}
 
   async createJudicialProcess(
     judicialProcess: CreateJudicialProcessDto,
@@ -81,6 +88,15 @@ export class JudicialProcessService {
         },
       });
 
+      await this.mail.sendWithTemplate(
+        createJudicialProcessTemplate,
+        {
+          fileCode: result.fileCode,
+        },
+        [this.config.get("EMAIL_RECIPIENT")],
+        "Nuevo proceso judicial",
+      );
+
       return result;
     }
 
@@ -109,7 +125,7 @@ export class JudicialProcessService {
     }
 
     try {
-      return this.prisma.judicialProcess.update({
+      const result = await this.prisma.judicialProcess.update({
         data: {
           fileCode: judicialProcess.fileCode,
           demanded: judicialProcess.demanded,
@@ -139,6 +155,8 @@ export class JudicialProcessService {
           id: Number(judicialProcess.id),
         },
       });
+
+      return result;
     } catch (error) {
       throw new InternalServerErrorException({
         message: `Error creating judicial process`,

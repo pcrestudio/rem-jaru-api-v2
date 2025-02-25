@@ -31,6 +31,10 @@ export class InstanceStepDataDto {
 
   @IsString()
   @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
   dateResume?: string;
 
   @IsString()

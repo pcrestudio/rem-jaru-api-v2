@@ -138,6 +138,7 @@ export class InstanceService {
             comments: stepData.comments,
             choice: stepData.choice ?? undefined,
             resume: stepData.resume ?? undefined,
+            title: stepData.title ?? undefined,
             dateResume,
             stepId: Number(stepData.stepId),
             file: stepData.file ? stepData.file.filename : undefined,
@@ -255,6 +256,7 @@ export class InstanceService {
                 resume: true,
                 choice: true,
                 dateResume: true,
+                title: true,
                 file: true,
                 fileTwo: true,
                 fileThree: true,
@@ -288,6 +290,7 @@ export class InstanceService {
       include: {
         module: true,
         submodule: true,
+        steps: true,
       },
     });
 
@@ -336,10 +339,10 @@ export class InstanceService {
               updatedAt: item.submodule.updatedAt,
             }
           : null,
+        steps: item.steps ?? [],
       });
     });
 
-    console.log(groupedData);
     return groupedData;
   }
 
@@ -351,5 +354,13 @@ export class InstanceService {
     }
 
     return fs.readFileSync(filePath);
+  }
+
+  async deleteIncident(incidentStepId: number) {
+    return this.prisma.step.delete({
+      where: {
+        id: incidentStepId,
+      },
+    });
   }
 }

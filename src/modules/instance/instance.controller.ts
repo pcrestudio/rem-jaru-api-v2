@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Query,
   Req,
@@ -66,6 +68,11 @@ export class InstanceController {
   @Get("settings")
   async getInstancesSettings() {
     return this.instanceService.getInstancesSettings();
+  }
+
+  @Delete(":id")
+  async deleteIncident(@Param("id") instanceStepId: string) {
+    return this.instanceService.deleteIncident(Number(instanceStepId));
   }
 
   @Get("export")
