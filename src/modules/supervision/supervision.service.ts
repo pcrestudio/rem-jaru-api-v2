@@ -6,42 +6,22 @@ import {
 import { PrismaService } from "../../core/database/prisma.service";
 import { CreateSupervisionDto } from "./dto/create-supervision.dto";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
-import {
-  EntityReferenceModel,
-  ModelType,
-} from "../../common/utils/entity_reference_mapping";
+import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 import { FilterSupervisionDto } from "./dto/filter-supervision.dto";
 import { EditSupervisionDto } from "./dto/edit-supervision.dto";
-import { readFileSync } from "fs";
 import { UtilsService } from "../../utils/utils.service";
 import { GetModuleAttributeValueDto } from "../../utils/dto/get-module-attribute.value.dto";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
 import { ExtendedAttributeConfig } from "../../config/extended-attribute.config";
-import AngloMultipleTableHeaderCell, {
-  tablePrincipalSituation,
-  tableTitle,
-} from "../../common/utils/anglo_table_header_cell";
-import {
-  Document,
-  Packer,
-  Paragraph,
-  Table,
-  TableCell,
-  TableLayoutType,
-  TableRow,
-  TextDirection,
-  VerticalAlign,
-  WidthType,
-} from "docx";
-import AngloTableCell from "../../common/utils/anglo_table_cell";
-import AngloSingleTableHeaderCell from "../../common/utils/anglo_table_single_header_cell";
-import { angloDocHeader } from "../../common/utils/anglo_doc_header";
 import { DataType } from "@prisma/client";
 import { ExportablesService } from "../exportables/exportables.service";
 import { searchableFields } from "../../config/submodule_searchableFields";
 import { ToggleJudicialProcessDto } from "../judicial_process/dto/toggle-judicial-process.dto";
 import capitalize from "../../utils/capitalize";
 import formatDateToLocale from "../../common/utils/format_date";
+import * as fs from "fs";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 
 @Injectable()
 export class SupervisionService {
@@ -241,9 +221,15 @@ export class SupervisionService {
 
   async exportWord(entityReference: string) {
     try {
-      const bufferLogo = readFileSync(
-        `${process.cwd()}/dist/public/img/Anglo_American_Logo_RGB_4C.png`,
+      const content = fs.readFileSync(
+        `${process.cwd()}/docs/templates/template_word.docx`,
+        "binary",
       );
+
+      const zip = new PizZip(content);
+
+      const doc = new Docxtemplater(zip);
+
       const supervision = await this.prisma.supervision.findFirst({
         where: {
           entityReference,
@@ -285,13 +271,6 @@ export class SupervisionService {
           submodule: true,
         },
       });
-
-      const historicalVersion =
-        await UtilsService._getHistoricalByEntityReference(
-          this.prisma,
-          entityReference,
-          ModelType.Supervision,
-        );
 
       const lastSituation = UtilsService._getModuleAttributeWithValueBySlug(
         supervision as unknown as GetModuleAttributeValueDto,
@@ -349,209 +328,74 @@ export class SupervisionService {
           ExtendedAttributeConfig.sectionAttributeValues,
         );
 
-      const rows = [
-        AngloMultipleTableHeaderCell("Criterios claves", "Detalle"),
-        new TableRow({
-          children: AngloTableCell("ID Expediente", supervision.fileCode),
-        }),
-        new TableRow({
-          children: AngloTableCell("Materia", supervision.submodule.name),
-        }),
-        new TableRow({
-          children: AngloTableCell("Moneda", supervision.controversialMatter),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Sujeto demandante",
-            `${supervision.plaintiff}`,
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Sujeto demandado",
-            `${supervision.demanded}`,
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Co-demandado",
-            `${supervision.coDefendant}`,
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell("Breve resumen del caso", resume),
-        }),
-        new TableRow({
-          children: AngloTableCell("Sede", sede),
-        }),
-        new TableRow({
-          children: AngloTableCell("Último actuado", lastSituation),
-        }),
-        new TableRow({
-          children: AngloTableCell("Causa / Raíz", cause),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Fecha de inicio del proceso",
-            formatDateToLocale(startDate),
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell("Criticidad del proceso", criticalProcess),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Nivel de contingencia",
-            capitalize(supervision.contingencyLevel),
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Monto demandado",
-            `S/. ${supervision.amount}`,
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Monto provisionado",
-            `S/. ${supervision.provisionAmount}`,
-          ),
-        }),
-        new TableRow({
-          children: AngloTableCell(
-            "Especialista interno responsable",
-            `${internalSpecialist}`,
-          ),
-        }),
-      ];
+      const sumAmount = supervision?.reclaims.reduce(
+        (sum, acc) => sum + Number(acc.amount),
+        0,
+      );
 
-      const table = new Table({
-        rows: rows,
-        columnWidths: [4505, 4505],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT,
-      });
+      const sumProvisionAmount = supervision?.reclaims.reduce(
+        (sum, acc) => sum + Number(acc.provisionAmount),
+        0,
+      );
 
-      const tableComments = new Table({
-        rows: [
-          AngloSingleTableHeaderCell("Comentarios", "347ff6"),
-          new TableRow({
-            children: [
-              new TableCell({
-                children: [new Paragraph(comments)],
-                verticalAlign: VerticalAlign.CENTER,
-                margins: { top: 100, bottom: 100 },
-              }),
-            ],
-          }),
-        ],
-        columnWidths: [9010],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT,
-      });
+      const sumPosibleAmount = supervision?.reclaims.reduce(
+        (sum, acc) => sum + Number(acc.posibleAmount),
+        0,
+      );
 
-      const rowsVersionHistorical = [
-        AngloSingleTableHeaderCell("Historial de versiones", "347ff6"),
-        ...UtilsService.generateHistorical(historicalVersion),
-      ];
+      const sumRemoteAmount = supervision?.reclaims.reduce(
+        (sum, acc) => sum + Number(acc.remoteAmount),
+        0,
+      );
 
-      const tableVersionHistorical = new Table({
-        rows: rowsVersionHistorical,
-        columnWidths: [4505, 4505],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT,
-      });
+      const sumContingencyPercentage = supervision?.reclaims.reduce(
+        (sum, acc) => sum + Number(acc.contingencyPercentage),
+        0,
+      );
 
-      const rowsChildProvision = [
-        new TableRow({
-          children: [
-            new TableCell({
-              children: [new Paragraph("Petitorio")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-            new TableCell({
-              children: [new Paragraph("Monto")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-            new TableCell({
-              children: [new Paragraph("% de contingencia")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-            new TableCell({
-              children: [new Paragraph("Nv. de contingencia")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-            new TableCell({
-              children: [new Paragraph("Provisión (probable)")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-            new TableCell({
-              children: [new Paragraph("Monto posible")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-            new TableCell({
-              children: [new Paragraph("Monto remoto")],
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-          ],
-        }),
-        ...UtilsService.generateReclaims(supervision?.reclaims),
-      ];
+      const lastItemArray = supervision?.reclaims.slice(-1)[0];
 
-      const tableChildProvision = new Table({
-        rows: rowsChildProvision,
-        columnWidths: [9010],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT, // Permitir ajuste automático
-      });
+      const exportableWordData = {
+        fileCode: supervision?.fileCode,
+        matter: supervision?.submodule.name,
+        plaintiff: supervision?.plaintiff,
+        demanded: supervision?.demanded,
+        coDefendant: supervision?.coDefendant,
+        resume,
+        sede,
+        lastSituation,
+        cause,
+        startDate: formatDateToLocale(startDate),
+        criticalProcess,
+        contingencyLevel: supervision?.contingencyLevel
+          ? capitalize(supervision?.contingencyLevel)
+          : "-",
+        amount: `S/. ${supervision?.amount}`,
+        provisionAmount: `S/. ${supervision?.provisionAmount}`,
+        internalSpecialist,
+        principalSituation,
+        comments: comments,
+        reclaims: supervision?.reclaims.map((reclaim) => ({
+          concept: reclaim.concept,
+          amount: `S/. ${reclaim.amount}`,
+          provisionAmount: `S/. ${reclaim.provisionAmount}`,
+          contingencyPercentage: `${reclaim.contingencyPercentage}%`,
+          remoteAmount: `S/. ${reclaim.remoteAmount}`,
+          posibleAmount: `S/. ${reclaim.posibleAmount}`,
+          contingencyLevel: capitalize(reclaim.contingencyLevel),
+        })),
+        updatedAt: formatDateToLocale(supervision?.updatedAt.toString()),
+        sumAmount: `S/. ${Number(sumAmount).toFixed(2)}`,
+        sumProvisionAmount: `S/. ${Number(sumProvisionAmount).toFixed(2)}`,
+        sumRemoteAmount: `S/. ${Number(sumRemoteAmount).toFixed(2)}`,
+        sumPosibleAmount: `S/. ${Number(sumPosibleAmount).toFixed(2)}`,
+        sumContingencyPercentage: `${Math.round(sumContingencyPercentage)}%`,
+        lastContingencyLevel: capitalize(lastItemArray?.contingencyLevel),
+      };
 
-      const rowsProvision = [
-        AngloSingleTableHeaderCell("Provisiones", "347ff6"),
-        new TableRow({
-          children: [
-            new TableCell({
-              children: [tableChildProvision], // Incluir la tabla correctamente
-              verticalAlign: VerticalAlign.CENTER,
-              textDirection: TextDirection.LEFT_TO_RIGHT_TOP_TO_BOTTOM,
-            }),
-          ],
-        }),
-      ];
+      doc.render(exportableWordData);
 
-      const tableParentProvision = new Table({
-        rows: rowsProvision,
-        columnWidths: [9010],
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        layout: TableLayoutType.AUTOFIT, // Asegurar ajuste
-      });
-
-      const doc = new Document({
-        sections: [
-          {
-            headers: {
-              default: angloDocHeader(bufferLogo),
-            },
-
-            children: [
-              tableTitle,
-              table,
-              tableParentProvision,
-              tableComments,
-              tablePrincipalSituation(principalSituation),
-              tableVersionHistorical,
-            ],
-          },
-        ],
-      });
-
-      return Packer.toBuffer(doc);
+      return doc.getZip().generate({ type: "nodebuffer" });
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
