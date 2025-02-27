@@ -25,6 +25,8 @@ import { ConfigService } from "@nestjs/config";
 import * as fs from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import { MasterStatusConfig } from "../../config/master-status.config";
+import finishedJudicialProcessTemplate from "./templates/finished-judicial-process.tpl";
 
 @Injectable()
 export class JudicialProcessService {
@@ -73,7 +75,11 @@ export class JudicialProcessService {
         {
           fileCode: result.fileCode,
         },
-        [this.config.get("EMAIL_RECIPIENT")],
+        [
+          ...UtilsService.getRecipientsEmail(
+            this.config.get("EMAIL_RECIPIENT").toString(),
+          ),
+        ],
         "Nuevo proceso judicial",
       );
 
@@ -102,6 +108,26 @@ export class JudicialProcessService {
       guaranteeLetter = file ? file.filename : "";
     } else if (judicialProcess.guaranteeLetter) {
       guaranteeLetter = judicialProcess.guaranteeLetter;
+    }
+
+    const getStatus = await UtilsService._getStatus(
+      Number(judicialProcess.statusId),
+      this.prisma,
+    );
+
+    if (getStatus === MasterStatusConfig.concluido) {
+      await this.mail.sendWithTemplate(
+        finishedJudicialProcessTemplate,
+        {
+          fileCode: judicialProcess.fileCode,
+        },
+        [
+          ...UtilsService.getRecipientsEmail(
+            this.config.get("EMAIL_RECIPIENT").toString(),
+          ),
+        ],
+        "Procesos judicial concluido.",
+      );
     }
 
     try {

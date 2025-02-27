@@ -5,10 +5,18 @@ import { ModelType } from "@prisma/client";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { EntityReferenceModel } from "../../common/utils/entity_reference_mapping";
 import { FilterReclaimDto } from "./dto/filter-reclaim.dto";
+import { MailService } from "../../shared/mail/mail.service";
+import { ConfigService } from "@nestjs/config";
+import reclaimsTemplate from "./templates/reclaims.tpl";
+import { UtilsService } from "../../utils/utils.service";
 
 @Injectable()
 export class ReclaimsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
+  ) {}
 
   upsert(
     reclaims: UpsertReclaimDto[],
@@ -23,6 +31,12 @@ export class ReclaimsService {
 
       this.prisma.$transaction(async (tx) => {
         for (const reclaim of reclaims) {
+          const judicialProcess = await this.prisma.judicialProcess.findFirst({
+            where: {
+              entityReference,
+            },
+          });
+
           await tx.reclaim.upsert({
             create: {
               amount: Number(reclaim.amount),
@@ -49,6 +63,20 @@ export class ReclaimsService {
               reclaimId: reclaim.reclaimId ?? 0,
             },
           });
+
+          await this.mail.sendWithTemplate(
+            reclaimsTemplate,
+            {
+              fileCode: judicialProcess?.fileCode,
+              title: reclaim.reclaimId ? "modificado" : "creado",
+            },
+            [
+              ...UtilsService.getRecipientsEmail(
+                this.config.get("EMAIL_RECIPIENT").toString(),
+              ),
+            ],
+            reclaim.reclaimId ? "Petitorio modificado" : "Petitorio creado",
+          );
         }
       });
 

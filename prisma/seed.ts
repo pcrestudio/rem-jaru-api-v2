@@ -12,6 +12,7 @@ import { AuthMethod } from "../src/config/auth-method.config";
 import { MasterOptionConfig } from "../src/config/master-option.config";
 import { mappingSubmodules } from "../src/common/utils/mapping_submodules";
 import { MasterSituationConfig } from "../src/config/master-situation.config";
+import { MasterStatusConfig } from "../src/config/master-status.config";
 
 const prisma = new PrismaClient();
 
@@ -211,10 +212,6 @@ const reportTabsSeed: CreateMasterOptionDto[] = [
     name: "Total de to-do's y alertas",
     slug: MasterReportTabs.byTodos,
   },
-  {
-    name: "Por especialista interno",
-    slug: MasterReportTabs.byInternalSpecialist,
-  },
 ];
 
 const situationSeed: CreateMasterOptionDto[] = [
@@ -229,6 +226,17 @@ const situationSeed: CreateMasterOptionDto[] = [
   {
     name: "Vencido",
     slug: MasterSituationConfig.vencido,
+  },
+];
+
+const statusSeed: CreateMasterOptionDto[] = [
+  {
+    name: "Concluido",
+    slug: MasterStatusConfig.concluido,
+  },
+  {
+    name: "Activo",
+    slug: MasterStatusConfig.activo,
   },
 ];
 
@@ -605,6 +613,28 @@ async function main() {
     });
 
     // finaliza la creación de maestro de situación
+
+    // Empieza la creación de maestro status
+    const statusMaster = await prisma.master.create({
+      data: {
+        name: "Status",
+        slug: MasterOptionConfig.status,
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      for (const masterOption of statusSeed) {
+        await tx.masterOption.create({
+          data: {
+            name: masterOption.name,
+            slug: masterOption.slug,
+            masterId: statusMaster.id,
+          },
+        });
+      }
+    });
+
+    // finaliza la creación de maestro de status
 
     await prisma.masterOption.create({
       data: {
