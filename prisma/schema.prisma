@@ -217,9 +217,10 @@ model JudicialProcess {
 
   sectionAttributeValues SectionAttributeValue[] @relation("JudicialProcessSectionAttributeValues")
   stepData               StepData[]              @relation("JudicialProcessStepData")
-  instanceIncidentData   InstanceIncidentData[]  @relation("JudicialProcessInstanceIncidentData")
   globalAttributeValues  GlobalAttributeValue[]  @relation("JudicialProcessGlobalAttributeValues")
   reclaims               Reclaim[]               @relation("JudicialProcessReclaim")
+
+  incidents Incidence[] @relation("JudicialProcessIncidence")
 }
 
 model Supervision {
@@ -264,8 +265,9 @@ model Supervision {
   sectionAttributeValues SectionAttributeValue[] @relation("SupervisionSectionAttributeValues")
   stepData               StepData[]              @relation("SupervisionStepData")
   globalAttributeValues  GlobalAttributeValue[]  @relation("SupervisionGlobalAttributeValues")
-  instanceIncidentData   InstanceIncidentData[]  @relation("SupervisionInstanceIncidentData")
   reclaims               Reclaim[]               @relation("SupervisionReclaim")
+
+  incidents Incidence[] @relation("SupervisionIncidence")
 }
 
 // Petitorios
@@ -470,45 +472,44 @@ model TodoActivity {
 }
 
 model Instance {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(50)
-  moduleId    Int?
-  submoduleId Int?
-  isGlobal    Boolean? @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  name                String   @db.VarChar(50)
+  moduleId            Int?
+  submoduleId         Int?
+  isGlobal            Boolean? @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  inheritToSubmodules Json?
 
-  submodule  Submodule?         @relation(fields: [submoduleId], references: [id])
-  module     Module?            @relation(fields: [moduleId], references: [id])
-  steps      Step[]
-  incidences InstanceIncident[]
+  submodule Submodule? @relation(fields: [submoduleId], references: [id])
+  module    Module?    @relation(fields: [moduleId], references: [id])
+  steps     Step[]
 }
 
-model InstanceIncident {
-  id         Int      @id @default(autoincrement())
-  instanceId Int
-  name       String   @db.LongText
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  instance              Instance               @relation(fields: [instanceId], references: [id])
-  instanceIncidenceData InstanceIncidentData[]
-}
-
-model InstanceIncidentData {
+model Incidence {
   id                             Int      @id @default(autoincrement())
-  instanceIncidentId             Int
-  headquarters                   String   @db.LongText
-  comment                        String   @db.LongText
-  fileCode                       String   @db.LongText
+  instanceId                     Int
+  name                           String   @db.LongText
   createdAt                      DateTime @default(now())
   updatedAt                      DateTime @updatedAt
   entityJudicialProcessReference String?
   entitySupervisionReference     String?
 
-  instanceIncidence InstanceIncident @relation(fields: [instanceIncidentId], references: [id])
-  judicialProcess   JudicialProcess? @relation("JudicialProcessInstanceIncidentData", fields: [entityJudicialProcessReference], references: [entityReference])
-  supervision       Supervision?     @relation("SupervisionInstanceIncidentData", fields: [entitySupervisionReference], references: [entityReference])
+  judicialProcess JudicialProcess? @relation("JudicialProcessIncidence", fields: [entityJudicialProcessReference], references: [entityReference])
+  supervision     Supervision?     @relation("SupervisionIncidence", fields: [entitySupervisionReference], references: [entityReference])
+  incidenceData   IncidenceData[]
+}
+
+model IncidenceData {
+  id           Int      @id @default(autoincrement())
+  incidentId   Int
+  headquarters String   @db.LongText
+  comment      String   @db.LongText
+  fileCode     String   @db.LongText
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  incidence Incidence @relation(fields: [incidentId], references: [id])
 }
 
 model Step {
