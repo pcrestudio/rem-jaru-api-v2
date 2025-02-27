@@ -304,7 +304,7 @@ export class JudicialProcessService {
   async exportWord(entityReference: string) {
     try {
       const content = fs.readFileSync(
-        `${process.cwd()}/docs/templates/template_word.docx`,
+        `${process.cwd()}/dist/docs/templates/template_word.docx`,
         "binary",
       );
 
