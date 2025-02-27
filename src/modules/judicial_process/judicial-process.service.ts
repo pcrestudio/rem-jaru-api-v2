@@ -55,6 +55,7 @@ export class JudicialProcessService {
         controversialMatter: judicialProcess.controversialMatter,
         projectId: judicialProcess.projectId,
         cargoStudioId: Number(judicialProcess.cargoStudioId),
+        statusId: Number(judicialProcess.statusId),
         amount: judicialProcess.amount,
         responsibleId: judicialProcess.responsibleId,
         secondaryResponsibleId: judicialProcess.secondaryResponsibleId,
@@ -74,13 +75,17 @@ export class JudicialProcessService {
         createJudicialProcessTemplate,
         {
           fileCode: result.fileCode,
+          studio: await UtilsService._getStudio(
+            result?.cargoStudioId,
+            this.prisma,
+          ),
         },
         [
           ...UtilsService.getRecipientsEmail(
             this.config.get("EMAIL_RECIPIENT").toString(),
           ),
         ],
-        "Nuevo proceso judicial",
+        "Nuevo proceso",
       );
 
       return result;
@@ -120,13 +125,17 @@ export class JudicialProcessService {
         finishedJudicialProcessTemplate,
         {
           fileCode: judicialProcess.fileCode,
+          studio: await UtilsService._getStudio(
+            judicialProcess.cargoStudioId,
+            this.prisma,
+          ),
         },
         [
           ...UtilsService.getRecipientsEmail(
             this.config.get("EMAIL_RECIPIENT").toString(),
           ),
         ],
-        "Procesos judicial concluido.",
+        "Proceso concluido.",
       );
     }
 
@@ -469,7 +478,9 @@ export class JudicialProcessService {
         sumRemoteAmount: `S/. ${Number(sumRemoteAmount).toFixed(2)}`,
         sumPosibleAmount: `S/. ${Number(sumPosibleAmount).toFixed(2)}`,
         sumContingencyPercentage: `${Math.round(sumContingencyPercentage)}%`,
-        lastContingencyLevel: capitalize(lastItemArray?.contingencyLevel),
+        lastContingencyLevel: lastItemArray?.contingencyLevel
+          ? capitalize(lastItemArray?.contingencyLevel)
+          : "",
       };
 
       doc.render(exportableWordData);

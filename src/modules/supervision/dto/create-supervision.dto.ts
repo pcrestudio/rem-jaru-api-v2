@@ -25,6 +25,10 @@ export class CreateSupervisionDto {
   cargoStudioId: number;
 
   @IsNumber()
+  @IsOptional()
+  statusId: number;
+
+  @IsNumber()
   authorityId: number;
 
   @IsNumber()
@@ -32,6 +36,10 @@ export class CreateSupervisionDto {
 
   @IsNumber()
   responsibleId: number;
+
+  @IsNumber()
+  @IsOptional()
+  secondaryResponsibleId: number;
 
   @IsNumber()
   projectId: number;

@@ -12,7 +12,6 @@ import { Paragraph, TableCell, TableRow, VerticalAlign } from "docx";
 import AngloTableCell from "../common/utils/anglo_table_cell";
 import { UpsertReclaimDto } from "../modules/reclaims/dto/upsert-reclaim.dto";
 import capitalize from "./capitalize";
-import { ConfigService } from "@nestjs/config";
 
 export class UtilsService {
   static _getModuleAttributeWithValueBySlug(
@@ -279,6 +278,8 @@ export class UtilsService {
   }
 
   static async _getStatus(statusId: number, prisma: PrismaClient) {
+    if (!statusId) return "";
+
     const status = await prisma.masterOption.findFirst({
       where: {
         id: statusId,
@@ -286,6 +287,18 @@ export class UtilsService {
     });
 
     return status.slug;
+  }
+
+  static async _getStudio(studioId: number, prisma: PrismaClient) {
+    if (!studioId) return "";
+
+    const studio = await prisma.masterOption.findFirst({
+      where: {
+        id: Number(studioId),
+      },
+    });
+
+    return studio.name;
   }
 
   static getRecipientsEmail(recipients: string) {

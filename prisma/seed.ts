@@ -148,30 +148,30 @@ const mastersSeed: UpsertMasterDto[] = [
 
 const judicialProcessInstancesSeed: UpsertInstanceDto[] = [
   {
-    name: "Primera instancia",
+    title: "Primera instancia",
     isGlobal: true,
   },
   {
-    name: "Segunda instancia",
+    title: "Segunda instancia",
     isGlobal: true,
   },
   {
-    name: "Casación",
+    title: "Casación",
     isGlobal: true,
   },
 ];
 
 const supervisionInstancesSeed: UpsertInstanceDto[] = [
   {
-    name: "Etapa preliminar",
+    title: "Etapa preliminar",
     isGlobal: true,
   },
   {
-    name: "Etapa de supervisión",
+    title: "Etapa de supervisión",
     isGlobal: true,
   },
   {
-    name: "Etapa sancionadora",
+    title: "Etapa sancionadora",
     isGlobal: true,
   },
 ];
@@ -284,89 +284,89 @@ const rolesSeed: UpsertRoleDto[] = [
 
 const judicialInstanceStepOneSeed: UpsertInstanceDto[] = [
   {
-    name: "Demanda",
+    title: "Demanda",
     isGlobal: true,
   },
   {
-    name: "Contestación de demanda",
+    title: "Contestación de demanda",
     isGlobal: true,
   },
   {
-    name: "Oposiciones a los medios probatorios",
+    title: "Oposiciones a los medios probatorios",
     isGlobal: true,
   },
   {
-    name: "Solicitud de excepciones",
+    title: "Solicitud de excepciones",
     isGlobal: true,
   },
   {
-    name: "Absolución de contestación",
+    title: "Absolución de contestación",
     isGlobal: true,
   },
   {
-    name: "Solicitud de improcedencia",
+    title: "Solicitud de improcedencia",
     isGlobal: true,
   },
   {
-    name: "Informe de saneamiento",
+    title: "Informe de saneamiento",
     isGlobal: true,
   },
   {
-    name: "Informe oral",
+    title: "Informe oral",
     isGlobal: true,
   },
   {
-    name: "Sentencia",
+    title: "Sentencia",
     isGlobal: true,
   },
 ];
 
 const judicialInstanceStepTwoSeed: UpsertInstanceDto[] = [
   {
-    name: "Apelación",
+    title: "Apelación",
     isGlobal: true,
   },
   {
-    name: "Absolución de traslado de apelación",
+    title: "Absolución de traslado de apelación",
     isGlobal: true,
   },
   {
-    name: "Programación de vista de la causa",
+    title: "Programación de vista de la causa",
     isGlobal: true,
   },
   {
-    name: "Solicitud de uso de palabra",
+    title: "Solicitud de uso de palabra",
     isGlobal: true,
   },
   {
-    name: "Sentencia de la vista",
+    title: "Sentencia de la vista",
     isGlobal: true,
   },
 ];
 
 const judicialInstanceStepThreeSeed: UpsertInstanceDto[] = [
   {
-    name: "Solicitud de casación",
+    title: "Solicitud de casación",
     isGlobal: true,
   },
   {
-    name: "Solicitud de improcedencia",
+    title: "Solicitud de improcedencia",
     isGlobal: true,
   },
   {
-    name: "Auto de procedencia",
+    title: "Auto de procedencia",
     isGlobal: true,
   },
   {
-    name: "Programación de vista de la causa",
+    title: "Programación de vista de la causa",
     isGlobal: true,
   },
   {
-    name: "Solicitud de uso de palabra",
+    title: "Solicitud de uso de palabra",
     isGlobal: true,
   },
   {
-    name: "Sentencia de fondo",
+    title: "Sentencia de fondo",
     isGlobal: true,
   },
 ];
@@ -706,6 +706,7 @@ async function main() {
         const instance_created = await tx.instance.create({
           data: {
             ...instance,
+            name: instance.title,
             moduleId: modulesSet[0].id,
           },
         });
@@ -720,6 +721,7 @@ async function main() {
         await tx.step.create({
           data: {
             ...step,
+            name: step.title,
             instanceId: instanceSet[0].id,
           },
         });
@@ -731,6 +733,7 @@ async function main() {
         await tx.step.create({
           data: {
             ...step,
+            name: step.title,
             instanceId: instanceSet[1].id,
           },
         });
@@ -742,6 +745,7 @@ async function main() {
         await tx.step.create({
           data: {
             ...step,
+            name: step.title,
             instanceId: instanceSet[2].id,
           },
         });
@@ -820,6 +824,7 @@ async function main() {
         const instance_created = await tx.instance.create({
           data: {
             ...instance,
+            name: instance.title,
             moduleId: modulesSet[1].id,
           },
         });

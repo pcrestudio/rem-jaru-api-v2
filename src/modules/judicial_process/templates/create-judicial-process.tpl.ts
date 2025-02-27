@@ -20,7 +20,7 @@ const createJudicialProcessTemplate = (obj) => `${headerTemplate}
                           <p style="margin: 0; word-break: break-word;">
                             <span style="word-break: break-word;"> 
                               <strong>
-                                <span style="word-break: break-word;">El usuario creó el expediente correctamente, con código ${obj.fileCode}.</span>
+                                <span style="word-break: break-word;">El estudio ${obj.studio}, creó el expediente con código ${obj.fileCode}.</span>
                               </strong>
                             </span>
                             <br/>

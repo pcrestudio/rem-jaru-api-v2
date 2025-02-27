@@ -2,7 +2,7 @@ import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class UpsertInstanceDto {
   @IsString()
-  name: string;
+  title: string;
 
   @IsNumber()
   @IsOptional()

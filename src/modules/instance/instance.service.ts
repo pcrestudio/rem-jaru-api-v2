@@ -18,6 +18,7 @@ import {
 import * as path from "path";
 import * as fs from "fs";
 import processDate from "../../common/utils/convert_date_string";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class InstanceService {
@@ -29,13 +30,13 @@ export class InstanceService {
   async upsertInstance(instance: UpsertInstanceDto) {
     return this.prisma.instance.upsert({
       create: {
-        name: instance.name,
+        name: instance.title,
         submoduleId: instance.submoduleId,
         moduleId: instance.moduleId,
         isGlobal: instance.isGlobal,
       },
       update: {
-        name: instance.name,
+        name: instance.title,
         submoduleId: instance.submoduleId,
         moduleId: instance.moduleId,
         isGlobal: instance.isGlobal,
@@ -212,45 +213,29 @@ export class InstanceService {
         : { entitySupervisionReference: entityReference };
 
     const result = await this.prisma[`${model}`].findFirst({
-      where: {
-        entityReference,
-      },
+      where: { entityReference },
       include: {
-        submodule: {
-          include: {
-            module: true,
-          },
-        },
+        submodule: { include: { module: true } },
       },
     });
 
-    const instances = await this.prisma.instance.findMany({
-      where: {
-        OR: [
-          {
-            isGlobal: true,
-            moduleId: result.submodule.module.id,
-          },
-          {
-            isGlobal: false,
-            submoduleId: result.submodule.id,
-          },
-        ],
-      },
+    if (!result || !result.submodule) {
+      throw new Error("No se encontró el submódulo asociado.");
+    }
+
+    const submoduleId = result.submodule.id;
+    const moduleId = result.submodule.module.id;
+
+    // 1. Instancias propias del submódulo
+    const submoduleInstances = await this.prisma.instance.findMany({
+      where: { submoduleId },
       include: {
         module: true,
         submodule: true,
-        incidences: {
-          include: {
-            instanceIncidenceData: {
-              where: where,
-            },
-          },
-        },
         steps: {
           include: {
             stepData: {
-              where: where,
+              where,
               select: {
                 comments: true,
                 resume: true,
@@ -258,10 +243,6 @@ export class InstanceService {
                 dateResume: true,
                 title: true,
                 file: true,
-                fileTwo: true,
-                fileThree: true,
-                fileFour: true,
-                fileFive: true,
                 completed: true,
                 id: true,
                 entityId: true,
@@ -272,8 +253,96 @@ export class InstanceService {
       },
     });
 
+    // 2. Instancias heredadas al submódulo
+    const inheritedInstances = await this.prisma.instance.findMany({
+      where: {
+        inheritToSubmodules: {
+          // submódulos que heredan esta instancia
+          path: "$",
+          array_contains: [submoduleId],
+        },
+      },
+      include: {
+        module: true,
+        submodule: true,
+        steps: {
+          include: {
+            stepData: {
+              where,
+              select: {
+                comments: true,
+                resume: true,
+                choice: true,
+                dateResume: true,
+                title: true,
+                file: true,
+                completed: true,
+                id: true,
+                entityId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Si ya hay instancias (propias + heredadas), no tomamos las genéricas
+    if (submoduleInstances.length > 0 || inheritedInstances.length > 0) {
+      return [...submoduleInstances, ...inheritedInstances];
+    }
+
+    // 3. Instancias de módulo genéricas
+    const moduleInstances = await this.prisma.instance.findMany({
+      where: {
+        moduleId,
+        submoduleId: null,
+        OR: [
+          {
+            inheritToSubmodules: {
+              path: "$",
+              equals: Prisma.DbNull,
+            },
+          },
+          {
+            inheritToSubmodules: {
+              path: "$",
+              equals: Prisma.JsonNull,
+            },
+          },
+          {
+            inheritToSubmodules: {
+              equals: [],
+            },
+          },
+        ],
+      },
+      include: {
+        module: true,
+        submodule: true,
+        steps: {
+          include: {
+            stepData: {
+              where,
+              select: {
+                comments: true,
+                resume: true,
+                choice: true,
+                dateResume: true,
+                title: true,
+                file: true,
+                completed: true,
+                id: true,
+                entityId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 🔍 Filtro especial para SNF (se queda solo con etapas específicas y las ordena)
     if (prefix === Entities.SNF) {
-      return instances
+      return [...submoduleInstances, ...inheritedInstances, ...moduleInstances]
         .filter(
           (instance) =>
             instance.name === "Etapa inspectiva" ||
@@ -282,7 +351,7 @@ export class InstanceService {
         .reverse();
     }
 
-    return instances;
+    return moduleInstances;
   }
 
   async getInstancesSettings() {

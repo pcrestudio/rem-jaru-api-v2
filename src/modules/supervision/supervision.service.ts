@@ -22,10 +22,19 @@ import formatDateToLocale from "../../common/utils/format_date";
 import * as fs from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import { MailService } from "../../shared/mail/mail.service";
+import { ConfigService } from "@nestjs/config";
+import createJudicialProcessTemplate from "../judicial_process/templates/create-judicial-process.tpl";
+import { MasterStatusConfig } from "../../config/master-status.config";
+import finishedJudicialProcessTemplate from "../judicial_process/templates/finished-judicial-process.tpl";
 
 @Injectable()
 export class SupervisionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
+  ) {}
 
   async createSupervision(supervision: CreateSupervisionDto, slug: string) {
     const submodule = await this.prisma.submodule.findFirst({
@@ -34,21 +43,55 @@ export class SupervisionService {
       },
     });
 
-    return this.prisma.$extended.supervision.create({
+    const { result } = await this.prisma.$extended.supervision.create({
       data: {
         fileCode: supervision.fileCode,
         demanded: supervision.demanded,
         plaintiff: supervision.plaintiff,
         coDefendant: supervision.coDefendant,
         controversialMatter: supervision.controversialMatter,
-        authorityId: supervision.authorityId,
-        situationId: supervision.situationId,
-        cargoStudioId: supervision.cargoStudioId,
+        authorityId: Number(supervision.authorityId),
+        situationId: Number(supervision.situationId),
+        cargoStudioId: Number(supervision.cargoStudioId),
+        statusId: Number(supervision.statusId),
         projectId: supervision.projectId,
         amount: Number(supervision.amount),
-        responsibleId: supervision.responsibleId,
+        responsibleId: Number(supervision.responsibleId),
+        secondaryResponsibleId: Number(supervision.secondaryResponsibleId),
         submoduleId: submodule.id,
       },
+    });
+
+    if (result) {
+      await this.prisma.cEJ_Expedientes.create({
+        data: {
+          expedientePJ: result.fileCode,
+          activo: "S",
+        },
+      });
+
+      await this.mail.sendWithTemplate(
+        createJudicialProcessTemplate,
+        {
+          fileCode: result.fileCode,
+          studio: await UtilsService._getStudio(
+            result?.cargoStudioId,
+            this.prisma,
+          ),
+        },
+        [
+          ...UtilsService.getRecipientsEmail(
+            this.config.get("EMAIL_RECIPIENT").toString(),
+          ),
+        ],
+        "Nuevo proceso",
+      );
+
+      return result;
+    }
+
+    throw new InternalServerErrorException({
+      message: `Error creating judicial process`,
     });
   }
 
@@ -78,6 +121,30 @@ export class SupervisionService {
       guaranteeLetter = supervision.guaranteeLetter;
     }
 
+    const getStatus = await UtilsService._getStatus(
+      Number(supervision.statusId),
+      this.prisma,
+    );
+
+    if (getStatus === MasterStatusConfig.concluido) {
+      await this.mail.sendWithTemplate(
+        finishedJudicialProcessTemplate,
+        {
+          fileCode: supervision.fileCode,
+          studio: await UtilsService._getStudio(
+            supervision.cargoStudioId,
+            this.prisma,
+          ),
+        },
+        [
+          ...UtilsService.getRecipientsEmail(
+            this.config.get("EMAIL_RECIPIENT").toString(),
+          ),
+        ],
+        "Proceso concluido.",
+      );
+    }
+
     try {
       return this.prisma.supervision.update({
         data: {
@@ -98,6 +165,7 @@ export class SupervisionService {
           cargoStudioId: Number(supervision.cargoStudioId),
           situationId: Number(supervision.situationId),
           responsibleId: Number(supervision.responsibleId),
+          secondaryResponsibleId: Number(supervision.secondaryResponsibleId),
           statusId: Number(supervision.statusId),
           projectId: Number(supervision.projectId),
           isProvisional: supervision.isProvisional === "false" ? false : true,
@@ -390,7 +458,9 @@ export class SupervisionService {
         sumRemoteAmount: `S/. ${Number(sumRemoteAmount).toFixed(2)}`,
         sumPosibleAmount: `S/. ${Number(sumPosibleAmount).toFixed(2)}`,
         sumContingencyPercentage: `${Math.round(sumContingencyPercentage)}%`,
-        lastContingencyLevel: capitalize(lastItemArray?.contingencyLevel),
+        lastContingencyLevel: lastItemArray?.contingencyLevel
+          ? capitalize(lastItemArray?.contingencyLevel)
+          : "",
       };
 
       doc.render(exportableWordData);

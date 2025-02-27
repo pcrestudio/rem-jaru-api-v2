@@ -1,6 +1,3 @@
-import base64Images from "./base64Images";
-const frontendUrl = process.env.FRONTEND_URL;
-
 const footerTemplate = `
             <table align="center" border="0" cellpadding="0" cellspacing="0" class="row row-4" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;" width="100%">
                 <tbody>
@@ -16,8 +13,8 @@ const footerTemplate = `
                                                         <div align="center" class="alignment">
                                                             <table border="0" cellpadding="0" cellspacing="0" class="social-table" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; display: inline-block;" width="74px">
                                                                 <tr>
-                                                                    <td style="padding:0 5px 0 0px;"><a href="https://www.linkedin.com/company/rodrigo-elias-medrano/" target="_blank"><img alt="LinkedIn" height="auto" src="${frontendUrl}/linkedin2x.png" style="display: block; height: auto; border: 0;" title="LinkedIn" width="32" height="32" /></a></td>
-                                                                    <td style="padding:0 5px 0 0px;"><a href="https://www.estudiorodrigo.com/" target="_blank"><img alt="Web Site" height="auto" src="${frontendUrl}/website2x.png" style="display: block; height: auto; border: 0;" title="Web Site" width="32" height="32" /></a></td>
+                                                                    <td style="padding:0 5px 0 0px;"><a href="https://www.linkedin.com/company/rodrigo-elias-medrano/" target="_blank"><img alt="LinkedIn" height="auto" src="https://www.estudiorodrigo.com/wp-content/uploads/2025/02/linkedin2x.png" style="display: block; height: auto; border: 0;" title="LinkedIn" width="32" height="32" /></a></td>
+                                                                    <td style="padding:0 5px 0 0px;"><a href="https://www.estudiorodrigo.com/" target="_blank"><img alt="Web Site" height="auto" src="https://www.estudiorodrigo.com/wp-content/uploads/2025/02/website2x.png" style="display: block; height: auto; border: 0;" title="Web Site" width="32" height="32" /></a></td>
                                                                 </tr>
                                                             </table>
                                                         </div>
@@ -44,7 +41,7 @@ const footerTemplate = `
                                                     <td class="pad" style="padding-top:20px;">
                                                         <div style="font-family: sans-serif">
                                                             <div class="" style="font-size: 12px; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; mso-line-height-alt: 14.399999999999999px; color: #1aa8de; line-height: 1.2;">
-                                                                <p style="margin: 0; font-size: 12px; text-align: center; mso-line-height-alt: 14.399999999999999px;">Email <span style="word-break: break-word; color: #ffffff; font-size: 12px;">soporte-jaru@estudiorodrigo.com</span></p>
+                                                                <p style="margin: 0; font-size: 12px; text-align: center; mso-line-height-alt: 14.399999999999999px;"> <span style="word-break: break-word; color: #ffffff; font-size: 12px;">soporte@estudiorodrigo.com</span></p>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -58,12 +55,12 @@ const footerTemplate = `
                     </tr>
                 </tbody>
             </table>
-
-            <table align="center" border="0" cellpadding="0" cellspacing="0" class="row row-5" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; padding:0; margin:0; display: block;" width="100%">
+            
+            <table align="center" border="0" cellpadding="0" cellspacing="0" class="row row-5" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;" width="100%">
                 <tbody>
                     <tr>
                         <td>
-                            <table align="center" border="0" cellpadding="0" cellspacing="0" class="row-content stack" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; color: #000000; width: 600px; margin: 0 auto; padding:0; display: block;" width="600">
+                            <table align="center" border="0" cellpadding="0" cellspacing="0" class="row-content stack" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; color: #000000; width: 600px; margin: 0 auto;" width="600">
                                 <tbody>
                                     <tr>
                                         <td class="column column-1" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;" width="100%">
@@ -71,7 +68,7 @@ const footerTemplate = `
                                                 <tr>
                                                     <td class="pad" style="width:100%;padding-bottom:25px;padding-right:0px;padding-left:0px;">
                                                         <div align="center" class="alignment" style="line-height:10px">
-                                                            <div class="fullWidth" style="max-width: 600px;"><img alt="Image" height="auto" src="${frontendUrl}/rounder-dwn.png" style="display: block; height: auto; border: 0; width: 100%;" title="Image" width="600"/></div>
+                                                            <div class="fullWidth" style="max-width: 600px;"><img alt="Image" height="auto" src="https://www.estudiorodrigo.com/wp-content/uploads/2025/02/rounder-dwn.png" style="display: block; height: auto; border: 0; width: 100%;" title="Image" width="600"/></div>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -88,7 +85,7 @@ const footerTemplate = `
                         </td>
                     </tr>
                 </tbody>
-            </table><!-- End -->
+            </table>
     </body>
 </html>`;
 export default footerTemplate;

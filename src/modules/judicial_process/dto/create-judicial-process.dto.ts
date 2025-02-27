@@ -23,6 +23,10 @@ export class CreateJudicialProcessDto {
   amount: string;
 
   @IsNumber()
+  @IsOptional()
+  statusId: string;
+
+  @IsNumber()
   cargoStudioId: number;
 
   @IsNumber()

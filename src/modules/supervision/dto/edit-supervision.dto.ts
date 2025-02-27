@@ -39,6 +39,10 @@ export class EditSupervisionDto {
   @IsNumber()
   responsibleId: number;
 
+  @IsNumber()
+  @IsOptional()
+  secondaryResponsibleId: number;
+
   @IsString()
   @IsOptional()
   isProvisional: string;

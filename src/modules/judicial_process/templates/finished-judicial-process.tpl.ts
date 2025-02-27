@@ -20,7 +20,7 @@ const finishedJudicialProcessTemplate = (obj) => `${headerTemplate}
                           <p style="margin: 0; word-break: break-word;">
                             <span style="word-break: break-word;"> 
                               <strong>
-                                <span style="word-break: break-word;">El proceso ha sido concluido, con código de referencia: ${obj.fileCode}.</span>
+                                <span style="word-break: break-word;">El proceso ha sido concluido por el ${obj.studio}, con código de referencia: ${obj.fileCode}.</span>
                               </strong>
                             </span>
                             <br/>
