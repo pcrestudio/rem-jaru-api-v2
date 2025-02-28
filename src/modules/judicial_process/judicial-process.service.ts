@@ -404,7 +404,7 @@ export class JudicialProcessService {
         );
 
       const internalSpecialist =
-        UtilsService._getModuleAttributeWithValueBySlug(
+        UtilsService._getModuleAttributeOptionLabelBySlug(
           judicialProcess as unknown as GetModuleAttributeValueDto,
           AttributeSlugConfig.internalSpecialist,
           ExtendedAttributeConfig.sectionAttributeValues,

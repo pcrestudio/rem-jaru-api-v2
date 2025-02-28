@@ -212,8 +212,6 @@ export class SupervisionService {
       whereFields["statusId"] = Number(filter.statusId);
     }
 
-    console.log(filter);
-
     const includeConditions: any = {
       project: filter.projectId
         ? {
@@ -396,7 +394,7 @@ export class SupervisionService {
       );
 
       const internalSpecialist =
-        UtilsService._getModuleAttributeWithValueBySlug(
+        UtilsService._getModuleAttributeOptionLabelBySlug(
           supervision as unknown as GetModuleAttributeValueDto,
           AttributeSlugConfig.supervisionInternalSpecialist,
           ExtendedAttributeConfig.sectionAttributeValues,
