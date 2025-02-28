@@ -71,6 +71,11 @@ export class JudicialProcessService {
         },
       });
 
+      const responsibleEmail = await UtilsService.getResponsibleEmail(
+        Number(result.responsibleId),
+        this.prisma,
+      );
+
       await this.mail.sendWithTemplate(
         createJudicialProcessTemplate,
         {
@@ -81,6 +86,7 @@ export class JudicialProcessService {
           ),
         },
         [
+          responsibleEmail,
           ...UtilsService.getRecipientsEmail(
             this.config.get("EMAIL_RECIPIENT").toString(),
           ),
@@ -120,25 +126,6 @@ export class JudicialProcessService {
       this.prisma,
     );
 
-    if (getStatus === MasterStatusConfig.concluido) {
-      await this.mail.sendWithTemplate(
-        finishedJudicialProcessTemplate,
-        {
-          fileCode: judicialProcess.fileCode,
-          studio: await UtilsService._getStudio(
-            judicialProcess.cargoStudioId,
-            this.prisma,
-          ),
-        },
-        [
-          ...UtilsService.getRecipientsEmail(
-            this.config.get("EMAIL_RECIPIENT").toString(),
-          ),
-        ],
-        "Proceso concluido.",
-      );
-    }
-
     try {
       const result = await this.prisma.judicialProcess.update({
         data: {
@@ -170,6 +157,31 @@ export class JudicialProcessService {
           id: Number(judicialProcess.id),
         },
       });
+
+      if (getStatus === MasterStatusConfig.concluido) {
+        const responsibleEmail = await UtilsService.getResponsibleEmail(
+          Number(judicialProcess.responsibleId),
+          this.prisma,
+        );
+
+        await this.mail.sendWithTemplate(
+          finishedJudicialProcessTemplate,
+          {
+            fileCode: judicialProcess.fileCode,
+            studio: await UtilsService._getStudio(
+              judicialProcess.cargoStudioId,
+              this.prisma,
+            ),
+          },
+          [
+            responsibleEmail,
+            ...UtilsService.getRecipientsEmail(
+              this.config.get("EMAIL_RECIPIENT").toString(),
+            ),
+          ],
+          "Proceso concluido.",
+        );
+      }
 
       return result;
     } catch (error) {

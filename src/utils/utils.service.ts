@@ -308,4 +308,24 @@ export class UtilsService {
 
     return recipients.split(",");
   }
+
+  static async getResponsibleEmail(
+    responsibleId: number,
+    prisma: PrismaClient,
+  ) {
+    if (!responsibleId || responsibleId === 0) {
+      return "";
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: responsibleId,
+      },
+      include: {
+        responsible: true,
+      },
+    });
+
+    return user.email;
+  }
 }
