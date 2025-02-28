@@ -705,9 +705,9 @@ async function main() {
       for (const instance of judicialProcessInstancesSeed) {
         const instance_created = await tx.instance.create({
           data: {
-            ...instance,
             name: instance.title,
             moduleId: modulesSet[0].id,
+            isGlobal: instance.isGlobal,
           },
         });
 
@@ -720,9 +720,9 @@ async function main() {
       for (const step of judicialInstanceStepOneSeed) {
         await tx.step.create({
           data: {
-            ...step,
             name: step.title,
             instanceId: instanceSet[0].id,
+            isGlobal: step.isGlobal,
           },
         });
       }
@@ -732,9 +732,9 @@ async function main() {
       for (const step of judicialInstanceStepTwoSeed) {
         await tx.step.create({
           data: {
-            ...step,
             name: step.title,
             instanceId: instanceSet[1].id,
+            isGlobal: step.isGlobal,
           },
         });
       }
@@ -744,9 +744,9 @@ async function main() {
       for (const step of judicialInstanceStepThreeSeed) {
         await tx.step.create({
           data: {
-            ...step,
             name: step.title,
             instanceId: instanceSet[2].id,
+            isGlobal: step.isGlobal,
           },
         });
       }
@@ -823,9 +823,9 @@ async function main() {
       for (const instance of supervisionInstancesSeed) {
         const instance_created = await tx.instance.create({
           data: {
-            ...instance,
             name: instance.title,
             moduleId: modulesSet[1].id,
+            isGlobal: instance.isGlobal,
           },
         });
 
