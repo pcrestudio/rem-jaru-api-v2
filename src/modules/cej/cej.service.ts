@@ -27,7 +27,7 @@ export class CejService {
       ...dossier,
       message: message,
       updated: updated,
-      alternativeMessage: `Total de actuaciones: ${dossier?.detalleactuaciones.length}`,
+      alternativeMessage: `Total de actuaciones: ${dossier?.detalleactuaciones ? dossier?.detalleactuaciones.length : 0}`,
     };
   }
 
@@ -58,7 +58,7 @@ export class CejService {
 
     try {
       if (!fs.existsSync(filePath)) {
-        throw new Error("El archivo no existe");
+        res.status(500).send("El archivo no existe.");
       }
 
       res.download(filePath, fileName, (err) => {

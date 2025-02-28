@@ -63,20 +63,6 @@ export class ReclaimsService {
               reclaimId: reclaim.reclaimId ?? 0,
             },
           });
-
-          await this.mail.sendWithTemplate(
-            reclaimsTemplate,
-            {
-              fileCode: judicialProcess?.fileCode,
-              title: reclaim.reclaimId ? "modificado" : "creado",
-            },
-            [
-              ...UtilsService.getRecipientsEmail(
-                this.config.get("EMAIL_RECIPIENT").toString(),
-              ),
-            ],
-            reclaim.reclaimId ? "Petitorio modificado" : "Petitorio creado",
-          );
         }
       });
 
