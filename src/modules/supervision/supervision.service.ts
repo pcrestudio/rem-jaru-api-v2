@@ -208,6 +208,12 @@ export class SupervisionService {
       whereFields["responsibleId"] = Number(filter.responsibleId);
     }
 
+    if (filter.statusId) {
+      whereFields["statusId"] = Number(filter.statusId);
+    }
+
+    console.log(filter);
+
     const includeConditions: any = {
       project: filter.projectId
         ? {

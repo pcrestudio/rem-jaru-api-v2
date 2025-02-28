@@ -57,32 +57,38 @@ export class AttributeValuesService {
     sectionId: number,
   ) {
     try {
-      this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx) => {
         const section = await tx.section.findUnique({
-          where: {
-            sectionId: sectionId,
-          },
+          where: { sectionId },
         });
 
         for (const attribute of attributes) {
-          await tx.sectionAttribute.create({
-            data: {
-              ...attribute,
-              dataType: attribute.dataType ? attribute.dataType : DataType.TEXT,
-              rowLayout: attribute.rowLayout
-                ? attribute.rowLayout
-                : RowLayout.single,
-              moduleId: section.moduleId ?? undefined,
-              submoduleId: section.submoduleId ?? undefined,
+          await tx.sectionAttribute.upsert({
+            where: { slug: attribute.slug }, // Se usa el campo único
+            update: {
+              dataType: attribute.dataType ?? DataType.TEXT,
+              rowLayout: attribute.rowLayout ?? RowLayout.single,
+              moduleId: section?.moduleId,
+              submoduleId: section?.submoduleId,
               isForReport: attribute.isForReport ?? false,
               isMultiple: attribute.isMultiple ?? false,
-              sectionId: section.sectionId,
+              sectionId: section?.sectionId,
+            },
+            create: {
+              ...attribute,
+              dataType: attribute.dataType ?? DataType.TEXT,
+              rowLayout: attribute.rowLayout ?? RowLayout.single,
+              moduleId: section?.moduleId,
+              submoduleId: section?.submoduleId,
+              isForReport: attribute.isForReport ?? false,
+              isMultiple: attribute.isMultiple ?? false,
+              sectionId: section?.sectionId,
             },
           });
         }
       });
 
-      return "Atributos insertados";
+      return "Atributos insertados o actualizados";
     } catch (error) {
       console.error("Error en upsertBulkSectionAttributes:", error);
       throw new InternalServerErrorException({

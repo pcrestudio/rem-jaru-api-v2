@@ -135,12 +135,14 @@ export class ReportService {
         : AttributeSlugConfig.cause,
     );
 
-    const internalSpecialists = await this.getTotalValueBySlug(
+    const internalSpecialists = await this.getTotalByAttributeOptionSlug(
       allData,
       allData[0].name === "Supervisiones"
         ? AttributeSlugConfig.supervisionInternalSpecialist
         : AttributeSlugConfig.internalSpecialist,
     );
+
+    console.log(internalSpecialists);
 
     const matters = await this.getMattersReport(
       filter,
