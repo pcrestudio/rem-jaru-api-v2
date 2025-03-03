@@ -68,8 +68,8 @@ export class SupervisionController {
   }
 
   @Get("export/excel")
-  async exportExcel(@Res() res: Response) {
-    const document = await this.supervisionService.exportExcel();
+  async exportExcel(@Res() res: Response, @Query("slug") slug: string) {
+    const document = await this.supervisionService.exportExcel(slug);
 
     res.setHeader(
       "Content-Type",

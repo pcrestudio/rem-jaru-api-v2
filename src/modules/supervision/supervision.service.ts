@@ -27,6 +27,7 @@ import { ConfigService } from "@nestjs/config";
 import createJudicialProcessTemplate from "../judicial_process/templates/create-judicial-process.tpl";
 import { MasterStatusConfig } from "../../config/master-status.config";
 import finishedJudicialProcessTemplate from "../judicial_process/templates/finished-judicial-process.tpl";
+import { processExcelHeaders } from "../../config/excel-headers.config";
 
 @Injectable()
 export class SupervisionService {
@@ -475,10 +476,13 @@ export class SupervisionService {
     }
   }
 
-  async exportExcel() {
+  async exportExcel(slug: string) {
     const supervisions = await this.prisma.supervision.findMany({
       where: {
         isActive: true,
+        submodule: {
+          slug: slug,
+        },
       },
       include: {
         responsible: true,
@@ -496,6 +500,7 @@ export class SupervisionService {
             },
           },
         },
+        reclaims: true,
         globalAttributeValues: {
           include: {
             attribute: {
@@ -509,37 +514,9 @@ export class SupervisionService {
     });
 
     const headers = [
-      {
-        key: "submodule.name",
-        header: "Materia",
-      },
-      {
-        key: "status.name",
-        header: "Status",
-      },
-      { key: "fileCode", header: "Código de expediente" },
-      { key: "demanded", header: "Demandante" },
-      { key: "plaintiff", header: "Demandado" },
-      { key: "coDefendant", header: "Co-demandado" },
-      { key: "responsible.displayName", header: "Responsable" },
-      {
-        key: "secondaryResponsible.displayName",
-        header: "Responsable Secundario",
-      },
-      { key: "project.name", header: "Razón social" },
-      { key: "studio.name", header: "Estudio" },
-      { key: "authority.name", header: "Estudio" },
+      ...processExcelHeaders,
+      { key: "authority.name", header: "Autoridad" },
       { key: "situation.name", header: "Situación" },
-      {
-        key: "controversialMatter",
-        header: "Moneda",
-      },
-      { key: "contingencyLevel", header: "Nivel de contingencia" },
-      { key: "contingencyPercentage", header: "% de contingencia" },
-      { key: "amount", header: "Monto demandado" },
-      { key: "provisionAmount", header: "Monto de provisión" },
-      { key: "paidAmount", header: "Monto pagado" },
-      { key: "savingAmount", header: "Ahorro generado" },
     ];
 
     for (const item of supervisions) {
@@ -586,12 +563,30 @@ export class SupervisionService {
       });
     }
 
-    const flattenedProcesses = supervisions.map((process) =>
-      headers.reduce((acc, { key }) => {
+    const totalPosibleAmount = this.getTotalFromAmounts(
+      supervisions,
+      "posibleAmount",
+    );
+
+    const totalRemoteAmount = this.getTotalFromAmounts(
+      supervisions,
+      "remoteAmount",
+    );
+
+    const flattenedProcesses = supervisions.map((process) => {
+      const flattened = headers.reduce((acc, { key }) => {
         acc[key] = UtilsService.getNestedValue(process, key);
         return acc;
-      }, {}),
-    );
+      }, {});
+
+      flattened["posibleAmount"] =
+        totalPosibleAmount[process.entityReference] || 0;
+
+      flattened["remoteAmount"] =
+        totalRemoteAmount[process.entityReference] || 0;
+
+      return flattened;
+    });
 
     try {
       return ExportablesService.generateExcel(headers, flattenedProcesses);
@@ -615,5 +610,17 @@ export class SupervisionService {
         id: supervision.id,
       },
     });
+  }
+
+  private getTotalFromAmounts(supervisions: any, amountType: string) {
+    return supervisions.reduce((acc, process) => {
+      process.reclaims.forEach((reclaim) => {
+        if (!acc[reclaim.entitySupervisionReference]) {
+          acc[reclaim.entitySupervisionReference] = 0;
+        }
+        acc[reclaim.entitySupervisionReference] += reclaim[`${amountType}`];
+      });
+      return acc;
+    }, {});
   }
 }

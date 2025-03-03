@@ -142,8 +142,6 @@ export class ReportService {
         : AttributeSlugConfig.internalSpecialist,
     );
 
-    console.log(internalSpecialists);
-
     const matters = await this.getMattersReport(
       filter,
       Number(filter.cargoStudioId),

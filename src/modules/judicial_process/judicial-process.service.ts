@@ -27,6 +27,7 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { MasterStatusConfig } from "../../config/master-status.config";
 import finishedJudicialProcessTemplate from "./templates/finished-judicial-process.tpl";
+import { processExcelHeaders } from "../../config/excel-headers.config";
 
 @Injectable()
 export class JudicialProcessService {
@@ -503,10 +504,13 @@ export class JudicialProcessService {
     }
   }
 
-  async exportExcel() {
+  async exportExcel(slug: string) {
     const judicialProcesses = await this.prisma.judicialProcess.findMany({
       where: {
         isActive: true,
+        submodule: {
+          slug: slug,
+        },
       },
       include: {
         responsible: true,
@@ -523,6 +527,7 @@ export class JudicialProcessService {
             },
           },
         },
+        reclaims: true,
         globalAttributeValues: {
           include: {
             attribute: {
@@ -535,37 +540,7 @@ export class JudicialProcessService {
       },
     });
 
-    const headers = [
-      {
-        key: "submodule.name",
-        header: "Materia",
-      },
-      {
-        key: "status.name",
-        header: "Status",
-      },
-      { key: "fileCode", header: "Código de expediente" },
-      { key: "demanded", header: "Demandante" },
-      { key: "plaintiff", header: "Demandado" },
-      { key: "coDefendant", header: "Co-demandado" },
-      { key: "responsible.displayName", header: "Responsable" },
-      {
-        key: "secondaryResponsible.displayName",
-        header: "Responsable Secundario",
-      },
-      {
-        key: "controversialMatter",
-        header: "Moneda",
-      },
-      { key: "project.name", header: "Razón social" },
-      { key: "studio.name", header: "Estudio" },
-      { key: "contingencyLevel", header: "Nivel de contingencia" },
-      { key: "contingencyPercentage", header: "% de contingencia" },
-      { key: "amount", header: "Monto demandado" },
-      { key: "provisionAmount", header: "Monto de provisión" },
-      { key: "paidAmount", header: "Monto pagado" },
-      { key: "savingAmount", header: "Ahorro generado" },
-    ];
+    const headers = [...processExcelHeaders];
 
     for (const item of judicialProcesses) {
       item.globalAttributeValues?.forEach((attribute, index) => {
@@ -611,17 +586,47 @@ export class JudicialProcessService {
       });
     }
 
-    const flattenedProcesses = judicialProcesses.map((process) =>
-      headers.reduce((acc, { key }) => {
+    const totalPosibleAmount = this.getTotalFromAmounts(
+      judicialProcesses,
+      "posibleAmount",
+    );
+
+    const totalRemoteAmount = this.getTotalFromAmounts(
+      judicialProcesses,
+      "remoteAmount",
+    );
+
+    const flattenedProcesses = judicialProcesses.map((process) => {
+      const flattened = headers.reduce((acc, { key }) => {
         acc[key] = UtilsService.getNestedValue(process, key);
         return acc;
-      }, {}),
-    );
+      }, {});
+
+      flattened["posibleAmount"] =
+        totalPosibleAmount[process.entityReference] || 0;
+
+      flattened["remoteAmount"] =
+        totalRemoteAmount[process.entityReference] || 0;
+
+      return flattened;
+    });
 
     try {
       return ExportablesService.generateExcel(headers, flattenedProcesses);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+
+  private getTotalFromAmounts(judicialProcesses: any, amountType: string) {
+    return judicialProcesses.reduce((acc, process) => {
+      process.reclaims.forEach((reclaim) => {
+        if (!acc[reclaim.entityJudicialProcessReference]) {
+          acc[reclaim.entityJudicialProcessReference] = 0;
+        }
+        acc[reclaim.entityJudicialProcessReference] += reclaim[`${amountType}`];
+      });
+      return acc;
+    }, {});
   }
 }

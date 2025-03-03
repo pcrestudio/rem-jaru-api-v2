@@ -81,8 +81,8 @@ export class JudicialProcessController {
   }
 
   @Get("export/excel")
-  async exportExcel(@Res() res: Response) {
-    const document = await this.judicialProcessService.exportExcel();
+  async exportExcel(@Res() res: Response, @Query("slug") slug: string) {
+    const document = await this.judicialProcessService.exportExcel(slug);
 
     res.setHeader(
       "Content-Type",
