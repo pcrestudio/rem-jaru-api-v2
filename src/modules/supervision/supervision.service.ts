@@ -71,6 +71,11 @@ export class SupervisionService {
         },
       });
 
+      const responsibleEmail = await UtilsService.getResponsibleEmail(
+        Number(result.responsibleId),
+        this.prisma,
+      );
+
       await this.mail.sendWithTemplate(
         createJudicialProcessTemplate,
         {
@@ -81,6 +86,7 @@ export class SupervisionService {
           ),
         },
         [
+          responsibleEmail,
           ...UtilsService.getRecipientsEmail(
             this.config.get("EMAIL_RECIPIENT").toString(),
           ),
@@ -127,6 +133,11 @@ export class SupervisionService {
       this.prisma,
     );
 
+    const responsibleEmail = await UtilsService.getResponsibleEmail(
+      Number(supervision.responsibleId),
+      this.prisma,
+    );
+
     if (getStatus === MasterStatusConfig.concluido) {
       await this.mail.sendWithTemplate(
         finishedJudicialProcessTemplate,
@@ -138,6 +149,7 @@ export class SupervisionService {
           ),
         },
         [
+          responsibleEmail,
           ...UtilsService.getRecipientsEmail(
             this.config.get("EMAIL_RECIPIENT").toString(),
           ),
