@@ -13,6 +13,11 @@ export class IncidentController {
     return this.incidentService.bulkIncidents(incidents);
   }
 
+  @Post("upsert")
+  async upsertIncidence(@Body() incidence: UpsertIncidentDto) {
+    return this.incidentService.upsertIncidence(incidence);
+  }
+
   @Get("")
   async getIncidences(@Query() filter: FilterIncidenceDto) {
     return this.incidentService.getIncidences(filter);
@@ -21,5 +26,10 @@ export class IncidentController {
   @Post("upsert/incidentData")
   async upsertIncidentData(@Body() incidents: UpsertIncidentDataDto[]) {
     return this.incidentService.upsertIncidentData(incidents);
+  }
+
+  @Get("incidence/data")
+  async getIncidenceData() {
+    return this.incidentService.getIncidenceData();
   }
 }

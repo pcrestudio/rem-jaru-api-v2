@@ -1,9 +1,14 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
 export class UpsertIncidentDto {
   @IsString()
   name: string;
 
-  @IsNumber()
-  instanceId: number;
+  @IsString()
+  @IsOptional()
+  entityReference?: string;
+
+  @IsString()
+  @IsOptional()
+  modelType?: string;
 }

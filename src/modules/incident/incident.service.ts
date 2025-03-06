@@ -3,7 +3,12 @@ import { PrismaService } from "../../core/database/prisma.service";
 import { UpsertIncidentDto } from "./dto/upsert-incident.dto";
 import { UpsertIncidentDataDto } from "./dto/upsert-incident-data.dto";
 import { FilterIncidenceDto } from "./dto/filter-incidence.dto";
-import { ModelType } from "../../common/utils/entity_reference_mapping";
+import {
+  EntityReferenceModel,
+  ModelType,
+} from "../../common/utils/entity_reference_mapping";
+import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
+import { searchableFields } from "../../config/submodule_searchableFields";
 
 @Injectable()
 export class IncidentService {
@@ -15,9 +20,19 @@ export class IncidentService {
         ? { entityJudicialProcessReference: filter.entityReference }
         : { entitySupervisionReference: filter.entityReference };
 
-    return this.prisma.incidence.findMany({
-      where: where,
-    });
+    return CustomPaginationService._getPaginationModel(
+      this.prisma,
+      EntityReferenceModel.Incidence,
+      {
+        page: filter.page,
+        pageSize: filter.pageSize,
+        whereFields: {
+          ...where,
+        },
+        search: filter.search,
+      },
+      searchableFields,
+    );
   }
 
   async bulkIncidents(incidents: UpsertIncidentDto[]) {
@@ -27,7 +42,6 @@ export class IncidentService {
           await tx.incidence.create({
             data: {
               name: incident.name,
-              instanceId: incident.instanceId,
             },
           });
         }
@@ -35,6 +49,27 @@ export class IncidentService {
     } catch (error) {
       throw new InternalServerErrorException({
         message: `Error while bulking incidents`,
+        error: error.message,
+      });
+    }
+  }
+
+  async upsertIncidence(incidence: UpsertIncidentDto) {
+    const createCondition =
+      incidence?.modelType === ModelType.JudicialProcess
+        ? { entityJudicialProcessReference: incidence.entityReference }
+        : { entitySupervisionReference: incidence.entityReference };
+
+    try {
+      return this.prisma.incidence.create({
+        data: {
+          name: incidence.name,
+          ...createCondition,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: `Error while creating incidence`,
         error: error.message,
       });
     }
@@ -71,4 +106,6 @@ export class IncidentService {
       });
     }
   }
+
+  async getIncidenceData() {}
 }

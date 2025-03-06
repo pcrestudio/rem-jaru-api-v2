@@ -481,23 +481,40 @@ model Instance {
   updatedAt           DateTime @updatedAt
   inheritToSubmodules Json?
 
-  submodule Submodule? @relation(fields: [submoduleId], references: [id])
-  module    Module?    @relation(fields: [moduleId], references: [id])
-  steps     Step[]
+  submodule          Submodule?          @relation(fields: [submoduleId], references: [id])
+  module             Module?             @relation(fields: [moduleId], references: [id])
+  steps              Step[]
+  incidenceInstances IncidenceInstance[]
 }
 
 model Incidence {
   id                             Int      @id @default(autoincrement())
-  instanceId                     Int
   name                           String   @db.LongText
   createdAt                      DateTime @default(now())
   updatedAt                      DateTime @updatedAt
   entityJudicialProcessReference String?
   entitySupervisionReference     String?
 
-  judicialProcess JudicialProcess? @relation("JudicialProcessIncidence", fields: [entityJudicialProcessReference], references: [entityReference])
-  supervision     Supervision?     @relation("SupervisionIncidence", fields: [entitySupervisionReference], references: [entityReference])
-  incidenceData   IncidenceData[]
+  judicialProcess   JudicialProcess?    @relation("JudicialProcessIncidence", fields: [entityJudicialProcessReference], references: [entityReference])
+  supervision       Supervision?        @relation("SupervisionIncidence", fields: [entitySupervisionReference], references: [entityReference])
+  incidenceData     IncidenceData[]
+  incidenceInstance IncidenceInstance[]
+
+  stepData StepData[]
+}
+
+model IncidenceInstance {
+  id          Int      @id @default(autoincrement())
+  incidenceId Int
+  instanceId  Int
+  createdAt   DateTime @default(now())
+
+  incidence Incidence @relation(fields: [incidenceId], references: [id])
+  instance  Instance  @relation(fields: [instanceId], references: [id])
+  Step      Step?     @relation(fields: [stepId], references: [id])
+  stepId    Int?
+
+  @@unique([incidenceId, instanceId])
 }
 
 model IncidenceData {
@@ -521,7 +538,9 @@ model Step {
   updatedAt       DateTime @updatedAt
   entityReference String?
 
-  instance Instance   @relation(fields: [instanceId], references: [id])
+  instance           Instance            @relation(fields: [instanceId], references: [id])
+  incidenceInstances IncidenceInstance[] // Ahora puede estar relacionado con múltiples incidencias
+
   stepData StepData[]
 }
 
@@ -531,6 +550,7 @@ model StepData {
   title                          String?
   stepId                         Int
   modelType                      ModelType
+  incidenceId                    Int?
   entityJudicialProcessReference String?
   entitySupervisionReference     String?
   file                           String?
@@ -547,6 +567,7 @@ model StepData {
   step            Step             @relation(fields: [stepId], references: [id])
   judicialProcess JudicialProcess? @relation("JudicialProcessStepData", fields: [entityJudicialProcessReference], references: [entityReference])
   supervision     Supervision?     @relation("SupervisionStepData", fields: [entitySupervisionReference], references: [entityReference])
+  incidence       Incidence?       @relation(fields: [incidenceId], references: [id]) // 🔹 Nueva relación opcional
 }
 
 model CEJ_Expedientes {
