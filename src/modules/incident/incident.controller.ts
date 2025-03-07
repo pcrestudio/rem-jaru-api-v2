@@ -3,6 +3,7 @@ import { IncidentService } from "./incident.service";
 import { UpsertIncidentDto } from "./dto/upsert-incident.dto";
 import { UpsertIncidentDataDto } from "./dto/upsert-incident-data.dto";
 import { FilterIncidenceDto } from "./dto/filter-incidence.dto";
+import { FilterIncidenceDataDto } from "../instance/dto/filter-incidence-data.dto";
 
 @Controller("incident")
 export class IncidentController {
@@ -28,8 +29,18 @@ export class IncidentController {
     return this.incidentService.upsertIncidentData(incidents);
   }
 
-  @Get("incidence/data")
-  async getIncidenceData() {
-    return this.incidentService.getIncidenceData();
+  @Post("upsert/data")
+  async upsertIncidenceData(@Body() incident: UpsertIncidentDataDto) {
+    return this.incidentService.upsertIncidenceData(incident);
+  }
+
+  @Get("data")
+  async getIncidenceData(@Query() filter: FilterIncidenceDataDto) {
+    return this.incidentService.getIncidenceData(filter);
+  }
+
+  @Get("instances")
+  async getIncidenceInstances(@Query() filter: FilterIncidenceDataDto) {
+    return this.incidentService.getIncidenceInstances(filter);
   }
 }

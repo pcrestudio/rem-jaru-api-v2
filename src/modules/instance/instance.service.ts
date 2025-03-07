@@ -125,10 +125,21 @@ export class InstanceService {
           return;
         }
 
-        const entityReference =
-          instanceStepData.modelType === ModelType.JudicialProcess
-            ? { entityJudicialProcessReference: stepData.entityReference }
-            : { entitySupervisionReference: stepData.entityReference };
+        let conditionCreation = {};
+
+        if (instanceStepData.modelType) {
+          conditionCreation =
+            instanceStepData.modelType === ModelType.JudicialProcess
+              ? { entityJudicialProcessReference: stepData.entityReference }
+              : { entitySupervisionReference: stepData.entityReference };
+        }
+
+        if (instanceStepData.incidenceId) {
+          conditionCreation = {
+            ...conditionCreation,
+            incidenceId: Number(instanceStepData?.incidenceId),
+          };
+        }
 
         const dateResume = stepData.dateResume
           ? processDate(JSON.parse(stepData.dateResume))
@@ -155,7 +166,7 @@ export class InstanceService {
               : undefined,
             modelType: instanceStepData.modelType,
             completed: !!stepData.comments,
-            ...entityReference,
+            ...conditionCreation,
           },
           update: {
             comments: stepData.comments,
@@ -209,8 +220,8 @@ export class InstanceService {
 
     const where =
       modelType === ModelType.JudicialProcess
-        ? { entityJudicialProcessReference: entityReference }
-        : { entitySupervisionReference: entityReference };
+        ? { entityJudicialProcessReference: entityReference, incidenceId: null }
+        : { entitySupervisionReference: entityReference, incidenceId: null };
 
     const result = await this.prisma[`${model}`].findFirst({
       where: { entityReference },

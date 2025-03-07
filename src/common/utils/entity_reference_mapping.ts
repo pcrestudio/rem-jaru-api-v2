@@ -11,6 +11,11 @@ export enum EntityReferenceModel {
   Incidence = "Incidence",
 }
 
+export const mappingModuleES: Record<string, string> = {
+  JudicialProcess: "Procesos Judiciales",
+  Supervision: "Supervisiones",
+};
+
 export enum ModelType {
   JudicialProcess = "JudicialProcess",
   Supervision = "Supervision",

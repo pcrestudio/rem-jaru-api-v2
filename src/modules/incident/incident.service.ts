@@ -5,10 +5,12 @@ import { UpsertIncidentDataDto } from "./dto/upsert-incident-data.dto";
 import { FilterIncidenceDto } from "./dto/filter-incidence.dto";
 import {
   EntityReferenceModel,
+  mappingModuleES,
   ModelType,
 } from "../../common/utils/entity_reference_mapping";
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { searchableFields } from "../../config/submodule_searchableFields";
+import { FilterIncidenceDataDto } from "../instance/dto/filter-incidence-data.dto";
 
 @Injectable()
 export class IncidentService {
@@ -20,19 +22,9 @@ export class IncidentService {
         ? { entityJudicialProcessReference: filter.entityReference }
         : { entitySupervisionReference: filter.entityReference };
 
-    return CustomPaginationService._getPaginationModel(
-      this.prisma,
-      EntityReferenceModel.Incidence,
-      {
-        page: filter.page,
-        pageSize: filter.pageSize,
-        whereFields: {
-          ...where,
-        },
-        search: filter.search,
-      },
-      searchableFields,
-    );
+    return this.prisma.incidence.findMany({
+      where,
+    });
   }
 
   async bulkIncidents(incidents: UpsertIncidentDto[]) {
@@ -59,13 +51,35 @@ export class IncidentService {
       incidence?.modelType === ModelType.JudicialProcess
         ? { entityJudicialProcessReference: incidence.entityReference }
         : { entitySupervisionReference: incidence.entityReference };
+    const moduleSlug = mappingModuleES[incidence?.modelType];
 
     try {
-      return this.prisma.incidence.create({
-        data: {
-          name: incidence.name,
-          ...createCondition,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const result = await tx.incidence.create({
+          data: {
+            name: incidence.name,
+            ...createCondition,
+          },
+        });
+
+        const instances = await tx.instance.findMany({
+          where: {
+            module: {
+              name: moduleSlug,
+            },
+          },
+        });
+
+        for (const instance of instances) {
+          await tx.incidenceInstance.create({
+            data: {
+              instanceId: instance.id,
+              incidenceId: Number(result.id),
+            },
+          });
+        }
+
+        return result;
       });
     } catch (error) {
       throw new InternalServerErrorException({
@@ -107,5 +121,70 @@ export class IncidentService {
     }
   }
 
-  async getIncidenceData() {}
+  async upsertIncidenceData(incidenceData: UpsertIncidentDataDto) {
+    try {
+      return this.prisma.incidenceData.upsert({
+        create: {
+          headquarters: incidenceData.headquarters,
+          comment: incidenceData.comment,
+          fileCode: incidenceData.fileCode,
+          incidentId: incidenceData.instanceIncidentId,
+        },
+        update: {
+          headquarters: incidenceData.headquarters,
+          comment: incidenceData.comment,
+          fileCode: incidenceData.fileCode,
+          incidentId: incidenceData.instanceIncidentId,
+        },
+        where: { id: incidenceData.id ? incidenceData.id : 0 },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException({
+        message: `Error while creating incidence`,
+        error: error.message,
+      });
+    }
+  }
+
+  async getIncidenceData(filter: FilterIncidenceDataDto) {
+    return this.prisma.incidenceData.findFirst({
+      where: {
+        incidentId: Number(filter.incidenceId),
+      },
+      include: {
+        incidence: {
+          include: {
+            incidenceInstance: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getIncidenceInstances(filter: FilterIncidenceDataDto) {
+    const incidenceInstances = await this.prisma.incidenceInstance.findMany({
+      where: {
+        incidenceId: Number(filter.incidenceId),
+      },
+      include: {
+        instance: {
+          include: {
+            steps: {
+              include: {
+                stepData: {
+                  where: {
+                    incidenceId: Number(filter.incidenceId),
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return incidenceInstances.map((incidenceInstance) => ({
+      ...incidenceInstance.instance,
+    }));
+  }
 }

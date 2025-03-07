@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsObject,
@@ -14,7 +15,16 @@ export class UpsertInstanceStepDataDto {
   stepData: InstanceStepDataDto[];
 
   @IsEnum(ModelType)
-  modelType: ModelType;
+  @IsOptional()
+  modelType?: ModelType;
+
+  @IsBoolean()
+  @IsOptional()
+  isInstance?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  incidenceId?: number;
 }
 
 export class InstanceStepDataDto {
