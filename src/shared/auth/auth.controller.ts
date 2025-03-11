@@ -25,7 +25,7 @@ export class AuthController {
   constructor(
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
   ) {
     this.cookiesConfig = {
       httpOnly: true,
@@ -114,7 +114,7 @@ export class AuthController {
 
     // Redirect with the token *and* the original redirect path
     return res.redirect(
-      `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`
+      `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`,
     );
   }
 
@@ -128,7 +128,7 @@ export class AuthController {
   @Post("reset-password")
   async resetPassword(
     @Body("token") token: string,
-    @Body("password") password: string
+    @Body("password") password: string,
   ) {
     return this.authService.resetPassword(token, password);
   }
@@ -153,5 +153,13 @@ export class AuthController {
   @Post("enable-mfa")
   async enableMfa(@Request() req, @Body("email") email: string) {
     return this.authService.enableMfa(email);
+  }
+
+  @Post("reset-password/admin")
+  async resetPasswordByAdmin(
+    @Body("email") email: string,
+    @Body("password") password: string,
+  ) {
+    return this.authService.resetPasswordByAdmin(email, password);
   }
 }

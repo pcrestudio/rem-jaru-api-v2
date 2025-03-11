@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { IncidentService } from "./incident.service";
 import { UpsertIncidentDto } from "./dto/upsert-incident.dto";
 import { UpsertIncidentDataDto } from "./dto/upsert-incident-data.dto";
@@ -42,5 +50,10 @@ export class IncidentController {
   @Get("instances")
   async getIncidenceInstances(@Query() filter: FilterIncidenceDataDto) {
     return this.incidentService.getIncidenceInstances(filter);
+  }
+
+  @Delete(":id")
+  async deleteIncidence(@Param("id") id: string) {
+    return this.incidentService.deleteIncidence(Number(id));
   }
 }

@@ -35,6 +35,10 @@ export class AuthService {
     return this.passwordAuthService.requestPasswordReset(email, authMethod);
   }
 
+  async resetPasswordByAdmin(email: string, authMethod?: string) {
+    return this.passwordAuthService.resetPasswordByAdmin(email, authMethod);
+  }
+
   async resetPassword(token: string, password: string) {
     return this.passwordAuthService.resetPassword(token, password);
   }

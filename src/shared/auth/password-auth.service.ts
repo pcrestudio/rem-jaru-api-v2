@@ -79,6 +79,21 @@ export class PasswordAuthService {
     return { message: "Password has been reset successfully" };
   }
 
+  async resetPasswordByAdmin(email: string, password: string) {
+    const hashed = await this.passwordService.hashPassword(password);
+    const user = await this.userService.findByEmail(email);
+
+    user.password = hashed;
+    user.passwordChangedAt = new Date();
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+
+    await this.userService.updateUser(user.id, user);
+    await this.passwordService.savePasswordHistory(user.id, hashed);
+
+    return { message: "Password has been reset successfully" };
+  }
+
   async requestPasswordReset(email: string, authMethod?: string) {
     const user = await this.userService.findByEmail(email);
     if (!user) {

@@ -187,4 +187,29 @@ export class IncidentService {
       ...incidenceInstance.instance,
     }));
   }
+
+  async deleteIncidence(incidenceId: number) {
+    return this.prisma.$transaction([
+      this.prisma.stepData.deleteMany({
+        where: {
+          incidenceId: incidenceId,
+        },
+      }),
+      this.prisma.incidenceData.deleteMany({
+        where: {
+          incidentId: incidenceId,
+        },
+      }),
+      this.prisma.incidenceInstance.deleteMany({
+        where: {
+          incidenceId: incidenceId,
+        },
+      }),
+      this.prisma.incidence.delete({
+        where: {
+          id: incidenceId,
+        },
+      }),
+    ]);
+  }
 }
