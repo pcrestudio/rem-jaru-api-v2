@@ -9,6 +9,15 @@ import * as fs from "fs";
 import * as https from "node:https";
 import { isEmpty } from "@nestjs/common/utils/shared.utils";
 import UserAgent from "user-agents";
+import { Workbook } from "exceljs";
+import {
+  Entities,
+  getPrefixByEntityReference,
+  mappingModuleEN,
+} from "../../common/utils/entity_reference_mapping";
+import { AttributeSlugConfig } from "../../config/attribute-slug.config";
+import { ModelType } from "@prisma/client";
+import capitalizeFirstLetter from "../../utils/capitalize";
 
 @Injectable()
 export class ScrapingService {
@@ -16,6 +25,367 @@ export class ScrapingService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
+
+  public async importTemplate(files: Express.Multer.File[]) {
+    const workbook = new Workbook();
+
+    if (files.length > 0) {
+      const filePath = files[0].path;
+
+      await workbook.xlsx.readFile(filePath);
+
+      const worksheet = workbook.worksheets[0];
+
+      const results = [];
+
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber < 5) return;
+
+        const rowData: Record<string, any> = {};
+
+        row.eachCell((cell, colNumber) => {
+          const columnLetter = worksheet.getColumn(colNumber).letter;
+          rowData[columnLetter] = cell.value;
+        });
+
+        results.push(rowData);
+      });
+
+      fs.unlinkSync(filePath);
+
+      if (results.length > 0) {
+        await this.prisma.$transaction(async (tx) => {
+          for (const dossier of results) {
+            const moduleName = dossier["B"];
+            const submodule = await tx.submodule.findFirst({
+              where: {
+                name: moduleName,
+              },
+              include: {
+                module: true,
+              },
+            });
+            const model = mappingModuleEN[submodule?.module?.name];
+
+            const project = await tx.masterOption.findFirst({
+              where: {
+                name: dossier["G"],
+              },
+            });
+            const responsible = await tx.user.findFirst({
+              where: {
+                displayName: dossier["J"].trim(),
+              },
+            });
+            const studio = await tx.masterOption.findFirst({
+              where: {
+                name: dossier["L"].trim(),
+              },
+            });
+            const status = await tx.masterOption.findFirst({
+              where: {
+                name: dossier["Q"].trim(),
+              },
+            });
+
+            if (model) {
+              const { result, entityReference } = await this.prisma.$extended[
+                `${model}`
+              ].create({
+                data: {
+                  fileCode: dossier["A"] ?? "",
+                  plaintiff: dossier["D"],
+                  demanded: dossier["E"],
+                  coDefendant: dossier["F"],
+                  projectId: project ? project.id : 0,
+                  submoduleId: submodule ? submodule.id : 0,
+                  responsibleId: responsible ? responsible.id : undefined,
+                  cargoStudioId: studio ? studio.id : undefined,
+                  statusId: status ? status.id : undefined,
+                  controversialMatter: dossier["N"],
+                  amount: dossier["P"],
+                },
+              });
+
+              const prefix = getPrefixByEntityReference(entityReference);
+
+              if (result) {
+                const fileCodeValidation =
+                  (model as ModelType) === ModelType.JudicialProcess
+                    ? {
+                        entityJudicialProcessReference: entityReference,
+                      }
+                    : {
+                        entitySupervisionReference: entityReference,
+                      };
+
+                const sharedData = {
+                  createdBy: "",
+                  modifiedBy: "",
+                  modelType: model as ModelType,
+                  ...fileCodeValidation,
+                };
+
+                const connectLegal = await this.getAttributeBySlug(
+                  AttributeSlugConfig.connectLegal,
+                  model,
+                );
+
+                if (connectLegal) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: connectLegal,
+                      value: dossier["AG"] ? dossier["AG"] : "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const startDate = await this.getAttributeBySlug(
+                  AttributeSlugConfig.startDate,
+                  model,
+                );
+
+                if (startDate) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: startDate,
+                      value: dossier["I"] ? dossier["I"].toString() : "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const resume = await this.getAttributeBySlug(
+                  AttributeSlugConfig.resume,
+                  model,
+                );
+
+                if (resume) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: resume,
+                      value: dossier["W"] ? dossier["W"] : "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const risks = await this.getAttributeBySlug(
+                  AttributeSlugConfig.risks,
+                  model,
+                );
+
+                if (risks) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: risks,
+                      value: dossier["AD"] ? dossier["AD"] : "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const lawyerEmail = await this.getAttributeBySlug(
+                  AttributeSlugConfig.lawyerEmail,
+                  model,
+                );
+
+                if (lawyerEmail) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: lawyerEmail,
+                      value:
+                        typeof dossier["AH"] === "object"
+                          ? dossier["AH"]["text"].trim()
+                          : dossier["AH"].trim(),
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const principalLawyer = await this.getAttributeBySlug(
+                  AttributeSlugConfig.principalLawyer,
+                  model,
+                );
+
+                if (principalLawyer) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: principalLawyer,
+                      value: dossier["AI"] ? dossier["AI"] : "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const lastSituation = await this.getAttributeBySlug(
+                  AttributeSlugConfig.lastSituation,
+                  model,
+                );
+
+                if (lastSituation) {
+                  const destructure = typeof dossier["AM"];
+                  let value = "";
+
+                  if (destructure === "object") {
+                    value = dossier["AM"]["richText"]
+                      .map((item: any) => item.text)
+                      .join("");
+                  } else {
+                    value = dossier["AM"];
+                  }
+
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: lastSituation,
+                      value: value ?? "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const numberCase = await this.getAttributeBySlug(
+                  AttributeSlugConfig.numberCase,
+                  model,
+                  true,
+                );
+
+                if (numberCase && prefix === Entities.JPCR) {
+                  const destructure = typeof dossier["S"];
+                  let value = "";
+
+                  if (destructure === "object") {
+                    value = dossier["S"]["richText"]
+                      .map((item: any) => item.text)
+                      .join("");
+                  } else {
+                    value = dossier["S"];
+                  }
+
+                  await tx.globalAttributeValue.create({
+                    data: {
+                      globalAttributeId: numberCase,
+                      value: value ?? "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const stage = await this.getAttributeOptionValueBySlug(
+                  AttributeSlugConfig.stage,
+                  dossier["T"],
+                  true,
+                );
+
+                if (stage.id !== 0 && prefix === Entities.JPCR) {
+                  await tx.globalAttributeValue.create({
+                    data: {
+                      globalAttributeId: stage.id,
+                      value: stage.value,
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const wronged = await this.getAttributeBySlug(
+                  AttributeSlugConfig.wronged,
+                  model,
+                  true,
+                );
+
+                if (wronged && prefix === Entities.JPCR) {
+                  await tx.globalAttributeValue.create({
+                    data: {
+                      globalAttributeId: wronged,
+                      value: dossier["V"],
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const nextSituation = await this.getAttributeBySlug(
+                  AttributeSlugConfig.nextSituation,
+                  model,
+                );
+
+                if (nextSituation) {
+                  const destructure = typeof dossier["AN"];
+                  let value = "";
+
+                  if (destructure === "object") {
+                    value = dossier["AN"]["richText"]
+                      .map((item: any) => item.text)
+                      .join("");
+                  } else {
+                    value = dossier["AN"];
+                  }
+
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: lastSituation,
+                      value: value ?? "",
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const sede = await this.getAttributeOptionValueBySlug(
+                  AttributeSlugConfig.sede,
+                  dossier["X"],
+                );
+
+                if (sede.id !== 0) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: sede.id,
+                      value: sede.value,
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const criticalProcess =
+                  await this.getAttributeOptionValueBySlug(
+                    AttributeSlugConfig.criticalProcess,
+                    dossier["AE"],
+                  );
+
+                if (criticalProcess.id !== 0) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: criticalProcess.id,
+                      value: criticalProcess.value.toLowerCase(),
+                      ...sharedData,
+                    },
+                  });
+                }
+
+                const resultProcess = await this.getAttributeOptionValueBySlug(
+                  AttributeSlugConfig.resultProcess,
+                  dossier["AJ"],
+                );
+
+                if (resultProcess.id !== 0) {
+                  await tx.sectionAttributeValue.create({
+                    data: {
+                      sectionAttributeId: resultProcess.id,
+                      value: resultProcess.value,
+                      ...sharedData,
+                    },
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+
+      return results;
+    }
+
+    return "ok";
+  }
 
   public async getCejGobPage() {
     const dossiers = await this.getDossiers();
@@ -520,5 +890,105 @@ export class ScrapingService {
         idProcesoUltimo: Math.random(),
       },
     });
+  }
+
+  private async getAttributeBySlug(
+    slug: string,
+    model: string,
+    isGlobal?: boolean,
+  ) {
+    const slugConversion =
+      (model as ModelType) === ModelType.Supervision
+        ? `${model.toLowerCase()}${capitalizeFirstLetter(slug)}`
+        : slug;
+
+    if (isGlobal) {
+      const globalAttribute = await this.prisma.globalAttribute.findFirst({
+        where: {
+          slug: slugConversion,
+        },
+      });
+
+      if (!globalAttribute) {
+        return null;
+      }
+
+      return globalAttribute.globalAttributeId;
+    }
+
+    const sectionAttribute = await this.prisma.sectionAttribute.findFirst({
+      where: {
+        slug: slugConversion,
+      },
+    });
+
+    if (!sectionAttribute) {
+      return null;
+    }
+
+    return sectionAttribute.sectionAttributeId;
+  }
+
+  private async getAttributeOptionValueBySlug(
+    slug: string,
+    optionLabel: string,
+    isGlobal?: boolean,
+  ) {
+    if (!optionLabel || optionLabel === "") {
+      return {
+        value: "",
+        id: 0,
+      };
+    }
+
+    if (isGlobal) {
+      const globalAttribute = await this.prisma.globalAttributeOption.findFirst(
+        {
+          where: {
+            optionLabel,
+            attribute: {
+              slug,
+            },
+          },
+        },
+      );
+
+      console.log({ optionLabel, slug });
+
+      if (!globalAttribute) {
+        return {
+          value: "",
+          id: 0,
+        };
+      }
+
+      return {
+        value: globalAttribute?.optionValue,
+        id: globalAttribute?.globalAttributeId,
+      };
+    }
+
+    const sectionAttribute = await this.prisma.sectionAttributeOption.findFirst(
+      {
+        where: {
+          optionLabel,
+          attribute: {
+            slug,
+          },
+        },
+      },
+    );
+
+    if (!sectionAttribute) {
+      return {
+        value: "",
+        id: 0,
+      };
+    }
+
+    return {
+      value: sectionAttribute?.optionValue,
+      id: sectionAttribute?.attributeId,
+    };
   }
 }

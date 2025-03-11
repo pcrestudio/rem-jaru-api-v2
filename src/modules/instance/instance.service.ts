@@ -134,10 +134,10 @@ export class InstanceService {
               : { entitySupervisionReference: stepData.entityReference };
         }
 
-        if (instanceStepData.incidenceId) {
+        if (stepData.incidenceId) {
           conditionCreation = {
             ...conditionCreation,
-            incidenceId: Number(instanceStepData?.incidenceId),
+            incidenceId: Number(stepData?.incidenceId),
           };
         }
 

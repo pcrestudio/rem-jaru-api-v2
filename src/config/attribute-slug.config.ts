@@ -6,16 +6,23 @@ export enum AttributeSlugConfig {
   successRate = "successRate",
   resume = "resume",
   principalSituation = "principalSituation",
+  resultProcess = "resultProcess",
   sede = "sede",
   startDate = "startDate",
   cause = "cause",
   comments = "comments",
   lawyerEmail = "lawyerEmail",
+  principalLawyer = "principalLawyer",
   amount = "amount",
+  connectLegal = "connectLegal",
   actualState = "actualState",
+  risks = "risks",
   lastDate = "lastDate", //fecha de actualizacion
   lastSituation = "lastSituation", //ultimo actuado
   nextSituation = "nextSituation", // proxima acción
+  numberCase = "numberCase", // número de caso
+  stage = "stage", // etapa
+  wronged = "wronged", // agraviado
   internalSpecialist = "internalSpecialist",
   commentsForResult = "commentsForResult",
   supervisionAmount = "supervisionAmount",
@@ -38,4 +45,7 @@ export enum AttributeSlugConfig {
   supervisionNextSituation = "supervisionNextSituation", // proxima acción
   supervisionInternalSpecialist = "supervisionInternalSpecialist",
   supervisionCommentsForResult = "supervisionCommentsForResult",
+  supervisionRisks = "supervisionRisks",
+  supervisionConnectLegal = "supervisionConnectLegal",
+  supervisionPrincipalLawyer = "supervisionPrincipalLawyer",
 }

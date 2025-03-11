@@ -373,20 +373,60 @@ const judicialInstanceStepThreeSeed: UpsertInstanceDto[] = [
 
 const angloamericanStudioSeed: CreateMasterOptionDto[] = [
   {
-    name: "Estudio Rodrigo, Elías & Medrano",
+    name: "Rodrigo Elias & Medrano",
     slug: "rem",
   },
   {
-    name: "Estudio PAYET",
+    name: "Payet, Rey, Cauvi, Pérez",
     slug: "payet",
   },
   {
-    name: "Estudio CUATRECASAS",
+    name: "Cuatrecasas",
     slug: "cuatrecasas",
   },
   {
-    name: "Estudio GRAU",
+    name: "CMS Grau",
     slug: "grau",
+  },
+  {
+    name: "Garrigues",
+    slug: "garrigues",
+  },
+  {
+    name: "Hernández & Cía",
+    slug: "hernandez-cia",
+  },
+  {
+    name: "Muñiz",
+    slug: "Muñiz",
+  },
+  {
+    name: "PPU",
+    slug: "ppu",
+  },
+  {
+    name: "Rubio Leguia Normand",
+    slug: "rubio-leguia",
+  },
+  {
+    name: "Vinatea & Toyama",
+    slug: "vinatea",
+  },
+  {
+    name: "DLA Piper",
+    slug: "piper",
+  },
+  {
+    name: "Miranda & Amado",
+    slug: "miranda-amado",
+  },
+  {
+    name: "Echecopar",
+    slug: "echecopar",
+  },
+  {
+    name: "Santivañez",
+    slug: "santiva",
   },
 ];
 

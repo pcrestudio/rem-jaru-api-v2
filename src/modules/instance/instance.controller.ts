@@ -21,7 +21,6 @@ import { AnyFilesInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from "../../config/multer.config";
 import * as path from "path";
 import { ExportablesService } from "../exportables/exportables.service";
-import { FilterIncidenceDataDto } from "./dto/filter-incidence-data.dto";
 
 @Controller("instance")
 export class InstanceController {

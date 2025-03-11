@@ -49,7 +49,7 @@ export class PrismaService extends PrismaClient {
               },
             });
 
-            return { result };
+            return { result, entityReference };
           },
         },
         supervision: {
@@ -72,7 +72,7 @@ export class PrismaService extends PrismaClient {
               },
             });
 
-            return { result };
+            return { result, entityReference };
           },
         },
         toDo: {

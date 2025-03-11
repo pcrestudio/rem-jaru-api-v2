@@ -48,6 +48,10 @@ export class InstanceStepDataDto {
   dateResume?: string;
 
   @IsString()
+  @IsOptional()
+  incidenceId?: string;
+
+  @IsString()
   entityReference: string;
 
   @IsNumber()

@@ -135,13 +135,6 @@ export class ReportService {
         : AttributeSlugConfig.cause,
     );
 
-    const internalSpecialists = await this.getTotalByAttributeOptionSlug(
-      allData,
-      allData[0].name === "Supervisiones"
-        ? AttributeSlugConfig.supervisionInternalSpecialist
-        : AttributeSlugConfig.internalSpecialist,
-    );
-
     const matters = await this.getMattersReport(
       filter,
       Number(filter.cargoStudioId),
@@ -154,6 +147,8 @@ export class ReportService {
 
     const studios = await this.getReportByStudio(filter);
 
+    const responsible = await this.getReportByResponsible(filter);
+
     return {
       provisionAmount: {
         report: Number(provisionAmountSum).toFixed(2),
@@ -165,7 +160,7 @@ export class ReportService {
         report: Number(savingAmount).toFixed(2),
       },
       internalSpecialists: {
-        report: internalSpecialists,
+        report: responsible,
       },
       causes: {
         report: causes,
@@ -321,16 +316,6 @@ export class ReportService {
   }
 
   async getReportByResponsible(filter: FilterReportDto) {
-    const whereFilters: any = {};
-
-    if (filter.responsibleId) {
-      whereFilters.responsibleId = Number(filter.responsibleId);
-    }
-
-    if (filter.cargoStudioId) {
-      whereFilters.cargoStudioId = Number(filter.cargoStudioId);
-    }
-
     const moduleData = await this.prisma.module.findFirst({
       where: { name: filter.moduleId },
       select: {
@@ -342,17 +327,38 @@ export class ReportService {
           select: {
             id: true,
             JudicialProcess: {
-              where: whereFilters, // Filtra por responsable y cargoStudioId
-              select: { responsibleId: true, responsible: true },
+              where: filter.responsibleId
+                ? {
+                    responsibleId: Number(filter.responsibleId),
+                  }
+                : undefined,
+              select: {
+                responsibleId: true,
+                responsible: true,
+                studio: true,
+                cargoStudioId: true,
+              },
             },
             Supervision: {
-              where: whereFilters, // Filtra por responsable y cargoStudioId
-              select: { responsibleId: true, responsible: true },
+              where: filter.responsibleId
+                ? {
+                    responsibleId: Number(filter.responsibleId),
+                  }
+                : undefined,
+              select: {
+                responsibleId: true,
+                responsible: true,
+                authorityId: true,
+                authority: true,
+                studio: true,
+              },
             },
           },
         },
       },
     });
+
+    console.log(moduleData);
 
     if (!moduleData) {
       throw new NotFoundException(
@@ -377,7 +383,7 @@ export class ReportService {
       for (const process of combinedProcesses) {
         const responsible = process.responsible;
 
-        if (!responsible) continue; // Si no hay responsable, lo ignoramos
+        if (!responsible) continue;
 
         const fullName = `${responsible.firstName} ${responsible.lastName}`;
 

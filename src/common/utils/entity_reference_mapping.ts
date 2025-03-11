@@ -16,6 +16,11 @@ export const mappingModuleES: Record<string, string> = {
   Supervision: "Supervisiones",
 };
 
+export const mappingModuleEN: Record<string, string> = {
+  "Procesos Judiciales": "JudicialProcess",
+  Supervisiones: "Supervision",
+};
+
 export enum ModelType {
   JudicialProcess = "JudicialProcess",
   Supervision = "Supervision",
