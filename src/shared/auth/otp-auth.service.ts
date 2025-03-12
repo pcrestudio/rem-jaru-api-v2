@@ -13,7 +13,7 @@ export class OtpAuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   private readonly otpExpiryTime = 5 * 60; // 5 minutes
@@ -27,7 +27,7 @@ export class OtpAuthService {
 
       if (user.failedOtpAttempts >= this.maxFailedAttempts) {
         throw new UnauthorizedException(
-          "Account locked due to too many failed OTP attempts"
+          "Account locked due to too many failed OTP attempts",
         );
       }
 
@@ -51,7 +51,7 @@ export class OtpAuthService {
         otpTemplate,
         templateData,
         [email],
-        "Código de Verificación"
+        "Código de Verificación",
       );
 
       return { message: "Código de verificación enviado" };
@@ -69,7 +69,7 @@ export class OtpAuthService {
 
     if (user.failedOtpAttempts >= this.maxFailedAttempts) {
       throw new UnauthorizedException(
-        "Account locked due to too many failed OTP attempts"
+        "Account locked due to too many failed OTP attempts",
       );
     }
 
@@ -88,6 +88,7 @@ export class OtpAuthService {
       const valid_user = await this.prisma.user.findFirst({
         where: { email: user.email },
         include: {
+          studio: true,
           UserRole: {
             include: {
               role: {
@@ -106,6 +107,9 @@ export class OtpAuthService {
         email: valid_user.email,
         firstName: valid_user.firstName,
         lastName: valid_user.lastName,
+        displayName: valid_user.displayName,
+        studioId: valid_user.studioId ?? 0,
+        studio: valid_user.studio ?? null,
         role:
           valid_user.UserRole.length > 0
             ? valid_user.UserRole[0].role.name

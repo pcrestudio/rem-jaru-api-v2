@@ -124,7 +124,7 @@ export class UsersService {
         });
       }
 
-      if (userCreated.authMethod === AuthMethod.otp && payload.id)
+      if (userCreated.authMethod !== AuthMethod.local && payload.id)
         return userCreated;
 
       if (!payload.id) {

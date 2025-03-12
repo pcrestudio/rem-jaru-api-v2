@@ -4,12 +4,9 @@ import { UpsertIncidentDto } from "./dto/upsert-incident.dto";
 import { UpsertIncidentDataDto } from "./dto/upsert-incident-data.dto";
 import { FilterIncidenceDto } from "./dto/filter-incidence.dto";
 import {
-  EntityReferenceModel,
   mappingModuleES,
   ModelType,
 } from "../../common/utils/entity_reference_mapping";
-import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
-import { searchableFields } from "../../config/submodule_searchableFields";
 import { FilterIncidenceDataDto } from "../instance/dto/filter-incidence-data.dto";
 
 @Injectable()
@@ -54,7 +51,7 @@ export class IncidentService {
     const moduleSlug = mappingModuleES[incidence?.modelType];
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return this.prisma.$transaction(async (tx) => {
         const result = await tx.incidence.create({
           data: {
             name: incidence.name,

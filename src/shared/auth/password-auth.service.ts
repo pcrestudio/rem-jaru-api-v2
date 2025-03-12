@@ -12,6 +12,7 @@ import { ConfigService } from "@nestjs/config";
 import { MailService } from "../mail/mail.service";
 import passwordResetTemplate from "./templates/password-reset.tpl";
 import { AuthMethod } from "../../config/auth-method.config";
+import welcomeTemplate from "./templates/welcome.tpl";
 
 @Injectable()
 export class PasswordAuthService {
@@ -117,13 +118,16 @@ export class PasswordAuthService {
     // 4. Save user
     await this.userService.updateUser(user.id, user);
 
-    if (authMethod === AuthMethod.otp)
-      return {
-        message: "",
-      };
+    if (authMethod && authMethod === AuthMethod.local) {
+      await this.sendWelcomeEmail(user, resetToken);
 
-    // 5. Send email with reset link
-    await this.sendResetEmail(user, resetToken);
+      return {
+        message: "Mensaje enviado, por favor revisa tu correo electrónico",
+        token: resetToken,
+      };
+    } else {
+      await this.sendResetEmail(user, resetToken);
+    }
 
     return {
       message: "Mensaje enviado, por favor revisa tu correo electrónico",
@@ -141,6 +145,22 @@ export class PasswordAuthService {
 
     await this.mailService.sendWithTemplate(
       passwordResetTemplate,
+      templateData,
+      to,
+      subject,
+    );
+  }
+
+  private async sendWelcomeEmail(user: User, token: string) {
+    console.log(`Sending password reset email to ${user.email}`);
+
+    const to = [user.email];
+    const resetUrl = `${this.configService.get("FRONTEND_URL")}/auth/reset-password?token=${token}`;
+    const subject: string = "Bienvenido a Jaru";
+    const templateData = { displayName: user.firstName, resetUrl };
+
+    await this.mailService.sendWithTemplate(
+      welcomeTemplate,
       templateData,
       to,
       subject,

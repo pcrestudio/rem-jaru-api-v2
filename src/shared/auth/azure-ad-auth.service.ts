@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
@@ -7,7 +7,7 @@ import { firstValueFrom } from "rxjs";
 export class AzureAdAuthService {
   constructor(
     private readonly config: ConfigService,
-    private readonly httpService: HttpService
+    private readonly httpService: HttpService,
   ) {}
 
   private jwksCache;
@@ -18,7 +18,7 @@ export class AzureAdAuthService {
       const metadataUrl = `https://login.microsoftonline.com/${this.config.get("TENANT_ID")}/v2.0/.well-known/openid-configuration`;
 
       const metadataResponse = await firstValueFrom(
-        this.httpService.get(metadataUrl)
+        this.httpService.get(metadataUrl),
       );
       const jwksUri = metadataResponse.data.jwks_uri;
 
@@ -35,7 +35,7 @@ export class AzureAdAuthService {
       const signingKey = this.jwksCache.find((key) => key.kid === kid);
       if (!signingKey) {
         throw new Error(
-          `The JWKS endpoint did not contain a key with kid ${kid}`
+          `The JWKS endpoint did not contain a key with kid ${kid}`,
         );
       }
       return signingKey;
