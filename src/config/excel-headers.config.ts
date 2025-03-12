@@ -26,8 +26,8 @@ export const processExcelHeaders = [
   { key: "contingencyPercentage", header: "% de contingencia" },
   { key: "amount", header: "Monto demandado" },
   { key: "provisionAmount", header: "Monto de provisión" },
-  { key: "paidAmount", header: "Monto pagado" },
-  { key: "savingAmount", header: "Ahorro generado" },
   { key: "posibleAmount", header: "Petitorio monto posible total" },
   { key: "remoteAmount", header: "Petitorio monto remoto total" },
+  { key: "savingAmount", header: "Ahorro generado" },
+  { key: "paidAmount", header: "Monto pagado" },
 ];

@@ -18,8 +18,8 @@ export class ModuleController {
   }
 
   @Get("")
-  async getModules() {
-    return this.moduleService.getModules();
+  async getModules(@Query("isActive") isActive: string) {
+    return this.moduleService.getModules(isActive);
   }
 
   @Get("settings")

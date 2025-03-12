@@ -15,11 +15,15 @@ export class ModuleService {
     });
   }
 
-  async getModules() {
+  async getModules(isActive: string) {
+    let where = {};
+
+    if (Boolean(isActive)) {
+      where = { isActive: Boolean(isActive) };
+    }
+
     return this.prisma.module.findMany({
-      where: {
-        isActive: true,
-      },
+      where,
     });
   }
 
@@ -117,6 +121,9 @@ export class ModuleService {
       where: {
         moduleId: module_id?.id,
         isActive: true,
+        module: {
+          isActive: true,
+        },
       },
     });
   }
