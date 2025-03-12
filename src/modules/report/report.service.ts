@@ -358,8 +358,6 @@ export class ReportService {
       },
     });
 
-    console.log(moduleData);
-
     if (!moduleData) {
       throw new NotFoundException(
         `No data found for module with id ${filter.moduleId}`,
