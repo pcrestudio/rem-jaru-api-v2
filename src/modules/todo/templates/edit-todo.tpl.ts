@@ -1,5 +1,6 @@
 import headerTemplate from "src/common/templates/headerTemplate";
 import footerTemplate from "src/common/templates/footerTemplate";
+import buttonTemplate from "../../../common/templates/buttonTemplate";
 
 const frontendUrl = process.env.FRONTEND_URL;
 
@@ -89,7 +90,10 @@ const editTodoTemplate = (obj) => `${headerTemplate}
                         font-family: 'Montserrat', Arial, sans-serif;
                       "
                     >
-                      <a href="${frontendUrl}/admin/todos">Ir a Jaru Software</a>
+                      ${buttonTemplate({
+                        label: "Ir a Jaru Software",
+                        url: `${frontendUrl}/admin/todos`,
+                      })}
                     </td>
                   </tr>
                 </table>

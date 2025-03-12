@@ -49,7 +49,7 @@ const welcomeTemplate = (obj) => `${headerTemplate}
                         <div style="font-family: sans-serif">
                           <div class="" style="font-size: 12px; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
                             <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 21px;">
-                              Como nuevo usuario, te invitamos a que cambies tu nueva contraseña para que puedas ingresar
+                              Te invitamos a que cambies tu nueva contraseña para que puedas ingresar
                               a la plataforma.
                               <span style="word-break: break-word; color: #a8bf6f; font-size: 14px;">
                                 <strong>
@@ -78,7 +78,7 @@ const welcomeTemplate = (obj) => `${headerTemplate}
                       <td class="pad" style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:25px;text-align:center;">
                         <div align="center" class="alignment">
                           ${buttonTemplate({
-                            label: "RESTABLECER CONTRASEÑA",
+                            label: "CONFIGURAR CONTRASEÑA",
                             url: obj.resetUrl,
                           })}
                         </div>

@@ -144,7 +144,6 @@ export class TodoService {
   }
 
   async getTodos(filter: FilterTodoDto, userId: number) {
-    // Verificamos si el usuario es un superadmin
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -159,7 +158,8 @@ export class TodoService {
     const isSuperAdmin = user?.UserRole?.some(
       (userRole) =>
         userRole.role.name === RoleConfig["super-admin"] ||
-        userRole.role.name === RoleConfig.admin,
+        userRole.role.name === RoleConfig.admin ||
+        (userRole.role.name === RoleConfig.visualizer && !user.studioId),
     );
 
     // Si es superadmin o admin puede ver todos los to-dos
