@@ -258,7 +258,7 @@ export class TodoService {
 
     const filteredResults = processedResults.filter((result) => {
       const matchesModuleId = filter.moduleId
-        ? result?.detail?.submodule?.module?.id === Number(filter.moduleId)
+        ? result?.detail?.submodule?.module?.name === filter.moduleId
         : true;
 
       const matchesSubmoduleId = filter.submoduleId
@@ -338,7 +338,10 @@ export class TodoService {
 
       return "Todos added";
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new InternalServerErrorException({
+        message: `Can't create todos`,
+        error: error.message,
+      });
     }
   }
 

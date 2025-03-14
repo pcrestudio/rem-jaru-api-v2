@@ -965,8 +965,6 @@ export class ScrapingService {
         },
       );
 
-      console.log({ optionLabel, slug });
-
       if (!globalAttribute) {
         return {
           value: "",

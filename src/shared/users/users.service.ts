@@ -127,7 +127,7 @@ export class UsersService {
       if (userCreated.authMethod !== AuthMethod.local && payload.id)
         return userCreated;
 
-      if (!payload.id) {
+      if (!payload.id && userCreated.authMethod === AuthMethod.local) {
         await this.authService.requestPasswordReset(
           userCreated.email,
           userCreated.authMethod,
