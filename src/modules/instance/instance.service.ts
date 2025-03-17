@@ -89,6 +89,8 @@ export class InstanceService {
     userId: number,
   ) {
     try {
+      if (!instanceStepData.stepData) return;
+
       const stepDataWithFiles = instanceStepData.stepData.map((step, index) => {
         const file = files.find(
           (f) => f.fieldname === `stepData[${index}][file]`,

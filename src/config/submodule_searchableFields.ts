@@ -7,6 +7,7 @@ export const searchableFields = [
   "responsible.displayName.nosome",
   "project.name.nosome",
   "studio.name.nosome",
+  "status.name.nosome",
   "sectionAttributeValues.value",
   "globalAttributeValues.value",
 ];

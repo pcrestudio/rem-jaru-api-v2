@@ -4,6 +4,7 @@ import { FilterReportDto } from "./dto/filter-report.dto";
 import {
   EntityReferenceModel,
   getModelByEntityReference,
+  mappingModuleEN,
 } from "../../common/utils/entity_reference_mapping";
 import { MasterTodosStates } from "../../config/master-todos-states.config";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
@@ -14,6 +15,32 @@ export class ReportService {
   constructor(private prisma: PrismaService) {}
 
   async getInitReportByFilter(filter: FilterReportDto) {
+    let where = {};
+
+    if (filter.cargoStudioId) {
+      where = {
+        cargoStudioId: Number(filter.cargoStudioId),
+      };
+    }
+
+    if (filter.statusId) {
+      where = {
+        statusId: Number(filter.statusId),
+      };
+    }
+
+    if (filter.projectId) {
+      where = {
+        projectId: Number(filter.projectId),
+      };
+    }
+
+    if (filter.responsibleId) {
+      where = {
+        responsibleId: Number(filter.responsibleId),
+      };
+    }
+
     const allData = await this.prisma.module.findMany({
       where: {
         isActive: true,
@@ -23,9 +50,7 @@ export class ReportService {
         Submodule: {
           include: {
             JudicialProcess: {
-              where: filter.cargoStudioId
-                ? { cargoStudioId: Number(filter.cargoStudioId) }
-                : {},
+              where,
               include: {
                 sectionAttributeValues: {
                   where: {
@@ -67,9 +92,7 @@ export class ReportService {
               },
             },
             Supervision: {
-              where: filter.cargoStudioId
-                ? { cargoStudioId: Number(filter.cargoStudioId) }
-                : {},
+              where,
               include: {
                 sectionAttributeValues: {
                   where: {
@@ -149,6 +172,10 @@ export class ReportService {
 
     const responsible = await this.getReportByResponsible(filter);
 
+    const total = allData[0].Submodule.map((dossier) => {
+      return dossier[mappingModuleEN[filter.moduleId]].length;
+    }).reduce((sum, dossier) => sum + dossier, 0);
+
     return {
       provisionAmount: {
         report: Number(provisionAmountSum).toFixed(2),
@@ -187,6 +214,7 @@ export class ReportService {
       instances: {
         report: instances,
       },
+      total,
     };
   }
 

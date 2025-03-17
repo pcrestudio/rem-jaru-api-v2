@@ -1,30 +1,28 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../core/database/prisma.service";
+import { Cron } from "@nestjs/schedule";
 import axios from "axios";
 import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "../../core/database/prisma.service";
 
 @Injectable()
-export class ExchangeService {
+export class GetExchangeTask {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
 
-  async createExchange(id?: number) {
+  @Cron("0 */6 * * *") // Runs every minute
+  async getExchangeTask() {
     const { data } = await axios.get(
       `${this.config.get("EXCHANGE_RATE_URL")}/${this.config.get("EXCHANGE_RATE_API_KEY")}/latest/USD`,
     );
 
+    console.log("Cambio referencial", data["conversion_rates"]["PEN"]);
+
     if (data) {
-      const response = await this.prisma.exchange.upsert({
-        create: {
+      const response = await this.prisma.exchange.create({
+        data: {
           value: data["conversion_rates"]["PEN"],
-        },
-        update: {
-          value: data["conversion_rates"]["PEN"],
-        },
-        where: {
-          id: id ? id : 0,
         },
       });
 
@@ -38,11 +36,5 @@ export class ExchangeService {
       response: {},
       message: "La conversión no se realizó.",
     };
-  }
-
-  async getExchange() {
-    return this.prisma.exchange.findFirst({
-      orderBy: [{ updatedAt: "desc" }],
-    });
   }
 }
