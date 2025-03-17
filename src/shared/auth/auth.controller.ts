@@ -107,7 +107,7 @@ export class AuthController {
     const user = req.user;
     const token = await this.authService.login(user);
 
-    res.cookie("token", token, this.cookiesConfig);
+    res.cookie("token", token.access_token, this.cookiesConfig);
 
     const redirect = req.session.redirect || "/admin";
     req.session.redirect = null; // Clear the session key
