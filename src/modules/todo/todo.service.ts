@@ -164,7 +164,16 @@ export class TodoService {
 
     // Si es superadmin o admin puede ver todos los to-dos
     const whereFields = isSuperAdmin
-      ? {} // No se filtra nada, ve todo
+      ? {
+          AND: [
+            ...(filter.check ? [{ check: filter.check === "true" }] : []),
+            ...(filter.alert ? [{ alert: filter.alert === "true" }] : []),
+            ...(filter.state ? [{ todoStateId: Number(filter.state) }] : []),
+            ...(filter.responsibleId
+              ? [{ responsible: { id: Number(filter.responsibleId) } }]
+              : []),
+          ],
+        } // No se filtra nada, ve todo
       : {
           AND: [
             {

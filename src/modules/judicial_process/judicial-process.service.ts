@@ -416,12 +416,9 @@ export class JudicialProcessService {
           ExtendedAttributeConfig.sectionAttributeValues,
         );
 
-      const internalSpecialist =
-        UtilsService._getModuleAttributeOptionLabelBySlug(
-          judicialProcess as unknown as GetModuleAttributeValueDto,
-          AttributeSlugConfig.internalSpecialist,
-          ExtendedAttributeConfig.sectionAttributeValues,
-        );
+      const internalSpecialist = judicialProcess.responsible
+        ? `${judicialProcess?.responsible.firstName} ${judicialProcess?.responsible.lastName}`
+        : "";
 
       const commentsForResult = UtilsService._getModuleAttributeWithValueBySlug(
         judicialProcess as unknown as GetModuleAttributeValueDto,
@@ -461,7 +458,7 @@ export class JudicialProcessService {
         matter: judicialProcess?.submodule.name,
         plaintiff: judicialProcess?.plaintiff,
         demanded: judicialProcess?.demanded,
-        coDefendant: judicialProcess?.coDefendant,
+        coDefendant: judicialProcess?.coDefendant ?? "",
         resume,
         sede,
         lastSituation,

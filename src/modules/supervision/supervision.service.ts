@@ -407,12 +407,9 @@ export class SupervisionService {
         ExtendedAttributeConfig.globalAttributeValues,
       );
 
-      const internalSpecialist =
-        UtilsService._getModuleAttributeOptionLabelBySlug(
-          supervision as unknown as GetModuleAttributeValueDto,
-          AttributeSlugConfig.supervisionInternalSpecialist,
-          ExtendedAttributeConfig.sectionAttributeValues,
-        );
+      const internalSpecialist = supervision.responsible
+        ? `${supervision?.responsible.firstName} ${supervision?.responsible.lastName}`
+        : "";
 
       const sumAmount = supervision?.reclaims.reduce(
         (sum, acc) => sum + Number(acc.amount),
@@ -446,7 +443,7 @@ export class SupervisionService {
         matter: supervision?.submodule.name,
         plaintiff: supervision?.plaintiff,
         demanded: supervision?.demanded,
-        coDefendant: supervision?.coDefendant,
+        coDefendant: supervision?.coDefendant ?? "",
         resume,
         sede,
         lastSituation,
