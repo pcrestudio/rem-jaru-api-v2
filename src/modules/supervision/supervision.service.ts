@@ -268,6 +268,7 @@ export class SupervisionService {
           }
         : true,
       situation: true,
+      status: true,
       stepData: {
         include: {
           step: {
@@ -289,7 +290,7 @@ export class SupervisionService {
         includeConditions,
         search: filter.search,
       },
-      searchableFields,
+      [...searchableFields, "situation.name.nosome", "authority.name.nosome"],
     );
   }
 
