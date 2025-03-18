@@ -71,7 +71,7 @@ export class AuthController {
     res.clearCookie("token", this.cookiesConfig);
 
     // Eliminar la cookie de sesión
-    res.clearCookie("connect.sid", this.cookiesConfig);
+    res.clearCookie("connect.sid");
 
     // Destroy the Express session (the data used by passport-azure-ad)
     req.session.destroy((err) => {
