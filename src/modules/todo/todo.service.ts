@@ -63,6 +63,7 @@ export class TodoService {
         todoUpsert,
         todo.id ? editTodoTemplate : assignTodoTemplate,
         todo.id ? MessagesConfig.todoEdit : MessagesConfig.todoCreate,
+        todo.id ? true : false,
       );
 
       return todoUpsert;
@@ -342,6 +343,7 @@ export class TodoService {
             todoUpsert,
             assignTodoTemplate,
             MessagesConfig.todoCreate,
+            true,
           );
         }),
       );
@@ -363,7 +365,12 @@ export class TodoService {
     });
 
     if (todo) {
-      this.sendTodoEmail(todo, alertTodoTemplate, MessagesConfig.todoAlert);
+      this.sendTodoEmail(
+        todo,
+        alertTodoTemplate,
+        MessagesConfig.todoAlert,
+        false,
+      );
     }
 
     return this.prisma.toDo.update({
@@ -414,6 +421,30 @@ export class TodoService {
     }
 
     try {
+      const { email, displayName } = await this.prisma.user.findFirst({
+        where: {
+          id: todoActivities.todoId,
+        },
+      });
+
+      const todo = await this.prisma.toDo.findFirst({
+        where: {
+          id: todoActivities.todoId,
+        },
+      });
+
+      const templateData = {
+        displayName: displayName,
+        title: todo.title,
+      };
+
+      await this.mail.sendWithTemplate(
+        editTodoTemplate,
+        templateData,
+        [email],
+        MessagesConfig.todoEdit,
+      );
+
       return this.prisma.todoActivity.upsert({
         create: {
           activity: todoActivities.activity,
@@ -518,10 +549,17 @@ export class TodoService {
     todo: GetTodoDto,
     template: any,
     message: string,
+    preventCreatorEmail?: boolean,
   ) {
     const { email, displayName } = await this.prisma.user.findFirst({
       where: {
         id: todo.responsibleId,
+      },
+    });
+
+    const creator = await this.prisma.user.findFirst({
+      where: {
+        id: todo.creatorId,
       },
     });
 
@@ -530,6 +568,11 @@ export class TodoService {
       title: todo.title,
     };
 
-    return this.mail.sendWithTemplate(template, templateData, [email], message);
+    const to = [
+      email,
+      preventCreatorEmail ? "undefined" : creator.email,
+    ].filter((email) => email !== "undefined");
+
+    return this.mail.sendWithTemplate(template, templateData, [...to], message);
   }
 }
