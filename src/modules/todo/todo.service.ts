@@ -60,8 +60,8 @@ export class TodoService {
 
       await this.sendTodoEmail(
         todoUpsert,
-        editTodoTemplate,
-        MessagesConfig.todoEdit,
+        todo.id ? editTodoTemplate : assignTodoTemplate,
+        todo.id ? MessagesConfig.todoEdit : MessagesConfig.todoCreate,
       );
 
       return todoUpsert;
