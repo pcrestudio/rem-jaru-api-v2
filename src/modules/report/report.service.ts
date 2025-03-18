@@ -6,7 +6,6 @@ import {
   getModelByEntityReference,
   mappingModuleEN,
 } from "../../common/utils/entity_reference_mapping";
-import { MasterTodosStates } from "../../config/master-todos-states.config";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
 import { MasterOptionConfig } from "../../config/master-option.config";
 
