@@ -327,7 +327,9 @@ export class ReportService {
     };
   }
 
-  async getReportByResponsible(filter: FilterReportDto, where: any) {
+  async getReportByResponsible(filter: FilterReportDto, where?: any) {
+    const whereInside = this.whereFilter(filter);
+
     const moduleData = await this.prisma.module.findFirst({
       where: { name: filter.moduleId },
       select: {
@@ -339,14 +341,14 @@ export class ReportService {
           select: {
             id: true,
             JudicialProcess: {
-              where,
+              where: where ?? whereInside,
               include: {
                 responsible: true,
                 studio: true,
               },
             },
             Supervision: {
-              where,
+              where: where ?? whereInside,
               include: {
                 responsible: true,
                 authority: true,
@@ -459,7 +461,9 @@ export class ReportService {
     }));
   }
 
-  async getReportByStudio(filter: FilterReportDto, where: any) {
+  async getReportByStudio(filter: FilterReportDto, where?: any) {
+    const whereInside = this.whereFilter(filter);
+
     const studioData = await this.prisma.module.findFirst({
       where: {
         name: filter.moduleId,
@@ -472,14 +476,14 @@ export class ReportService {
             : undefined,
           include: {
             JudicialProcess: {
-              where,
+              where: where ?? whereInside,
               include: {
                 responsible: true,
                 studio: true,
               },
             },
             Supervision: {
-              where,
+              where: where ?? whereInside,
               include: {
                 responsible: true,
                 authority: true,
