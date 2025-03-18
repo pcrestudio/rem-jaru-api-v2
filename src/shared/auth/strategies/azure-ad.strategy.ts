@@ -7,11 +7,11 @@ import { ConfigService } from "@nestjs/config";
 @Injectable()
 export class AzureAdStrategy extends PassportStrategy(
   OIDCStrategy,
-  "azure-ad"
+  "azure-ad",
 ) {
   constructor(
     private configService: ConfigService,
-    private authService: AuthService
+    private authService: AuthService,
   ) {
     super({
       identityMetadata: `https://login.microsoftonline.com/${configService.get<string>("M365_AUTH_TENANT_ID")}/v2.0/.well-known/openid-configuration`,
@@ -29,7 +29,7 @@ export class AzureAdStrategy extends PassportStrategy(
   async validate(
     req: any,
     profile: any,
-    done: (err: any, user: any, info?: any) => void
+    done: (err: any, user: any, info?: any) => void,
   ) {
     try {
       const user = await this.authService.validateAzureAdUser(profile);

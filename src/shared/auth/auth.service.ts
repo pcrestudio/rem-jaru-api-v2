@@ -92,15 +92,15 @@ export class AuthService {
   // Validate or create user from Azure AD profile
   async validateAzureAdUser(profile: any): Promise<any> {
     const email = profile._json.preferred_username;
-    let user: GetUserDto = await this.usersService.findByEmail(email);
+    const user: GetUserDto = await this.usersService.findByEmail(email);
 
     if (!user) {
-      user = await this.usersService.creteAzureADUser({
+      /*user = await this.usersService.creteAzureADUser({
         email: email,
         displayName: profile.displayName,
         lastLogon: new Date(),
         isActive: true,
-      });
+      });*/
     } else {
       await this.usersService.updateUser(user.id, {
         lastLogon: new Date(),

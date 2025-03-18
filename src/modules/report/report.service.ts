@@ -15,31 +15,7 @@ export class ReportService {
   constructor(private prisma: PrismaService) {}
 
   async getInitReportByFilter(filter: FilterReportDto) {
-    let where = {};
-
-    if (filter.cargoStudioId) {
-      where = {
-        cargoStudioId: Number(filter.cargoStudioId),
-      };
-    }
-
-    if (filter.statusId) {
-      where = {
-        statusId: Number(filter.statusId),
-      };
-    }
-
-    if (filter.projectId) {
-      where = {
-        projectId: Number(filter.projectId),
-      };
-    }
-
-    if (filter.responsibleId) {
-      where = {
-        responsibleId: Number(filter.responsibleId),
-      };
-    }
+    const where = this.whereFilter(filter);
 
     const allData = await this.prisma.module.findMany({
       where: {
@@ -158,19 +134,16 @@ export class ReportService {
         : AttributeSlugConfig.cause,
     );
 
-    const matters = await this.getMattersReport(
-      filter,
-      Number(filter.cargoStudioId),
-    );
+    const matters = await this.getMattersReport(filter, where);
 
     const instances = await this.getInstancesReport(
       allData,
       Number(filter.cargoStudioId),
     );
 
-    const studios = await this.getReportByStudio(filter);
+    const studios = await this.getReportByStudio(filter, where);
 
-    const responsible = await this.getReportByResponsible(filter);
+    const responsible = await this.getReportByResponsible(filter, where);
 
     const total = allData[0].Submodule.map((dossier) => {
       return dossier[mappingModuleEN[filter.moduleId]].length;
@@ -343,7 +316,7 @@ export class ReportService {
     };
   }
 
-  async getReportByResponsible(filter: FilterReportDto) {
+  async getReportByResponsible(filter: FilterReportDto, where: any) {
     const moduleData = await this.prisma.module.findFirst({
       where: { name: filter.moduleId },
       select: {
@@ -355,28 +328,16 @@ export class ReportService {
           select: {
             id: true,
             JudicialProcess: {
-              where: filter.responsibleId
-                ? {
-                    responsibleId: Number(filter.responsibleId),
-                  }
-                : undefined,
-              select: {
-                responsibleId: true,
+              where,
+              include: {
                 responsible: true,
                 studio: true,
-                cargoStudioId: true,
               },
             },
             Supervision: {
-              where: filter.responsibleId
-                ? {
-                    responsibleId: Number(filter.responsibleId),
-                  }
-                : undefined,
-              select: {
-                responsibleId: true,
+              where,
+              include: {
                 responsible: true,
-                authorityId: true,
                 authority: true,
                 studio: true,
               },
@@ -487,7 +448,7 @@ export class ReportService {
     }));
   }
 
-  async getReportByStudio(filter: FilterReportDto) {
+  async getReportByStudio(filter: FilterReportDto, where: any) {
     const studioData = await this.prisma.module.findFirst({
       where: {
         name: filter.moduleId,
@@ -500,24 +461,16 @@ export class ReportService {
             : undefined,
           include: {
             JudicialProcess: {
-              where: filter.cargoStudioId
-                ? { cargoStudioId: Number(filter.cargoStudioId) }
-                : undefined,
-              select: {
-                responsibleId: true,
+              where,
+              include: {
                 responsible: true,
                 studio: true,
-                cargoStudioId: true,
               },
             },
             Supervision: {
-              where: filter.cargoStudioId
-                ? { cargoStudioId: Number(filter.cargoStudioId) }
-                : undefined,
-              select: {
-                responsibleId: true,
+              where,
+              include: {
                 responsible: true,
-                authorityId: true,
                 authority: true,
                 studio: true,
               },
@@ -712,10 +665,7 @@ export class ReportService {
     return total;
   }
 
-  private async getMattersReport(
-    filter?: FilterReportDto,
-    cargoStudioId?: number,
-  ) {
+  private async getMattersReport(filter: FilterReportDto, where: any) {
     const report = await this.prisma.module.findMany({
       select: {
         Submodule: {
@@ -728,12 +678,14 @@ export class ReportService {
             name: true,
             _count: {
               select: {
-                JudicialProcess: cargoStudioId
-                  ? { where: { cargoStudioId } }
-                  : true,
-                Supervision: cargoStudioId
-                  ? { where: { cargoStudioId } }
-                  : true,
+                JudicialProcess:
+                  Object.values(where).length > 0
+                    ? { where: { ...where } }
+                    : true,
+                Supervision:
+                  Object.values(where).length > 0
+                    ? { where: { ...where } }
+                    : true,
               },
             },
           },
@@ -883,10 +835,9 @@ export class ReportService {
       });
     });
 
-    // Formatear resultado
     return Object.keys(counter).map((optionLabel) => ({
       name: optionLabel,
-      _count: { group: counter[optionLabel] },
+      _count: { group: counter[optionLabel] || 0 },
     }));
   }
 
@@ -924,5 +875,35 @@ export class ReportService {
       slug: option.slug,
       count: counter[option.slug] || 0,
     }));
+  }
+
+  private whereFilter(filter: FilterReportDto) {
+    let where = {};
+
+    if (filter.cargoStudioId) {
+      where = {
+        cargoStudioId: Number(filter.cargoStudioId),
+      };
+    }
+
+    if (filter.responsibleId) {
+      where = {
+        responsibleId: Number(filter.responsibleId),
+      };
+    }
+
+    if (filter.statusId) {
+      where = {
+        statusId: Number(filter.statusId),
+      };
+    }
+
+    if (filter.projectId) {
+      where = {
+        projectId: Number(filter.projectId),
+      };
+    }
+
+    return where;
   }
 }
