@@ -52,19 +52,28 @@ export class CejService {
   }
 
   async exportDossier(fileName: string, res: Response) {
-    const basePath = path.resolve(process.env.RESOLUCIONES);
+    const basePath = process.env.RESOLUCIONES;
+
+    if (!basePath) {
+      throw new Error("La variable RESOLUCIONES no está definida.");
+    }
 
     const filePath = path.join(basePath, fileName);
 
     try {
       if (!fs.existsSync(filePath)) {
-        res.status(500).send("El archivo no existe.");
+        console.warn(`Archivo no encontrado: ${filePath}`);
+        return res.status(404).json({ message: "El archivo no existe." });
       }
 
       res.download(filePath, fileName, (err) => {
         if (err) {
           console.error("Error al enviar el archivo:", err);
-          res.status(500).send("Error al descargar el archivo.");
+          if (!res.headersSent) {
+            return res
+              .status(500)
+              .json({ message: "Error al descargar el archivo." });
+          }
         }
       });
     } catch (error) {
