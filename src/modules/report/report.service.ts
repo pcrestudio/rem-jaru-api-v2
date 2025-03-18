@@ -216,12 +216,24 @@ export class ReportService {
         todo.submoduleId === Number(filter.submoduleId) &&
         todo.submodule.module.name === filter.moduleId;
 
-      // Filtramos por cargoStudioId solo si existe en el filtro
+      const matchesProject = filter.projectId
+        ? todo.projectId === Number(filter.projectId)
+        : true;
+
+      const matchesResponsible = filter.responsibleId
+        ? todo.responsibleId === Number(filter.responsibleId)
+        : true;
+
       const matchesCargoStudio = filter.cargoStudioId
         ? todo.cargoStudioId === Number(filter.cargoStudioId)
         : true;
 
-      return matchesSubmodule && matchesCargoStudio;
+      return (
+        matchesSubmodule &&
+        matchesCargoStudio &&
+        matchesProject &&
+        matchesResponsible
+      );
     });
 
     return this._countTotalStates(filterTodos);
@@ -566,37 +578,37 @@ export class ReportService {
     }
   }
 
-  private _countTotalStates(todos: any) {
-    const slugsToMatch = [
-      MasterTodosStates.moreThanTwoWeeks,
-      MasterTodosStates.lessThanTwoWeeks,
-      MasterTodosStates.expired,
-    ];
+  private async _countTotalStates(todos: any) {
+    const todoStates = await this.prisma.masterOption.findMany({
+      where: {
+        master: {
+          slug: MasterOptionConfig.todoEstados,
+        },
+      },
+    });
+
+    const stateMap = todoStates.reduce((acc, state) => {
+      acc[state.name] = {
+        label: state.name,
+        slug: state.slug,
+        count: 0,
+        alertTrue: 0,
+        alertFalse: 0,
+        checkTrue: 0,
+        checkFalse: 0,
+      };
+      return acc;
+    }, {});
 
     return todos.reduce(
       (acc, item) => {
         const state = item?.todo?.state || {};
 
-        if (slugsToMatch.includes(state["slug"])) {
+        if (stateMap[state.name]) {
           const isAlert = Boolean(item.todo.alert);
           const isCheck = Boolean(item.todo.check);
 
-          let existingState = acc.states.find(
-            (s: any) => s.slug === state["slug"],
-          );
-
-          if (!existingState) {
-            existingState = {
-              label: state["name"] || "Sin Nombre",
-              slug: state["slug"],
-              count: 0,
-              alertTrue: 0,
-              alertFalse: 0,
-              checkTrue: 0,
-              checkFalse: 0,
-            };
-            acc.states.push(existingState);
-          }
+          const existingState = stateMap[state.name];
 
           existingState.count += 1;
           existingState.alertTrue += isAlert ? 1 : 0;
@@ -607,7 +619,7 @@ export class ReportService {
 
         return acc;
       },
-      { states: [] },
+      { states: Object.values(stateMap) },
     );
   }
 
