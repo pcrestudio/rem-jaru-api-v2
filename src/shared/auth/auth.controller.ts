@@ -70,6 +70,9 @@ export class AuthController {
     // Clear the HttpOnly cookie
     res.clearCookie("token", this.cookiesConfig);
 
+    // Eliminar la cookie de sesión
+    res.clearCookie("connect.sid", this.cookiesConfig);
+
     // Destroy the Express session (the data used by passport-azure-ad)
     req.session.destroy((err) => {
       if (err) {

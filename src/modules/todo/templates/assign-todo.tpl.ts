@@ -92,7 +92,7 @@ const assignTodoTemplate = (obj) => `${headerTemplate}
                     >
                     ${buttonTemplate({
                       label: "Ir a Jaru Software",
-                      url: frontendUrl,
+                      url: `${frontendUrl}/admin/todos`,
                     })}
                     </td>
                   </tr>
