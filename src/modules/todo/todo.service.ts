@@ -19,6 +19,7 @@ import { RoleConfig } from "../../config/role.config";
 import { MessagesConfig } from "../../config/messages.config";
 import editTodoTemplate from "./templates/edit-todo.tpl";
 import { GetTodoDto } from "./dto/get-todo.dto";
+import alertTodoTemplate from "./templates/alert-todo.tpl";
 
 @Injectable()
 export class TodoService {
@@ -355,6 +356,16 @@ export class TodoService {
   }
 
   async alertTodo(id: number) {
+    const todo = await this.prisma.toDo.findFirst({
+      where: {
+        id,
+      },
+    });
+
+    if (todo) {
+      this.sendTodoEmail(todo, alertTodoTemplate, MessagesConfig.todoAlert);
+    }
+
     return this.prisma.toDo.update({
       data: {
         alert: true,
