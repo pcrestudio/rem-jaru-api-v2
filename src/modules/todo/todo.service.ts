@@ -423,13 +423,13 @@ export class TodoService {
     try {
       const { email, displayName } = await this.prisma.user.findFirst({
         where: {
-          id: todoActivities.todoId,
+          id: Number(todoActivities.todoId),
         },
       });
 
       const todo = await this.prisma.toDo.findFirst({
         where: {
-          id: todoActivities.todoId,
+          id: Number(todoActivities.todoId),
         },
       });
 
