@@ -486,12 +486,21 @@ export class SupervisionService {
     }
   }
 
-  async exportExcel(slug: string) {
+  async exportExcel(filter: FilterSupervisionDto) {
+    let where = {};
+
+    if (filter.cargoStudioId) {
+      where = {
+        cargoStudioId: Number(filter.cargoStudioId),
+      };
+    }
+
     const supervisions = await this.prisma.supervision.findMany({
       where: {
         isActive: true,
+        ...where,
         submodule: {
-          slug: slug,
+          slug: filter.slug,
         },
       },
       include: {

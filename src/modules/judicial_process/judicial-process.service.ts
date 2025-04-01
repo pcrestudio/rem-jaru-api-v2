@@ -501,12 +501,21 @@ export class JudicialProcessService {
     }
   }
 
-  async exportExcel(slug: string) {
+  async exportExcel(filter: FilterJudicialProcessDto) {
+    let where = {};
+
+    if (filter.cargoStudioId) {
+      where = {
+        cargoStudioId: Number(filter.cargoStudioId),
+      };
+    }
+
     const judicialProcesses = await this.prisma.judicialProcess.findMany({
       where: {
         isActive: true,
+        ...where,
         submodule: {
-          slug: slug,
+          slug: filter.slug,
         },
       },
       include: {
