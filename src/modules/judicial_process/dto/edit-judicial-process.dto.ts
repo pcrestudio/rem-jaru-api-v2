@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export class EditJudicialProcessDto {
   @IsString()
@@ -69,9 +69,13 @@ export class EditJudicialProcessDto {
   @IsOptional()
   paidAmount: number;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  statusId: number;
+  statusId: string;
+
+  @IsObject()
+  @IsOptional()
+  endDateConclusion?: object;
 
   @IsNumber()
   @IsOptional()

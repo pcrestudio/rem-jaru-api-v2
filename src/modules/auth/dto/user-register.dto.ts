@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class UpsertRegisterDto {
   @IsString()
@@ -27,6 +27,10 @@ export class UpsertRegisterDto {
   @IsNumber()
   @IsOptional()
   studioId?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isSpecialist?: boolean;
 
   @IsNumber()
   @IsOptional()

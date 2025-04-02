@@ -50,4 +50,9 @@ export class MasterController {
   async toggleMasterOption(@Body() masterOption: ToggleMasterOptionDto) {
     return this.masterService.toggleMasterOption(masterOption);
   }
+
+  @Get("option")
+  async getMasterOption(@Query("id") id: string) {
+    return this.masterService.getMasterOption(Number(id));
+  }
 }

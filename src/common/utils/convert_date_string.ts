@@ -4,7 +4,8 @@ function convertToZonedDateTime(input: string | any): ZonedDateTime | null {
   let date: Date;
 
   if (typeof input === "string") {
-    date = new Date(input);
+    const cleanInput = input.replace(/\[.*?\]/g, "");
+    date = new Date(cleanInput);
     if (isNaN(date.getTime())) {
       return null;
     }
@@ -51,7 +52,7 @@ const convertDateString = (date: ZonedDateTime) => {
 
 const processDate = (dateExpiration: any): string => {
   if (!dateExpiration) {
-    return;
+    return "";
   }
 
   if (dateExpiration instanceof ZonedDateTime) {
@@ -59,6 +60,7 @@ const processDate = (dateExpiration: any): string => {
   }
 
   const zonedDateTime = convertToZonedDateTime(dateExpiration);
+
   if (!zonedDateTime) {
     throw new Error(`Invalid date format: ${dateExpiration}`);
   }

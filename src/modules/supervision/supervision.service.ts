@@ -28,6 +28,7 @@ import createJudicialProcessTemplate from "../judicial_process/templates/create-
 import { MasterStatusConfig } from "../../config/master-status.config";
 import finishedJudicialProcessTemplate from "../judicial_process/templates/finished-judicial-process.tpl";
 import { processExcelHeaders } from "../../config/excel-headers.config";
+import processDate from "../../common/utils/convert_date_string";
 
 @Injectable()
 export class SupervisionService {
@@ -44,6 +45,8 @@ export class SupervisionService {
       },
     });
 
+    const endDateConclusion = processDate(supervision.endDateConclusion);
+
     const { result } = await this.prisma.$extended.supervision.create({
       data: {
         fileCode: supervision.fileCode,
@@ -59,6 +62,7 @@ export class SupervisionService {
         amount: Number(supervision.amount),
         responsibleId: Number(supervision.responsibleId),
         secondaryResponsibleId: Number(supervision.secondaryResponsibleId),
+        endDateConclusion: endDateConclusion,
         submoduleId: submodule.id,
       },
     });
@@ -133,6 +137,8 @@ export class SupervisionService {
       this.prisma,
     );
 
+    const endDateConclusion = processDate(supervision.endDateConclusion);
+
     const responsibleEmail = await UtilsService.getResponsibleEmail(
       Number(supervision.responsibleId),
       this.prisma,
@@ -182,6 +188,7 @@ export class SupervisionService {
           statusId: Number(supervision.statusId),
           projectId: Number(supervision.projectId),
           isProvisional: supervision.isProvisional === "false" ? false : true,
+          endDateConclusion: endDateConclusion,
           guaranteeLetter,
         },
         where: {

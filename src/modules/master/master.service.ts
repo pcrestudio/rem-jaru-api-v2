@@ -44,6 +44,14 @@ export class MasterService {
     });
   }
 
+  async getMasterOption(id: number) {
+    return this.prisma.masterOption.findFirst({
+      where: {
+        id: id,
+      },
+    });
+  }
+
   async getOptionsForAutocompletes(filter?: AutocompleteFilterDto) {
     const baseQuery = {
       where: {

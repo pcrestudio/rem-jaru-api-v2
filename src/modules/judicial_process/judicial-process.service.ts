@@ -28,6 +28,7 @@ import Docxtemplater from "docxtemplater";
 import { MasterStatusConfig } from "../../config/master-status.config";
 import finishedJudicialProcessTemplate from "./templates/finished-judicial-process.tpl";
 import { processExcelHeaders } from "../../config/excel-headers.config";
+import processDate from "../../common/utils/convert_date_string";
 
 @Injectable()
 export class JudicialProcessService {
@@ -47,6 +48,8 @@ export class JudicialProcessService {
       },
     });
 
+    const endDateConclusion = processDate(judicialProcess.endDateConclusion);
+
     const { result } = await this.prisma.$extended.judicialProcess.create({
       data: {
         fileCode: judicialProcess.fileCode,
@@ -60,6 +63,7 @@ export class JudicialProcessService {
         amount: judicialProcess.amount,
         responsibleId: judicialProcess.responsibleId,
         secondaryResponsibleId: judicialProcess.secondaryResponsibleId,
+        endDateConclusion: endDateConclusion,
         submoduleId: submodule.id,
       },
     });
@@ -127,6 +131,8 @@ export class JudicialProcessService {
       this.prisma,
     );
 
+    const endDateConclusion = processDate(judicialProcess.endDateConclusion);
+
     try {
       const result = await this.prisma.judicialProcess.update({
         data: {
@@ -149,6 +155,7 @@ export class JudicialProcessService {
           cargoStudioId: Number(judicialProcess.cargoStudioId),
           statusId: Number(judicialProcess.statusId),
           responsibleId: Number(judicialProcess.responsibleId),
+          endDateConclusion: endDateConclusion,
           guaranteeLetter,
           secondaryResponsibleId: Number(
             judicialProcess.secondaryResponsibleId,

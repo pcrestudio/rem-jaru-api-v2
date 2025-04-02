@@ -208,6 +208,7 @@ model JudicialProcess {
   provisionAmount        Float?    @default(0) // Monto provisionado
   savingAmount           Float?    @default(0) // Ahorro generado
   paidAmount             Float?    @default(0) // Monto pagado
+  endDateConclusion      String? // Fecha de conclusión
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("ProjectRelation", fields: [projectId], references: [id], map: "fk_project_id")
@@ -253,6 +254,7 @@ model Supervision {
   provisionAmount        Float?    @default(0) // Monto provisionado
   savingAmount           Float?    @default(0) // Ahorro generado
   paidAmount             Float?    @default(0) // Monto pagado
+  endDateConclusion      String? // Fecha de conclusión
 
   submodule            Submodule     @relation(fields: [submoduleId], references: [id])
   project              MasterOption? @relation("SupervisionProjectRelation", fields: [projectId], references: [id], map: "fk_supervision_project_id")

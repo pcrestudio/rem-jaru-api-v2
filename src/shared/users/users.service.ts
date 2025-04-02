@@ -73,6 +73,7 @@ export class UsersService {
           lastName: payload.lastName,
           authMethod: payload.authMethod,
           displayName: payload.displayName,
+          isSpecialist: payload.isSpecialist,
           studioId: payload.studioId ?? null,
         },
         update: {
@@ -81,6 +82,7 @@ export class UsersService {
           lastName: payload.lastName,
           authMethod: payload.authMethod,
           displayName: payload.displayName,
+          isSpecialist: payload.isSpecialist,
           studioId: payload.studioId ?? null,
         },
         where: {
@@ -171,9 +173,11 @@ export class UsersService {
       };
     }
 
-    whereFields = {
-      isSpecialist: true,
-    };
+    if (filter.isSpecialist) {
+      whereFields = {
+        isSpecialist: filter.isSpecialist === "yes" ? true : false,
+      };
+    }
 
     return CustomPaginationService._getPaginationModel(
       this.prisma,
