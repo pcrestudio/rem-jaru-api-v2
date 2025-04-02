@@ -655,9 +655,11 @@ export class AttributeValuesService {
           OR: [
             {
               moduleId: module.id,
+              isActive: true,
             },
             {
               submoduleId: submodule.id,
+              isActive: true,
             },
           ],
         },
@@ -675,9 +677,11 @@ export class AttributeValuesService {
         OR: [
           {
             moduleId: module.id,
+            isActive: true,
           },
           {
             submoduleId: submodule.id,
+            isActive: true,
           },
         ],
       },

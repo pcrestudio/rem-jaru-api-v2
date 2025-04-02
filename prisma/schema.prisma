@@ -54,6 +54,7 @@ model User {
   updatedAt            DateTime? @updatedAt
   updatedBy            String?   @db.VarChar(50)
   studioId             Int?
+  isSpecialist         Boolean?  @default(false)
 
   studio MasterOption? @relation(fields: [studioId], references: [id])
 

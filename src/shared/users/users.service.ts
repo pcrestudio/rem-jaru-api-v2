@@ -171,6 +171,10 @@ export class UsersService {
       };
     }
 
+    whereFields = {
+      isSpecialist: true,
+    };
+
     return CustomPaginationService._getPaginationModel(
       this.prisma,
       EntityReferenceModel.User,
