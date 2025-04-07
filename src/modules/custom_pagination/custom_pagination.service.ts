@@ -55,58 +55,66 @@ export class CustomPaginationService {
     isNoSome: boolean,
     searchTerm: string,
   ) {
+    if (fieldParts.length === 1) {
+      // Campo directo del modelo
+      return {
+        [fieldParts[0]]: {
+          contains: searchTerm,
+        },
+      };
+    }
+
     const relation = fieldParts[0];
     const nestedField = fieldParts.slice(1).join(".");
 
-    if (fieldParts.length > 1) {
-      if (nestedField.includes(".")) {
-        return isNoSome
-          ? {
-              [relation]: {
-                [nestedField.split(".")[0]]: {
-                  [nestedField.slice(nestedField.indexOf(".") + 1)]: {
-                    contains: searchTerm,
-                  },
-                },
-              },
-            }
-          : {
-              [relation]: {
-                some: {
-                  [nestedField.split(".")[0]]: {
-                    [nestedField.slice(nestedField.indexOf(".") + 1)]: {
-                      contains: searchTerm,
-                    },
-                  },
-                },
-              },
-            };
-      }
-
+    if (nestedField.includes(".")) {
       return isNoSome
         ? {
             [relation]: {
-              [nestedField]: {
-                contains: searchTerm,
+              [nestedField.split(".")[0]]: {
+                [nestedField.slice(nestedField.indexOf(".") + 1)]: {
+                  contains: searchTerm,
+                },
               },
             },
           }
         : {
             [relation]: {
               some: {
-                [nestedField]: {
-                  contains: searchTerm,
+                [nestedField.split(".")[0]]: {
+                  [nestedField.slice(nestedField.indexOf(".") + 1)]: {
+                    contains: searchTerm,
+                  },
                 },
               },
             },
           };
     }
+
+    return isNoSome
+      ? {
+          [relation]: {
+            [nestedField]: {
+              contains: searchTerm,
+            },
+          },
+        }
+      : {
+          [relation]: {
+            some: {
+              [nestedField]: {
+                contains: searchTerm,
+              },
+            },
+          },
+        };
   }
 
   static buildOrConditions(searchableFields: string[], searchTerm: string) {
     return searchableFields
       .map((field) => {
         const { isNoSome, fieldParts } = this.getNestedFieldParts(field);
+
         return this.generateSearchCondition(fieldParts, isNoSome, searchTerm);
       })
       .filter((condition) => condition !== undefined);

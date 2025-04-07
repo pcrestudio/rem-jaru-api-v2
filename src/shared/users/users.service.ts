@@ -194,7 +194,9 @@ export class UsersService {
           },
         },
         whereFields,
+        search: filter.search,
       },
+      ["firstName", "lastName", "displayName"],
     );
   }
 
