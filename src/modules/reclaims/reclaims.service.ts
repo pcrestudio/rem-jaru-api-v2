@@ -91,4 +91,12 @@ export class ReclaimsService {
       [],
     );
   }
+
+  deleteReclaim(id: number) {
+    return this.prisma.reclaim.delete({
+      where: {
+        reclaimId: id,
+      },
+    });
+  }
 }

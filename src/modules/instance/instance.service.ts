@@ -175,6 +175,7 @@ export class InstanceService {
             stepId: Number(stepData.stepId),
             choice: stepData.choice ?? undefined,
             resume: stepData.resume ?? undefined,
+            title: stepData.title ?? undefined,
             dateResume,
             file:
               stepData.file && stepData.file.filename
