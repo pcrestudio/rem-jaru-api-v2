@@ -32,9 +32,19 @@ export class AzureAdStrategy extends PassportStrategy(
     done: (err: any, user: any, info?: any) => void,
   ) {
     try {
+      const email = profile?._json?.preferred_username;
+      console.log("[AzureAD] Email recibido:", email);
+
       const user = await this.authService.validateAzureAdUser(profile);
+
+      if (!user) {
+        console.warn("[AzureAD] Usuario no encontrado para:", email);
+        return done(null, false);
+      }
+
       done(null, user);
     } catch (err) {
+      console.error("[AzureAD] Error en validate:", err);
       done(err, false);
     }
   }
