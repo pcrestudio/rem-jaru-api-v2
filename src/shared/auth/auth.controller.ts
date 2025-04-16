@@ -107,15 +107,19 @@ export class AuthController {
   @Post("azure-ad/redirect")
   @UseGuards(AzureAdAuthGuard)
   async azureAdRedirect(@Req() req, @Res() res) {
-    const user = req.user;
-    const token = await this.authService.login(user);
+    const redirect = req.session?.redirect || "/admin";
+    req.session.redirect = null; // Limpia el valor guardado
+
+    if (!req.user) {
+      return res.redirect(
+        `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?error=unauthorized&redirect=${redirect}`,
+      );
+    }
+
+    const token = await this.authService.login(req.user);
 
     res.cookie("token", token, this.cookiesConfig);
 
-    const redirect = req.session.redirect || "/admin";
-    req.session.redirect = null; // Clear the session key
-
-    // Redirect with the token *and* the original redirect path
     return res.redirect(
       `${this.configService.get("FRONTEND_URL")}/auth/azure-ad/callback?token=${token.access_token}&redirect=${redirect}`,
     );

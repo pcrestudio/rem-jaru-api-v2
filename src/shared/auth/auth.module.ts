@@ -23,7 +23,7 @@ import { UnlockUsersTask } from "./tasks/unlock-users.task";
     PassportModule.register({ session: true }),
     JwtModule.register({
       secret: "your_jwt_secret",
-      signOptions: { expiresIn: "30d" },
+      signOptions: { expiresIn: "5s" },
     }),
     HttpModule,
   ],
