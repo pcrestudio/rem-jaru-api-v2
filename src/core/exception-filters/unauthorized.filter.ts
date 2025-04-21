@@ -19,8 +19,14 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
     const frontendUrl =
       this.configService.get<string>("FRONTEND_URL") || "http://localhost:3000";
 
+    console.log(`Petición sin autorización ${req.url}`);
+
     // If the request accepts HTML, redirect to the login page.
-    if (req.headers.accept && req.headers.accept.includes("text/html")) {
+    if (
+      req.headers.accept &&
+      req.headers.accept.includes("text/html") &&
+      req.url === "/auth/azure-ad/redirect"
+    ) {
       return res.redirect(`${frontendUrl}/auth`);
     }
 
