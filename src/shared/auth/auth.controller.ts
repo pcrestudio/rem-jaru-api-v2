@@ -32,7 +32,6 @@ export class AuthController {
       secure: this.configService.get("NODE_ENV") === "production",
       sameSite:
         this.configService.get("NODE_ENV") === "production" ? "none" : "lax",
-      maxAge: 3600000,
       path: "/",
       domain:
         this.configService.get("NODE_ENV") === "production"

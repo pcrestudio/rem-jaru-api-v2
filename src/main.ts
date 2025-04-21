@@ -6,6 +6,7 @@ import { ConfigService } from "@nestjs/config";
 import * as session from "express-session";
 import * as passport from "passport";
 import { join } from "path";
+import { UnauthorizedExceptionFilter } from "./core/exception-filters/unauthorized.filter";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,7 +19,10 @@ async function bootstrap() {
     optionsSuccessStatus: 200,
     allowedHeaders: ["Content-Type", "Authorization", "Content-Disposition"],
   });
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(
+    new AllExceptionsFilter(),
+    new UnauthorizedExceptionFilter(configService),
+  );
 
   app.useStaticAssets(join(__dirname, "..", "uploads/assets"), {
     prefix: "/assets", // URL prefix for accessing the assets

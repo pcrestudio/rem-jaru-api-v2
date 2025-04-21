@@ -102,12 +102,12 @@ export class AuthService {
         isActive: true,
       });*/
     } else {
-      await this.usersService.updateUser(user.id, {
+      await this.usersService.updateUser(user?.id, {
         lastLogon: new Date(),
       });
     }
 
-    await this.usersService.updateUser(user.id, {
+    await this.usersService.updateUser(user?.id, {
       lastLogon: new Date(),
     });
 
