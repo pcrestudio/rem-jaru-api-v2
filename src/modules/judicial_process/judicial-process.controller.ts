@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Res,
   UploadedFiles,
   UseInterceptors,
@@ -54,8 +55,16 @@ export class JudicialProcessController {
   }
 
   @Get("")
-  async getJudicialProcesses(@Query() filter: FilterJudicialProcessDto) {
-    return this.judicialProcessService.getJudicialProcesses(filter);
+  async getJudicialProcesses(
+    @Query() filter: FilterJudicialProcessDto,
+    @Req() req,
+  ) {
+    const user = req.user;
+
+    return this.judicialProcessService.getJudicialProcesses(
+      filter,
+      Number(user.userId),
+    );
   }
 
   @Get("/:id")

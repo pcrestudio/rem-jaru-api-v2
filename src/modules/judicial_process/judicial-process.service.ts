@@ -217,10 +217,17 @@ export class JudicialProcessService {
     });
   }
 
-  async getJudicialProcesses(filter: FilterJudicialProcessDto) {
+  async getJudicialProcesses(filter: FilterJudicialProcessDto, userId: number) {
     const submodule = await this.prisma.submodule.findFirst({
       where: {
         slug: filter.slug,
+      },
+    });
+
+    const isSpecialist = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        isSpecialist: true,
       },
     });
 
@@ -237,8 +244,19 @@ export class JudicialProcessService {
       whereFields["projectId"] = Number(filter.projectId);
     }
 
-    if (filter.responsibleId) {
-      whereFields["responsibleId"] = Number(filter.responsibleId);
+    if (isSpecialist) {
+      whereFields["OR"] = [
+        { responsibleId: isSpecialist.id },
+        { secondaryResponsibleId: isSpecialist.id },
+      ];
+    } else {
+      // Si no es especialista, se filtra por responsibleId solo si viene en el filtro
+      if (filter.responsibleId) {
+        whereFields["OR"] = [
+          { responsibleId: Number(filter.responsibleId) },
+          { secondaryResponsibleId: Number(filter.responsibleId) },
+        ];
+      }
     }
 
     if (filter.statusId) {

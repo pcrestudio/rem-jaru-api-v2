@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Res,
   UploadedFiles,
   UseInterceptors,
@@ -47,8 +48,16 @@ export class SupervisionController {
   }
 
   @Get("")
-  async getSupervisionsBySlug(@Query() filter: FilterSupervisionDto) {
-    return this.supervisionService.getSupervisionsBySlug(filter);
+  async getSupervisionsBySlug(
+    @Query() filter: FilterSupervisionDto,
+    @Req() req,
+  ) {
+    const user = req.user;
+
+    return this.supervisionService.getSupervisionsBySlug(
+      filter,
+      Number(user.userId),
+    );
   }
 
   @Get("export/word")

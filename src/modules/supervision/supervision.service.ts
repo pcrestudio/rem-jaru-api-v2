@@ -204,7 +204,14 @@ export class SupervisionService {
     }
   }
 
-  async getSupervisionsBySlug(filter: FilterSupervisionDto) {
+  async getSupervisionsBySlug(filter: FilterSupervisionDto, userId: number) {
+    const isSpecialist = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        isSpecialist: true,
+      },
+    });
+
     const submodule = await this.prisma.submodule.findFirst({
       where: {
         slug: filter.slug,
@@ -224,8 +231,19 @@ export class SupervisionService {
       whereFields["projectId"] = Number(filter.projectId);
     }
 
-    if (filter.responsibleId) {
-      whereFields["responsibleId"] = Number(filter.responsibleId);
+    if (isSpecialist) {
+      whereFields["OR"] = [
+        { responsibleId: isSpecialist.id },
+        { secondaryResponsibleId: isSpecialist.id },
+      ];
+    } else {
+      // Si no es especialista, se filtra por responsibleId solo si viene en el filtro
+      if (filter.responsibleId) {
+        whereFields["OR"] = [
+          { responsibleId: Number(filter.responsibleId) },
+          { secondaryResponsibleId: Number(filter.responsibleId) },
+        ];
+      }
     }
 
     if (filter.statusId) {
@@ -274,6 +292,7 @@ export class SupervisionService {
             },
           }
         : true,
+      secondaryResponsible: true,
       situation: true,
       status: true,
       stepData: {
