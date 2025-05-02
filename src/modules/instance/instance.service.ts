@@ -178,25 +178,27 @@ export class InstanceService {
             title: stepData.title ?? undefined,
             dateResume,
             file:
-              stepData.file && stepData.file.filename
-                ? stepData.file.filename
-                : undefined,
+              typeof stepData.file === "string"
+                ? stepData.file === ""
+                  ? ""
+                  : undefined
+                : (stepData.file?.filename ?? undefined),
             fileTwo:
-              stepData.fileTwo && stepData.fileTwo.filename
+              stepData.fileTwo && typeof stepData.fileTwo !== "string"
                 ? stepData.fileTwo.filename
-                : undefined,
+                : "",
             fileThree:
-              stepData.fileThree && stepData.fileThree.filename
+              stepData.fileThree && typeof stepData.fileThree !== "string"
                 ? stepData.fileThree.filename
-                : undefined,
+                : "",
             fileFour:
-              stepData.fileFour && stepData.fileFour.filename
+              stepData.fileFour && typeof stepData.fileFour !== "string"
                 ? stepData.fileFour.filename
-                : undefined,
+                : "",
             fileFive:
-              stepData.fileFive && stepData.fileFive.filename
+              stepData.fileFive && typeof stepData.fileFive !== "string"
                 ? stepData.fileFive.filename
-                : undefined,
+                : "",
             completed: true,
           },
           where: {

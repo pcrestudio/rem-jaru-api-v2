@@ -11,7 +11,6 @@ import {
 import { CustomPaginationService } from "../custom_pagination/custom_pagination.service";
 import { FilterTodoDto } from "./dto/filter-todo.dto";
 import processDate from "../../common/utils/convert_date_string";
-import { MasterTodosStates } from "../../config/master-todos-states.config";
 import { MailService } from "../../shared/mail/mail.service";
 import assignTodoTemplate from "./templates/assign-todo.tpl";
 import { UpsertTodoActivityDto } from "./dto/upsert-todo-activity.dto";
@@ -20,6 +19,7 @@ import { MessagesConfig } from "../../config/messages.config";
 import editTodoTemplate from "./templates/edit-todo.tpl";
 import { GetTodoDto } from "./dto/get-todo.dto";
 import alertTodoTemplate from "./templates/alert-todo.tpl";
+import { UtilsService } from "../../utils/utils.service";
 
 @Injectable()
 export class TodoService {
@@ -31,7 +31,10 @@ export class TodoService {
   async upsertTodo(todo: UpsertTodoDto, userId: number) {
     try {
       const dateExpiration = processDate(todo.dateExpiration);
-      const masterOption = await this._getTodoState(dateExpiration);
+      const masterOption = await UtilsService._getTodoState(
+        this.prisma,
+        dateExpiration,
+      );
 
       const todoUpsert = await this.prisma.toDo.upsert({
         create: {
@@ -312,7 +315,10 @@ export class TodoService {
       await Promise.all(
         todos.map(async (todo) => {
           const dateExpiration = processDate(todo.dateExpiration);
-          const masterOption = await this._getTodoState(dateExpiration);
+          const masterOption = await UtilsService._getTodoState(
+            this.prisma,
+            dateExpiration,
+          );
 
           const todoUpsert = await this.prisma.toDo.upsert({
             create: {
@@ -518,31 +524,6 @@ export class TodoService {
       console.error(`Error al obtener submodule para ${model}:`, error);
       return null;
     }
-  }
-
-  private _getTodoState(date: string) {
-    const targetDate = new Date(date);
-    const currentDate = new Date();
-
-    const differenceInMilliseconds =
-      targetDate.getTime() - currentDate.getTime();
-
-    const differenceInDays = Math.floor(
-      differenceInMilliseconds / (1000 * 60 * 60 * 24),
-    );
-
-    const masterSlug =
-      differenceInDays >= 14
-        ? MasterTodosStates.moreThanTwoWeeks
-        : differenceInDays >= 0
-          ? MasterTodosStates.lessThanTwoWeeks
-          : MasterTodosStates.expired;
-
-    return this.prisma.masterOption.findFirst({
-      where: {
-        slug: masterSlug,
-      },
-    });
   }
 
   private async sendTodoEmail(

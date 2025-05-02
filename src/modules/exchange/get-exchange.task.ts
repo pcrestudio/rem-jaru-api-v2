@@ -11,7 +11,7 @@ export class GetExchangeTask {
     private readonly config: ConfigService,
   ) {}
 
-  @Cron("0 */6 * * *") // Runs every minute
+  @Cron("0 */6 * * *") // Runs every six hours
   async getExchangeTask() {
     const { data } = await axios.get(
       `${this.config.get("EXCHANGE_RATE_URL")}/${this.config.get("EXCHANGE_RATE_API_KEY")}/latest/USD`,

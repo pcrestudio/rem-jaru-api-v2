@@ -12,6 +12,7 @@ import { Paragraph, TableCell, TableRow, VerticalAlign } from "docx";
 import AngloTableCell from "../common/utils/anglo_table_cell";
 import { UpsertReclaimDto } from "../modules/reclaims/dto/upsert-reclaim.dto";
 import capitalize from "./capitalize";
+import { MasterTodosStates } from "../config/master-todos-states.config";
 
 export class UtilsService {
   static _getModuleAttributeWithValueBySlug(
@@ -327,5 +328,30 @@ export class UtilsService {
     });
 
     return user.email;
+  }
+
+  static async _getTodoState(prisma: PrismaClient, date: string) {
+    const targetDate = new Date(date);
+    const currentDate = new Date();
+
+    const differenceInMilliseconds =
+      targetDate.getTime() - currentDate.getTime();
+
+    const differenceInDays = Math.floor(
+      differenceInMilliseconds / (1000 * 60 * 60 * 24),
+    );
+
+    const masterSlug =
+      differenceInDays >= 14
+        ? MasterTodosStates.moreThanTwoWeeks
+        : differenceInDays >= 0
+          ? MasterTodosStates.lessThanTwoWeeks
+          : MasterTodosStates.expired;
+
+    return prisma.masterOption.findFirst({
+      where: {
+        slug: masterSlug,
+      },
+    });
   }
 }

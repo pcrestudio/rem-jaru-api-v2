@@ -7,8 +7,6 @@ import { EntityReferenceModel } from "../../common/utils/entity_reference_mappin
 import { FilterReclaimDto } from "./dto/filter-reclaim.dto";
 import { MailService } from "../../shared/mail/mail.service";
 import { ConfigService } from "@nestjs/config";
-import reclaimsTemplate from "./templates/reclaims.tpl";
-import { UtilsService } from "../../utils/utils.service";
 
 @Injectable()
 export class ReclaimsService {
@@ -31,12 +29,6 @@ export class ReclaimsService {
 
       this.prisma.$transaction(async (tx) => {
         for (const reclaim of reclaims) {
-          const judicialProcess = await this.prisma.judicialProcess.findFirst({
-            where: {
-              entityReference,
-            },
-          });
-
           await tx.reclaim.upsert({
             create: {
               amount: Number(reclaim.amount),
