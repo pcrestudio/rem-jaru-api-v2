@@ -30,4 +30,6 @@ export const processExcelHeaders = [
   { key: "remoteAmount", header: "Petitorio monto remoto total" },
   { key: "savingAmount", header: "Ahorro generado" },
   { key: "paidAmount", header: "Monto pagado" },
+  { key: "modifiedAt", header: "Última fecha de actuación (modificación)" },
+  { key: "startDate", header: "Fecha de inicio del proceso" },
 ];

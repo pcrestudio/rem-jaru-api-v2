@@ -29,6 +29,8 @@ import { MasterStatusConfig } from "../../config/master-status.config";
 import finishedJudicialProcessTemplate from "../judicial_process/templates/finished-judicial-process.tpl";
 import { processExcelHeaders } from "../../config/excel-headers.config";
 import processDate from "../../common/utils/convert_date_string";
+import { format } from "date-fns";
+import { DateFormat } from "../../config/date-format.config";
 
 @Injectable()
 export class SupervisionService {
@@ -566,6 +568,10 @@ export class SupervisionService {
 
     for (const item of supervisions) {
       item.globalAttributeValues?.forEach((attribute, index) => {
+        if (attribute.attribute.slug === AttributeSlugConfig.startDate) {
+          return;
+        }
+
         const findIndex = attribute.attribute.options.findIndex(
           (option) => option.optionValue === attribute.value,
         );
@@ -587,6 +593,10 @@ export class SupervisionService {
       });
 
       item.sectionAttributeValues?.forEach((attribute, index) => {
+        if (attribute.attribute.slug === AttributeSlugConfig.startDate) {
+          return;
+        }
+
         const findIndex = attribute.attribute.options.findIndex(
           (option) => option.optionValue === attribute.value,
         );
@@ -624,11 +634,38 @@ export class SupervisionService {
         return acc;
       }, {});
 
+      const findAttributeLastSituation = process.sectionAttributeValues.find(
+        (value) => value.attribute.slug === AttributeSlugConfig.lastSituation,
+      );
+
+      const findAttributeNextSituation = process.sectionAttributeValues.find(
+        (value) => value.attribute.slug === AttributeSlugConfig.nextSituation,
+      );
+
+      const findAttributeStartDate = process.sectionAttributeValues.find(
+        (value) => value.attribute.slug === AttributeSlugConfig.startDate,
+      );
+
       flattened["posibleAmount"] =
         totalPosibleAmount[process.entityReference] || 0;
 
       flattened["remoteAmount"] =
         totalRemoteAmount[process.entityReference] || 0;
+
+      flattened["modifiedAt"] =
+        findAttributeLastSituation || findAttributeNextSituation
+          ? format(
+              new Date(
+                findAttributeLastSituation?.modifiedAt.toString() ??
+                  findAttributeNextSituation?.modifiedAt.toString(),
+              ),
+              DateFormat.normal,
+            )
+          : "";
+
+      flattened["startDate"] = findAttributeStartDate
+        ? format(findAttributeStartDate.value, DateFormat.normal)
+        : "";
 
       return flattened;
     });
