@@ -533,6 +533,7 @@ export class SupervisionService {
       },
       include: {
         responsible: true,
+        secondaryResponsible: true,
         project: true,
         authority: true,
         situation: true,

@@ -23,7 +23,6 @@ export const processExcelHeaders = [
   { key: "project.name", header: "Razón social" },
   { key: "studio.name", header: "Estudio" },
   { key: "contingencyLevel", header: "Nivel de contingencia" },
-  { key: "contingencyPercentage", header: "% de contingencia" },
   { key: "amount", header: "Monto demandado" },
   { key: "provisionAmount", header: "Monto de provisión" },
   { key: "posibleAmount", header: "Petitorio monto posible total" },

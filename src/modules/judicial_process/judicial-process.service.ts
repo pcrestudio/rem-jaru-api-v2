@@ -547,6 +547,7 @@ export class JudicialProcessService {
       },
       include: {
         responsible: true,
+        secondaryResponsible: true,
         studio: true,
         project: true,
         submodule: true,
