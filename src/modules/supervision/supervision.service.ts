@@ -13,7 +13,6 @@ import { UtilsService } from "../../utils/utils.service";
 import { GetModuleAttributeValueDto } from "../../utils/dto/get-module-attribute.value.dto";
 import { AttributeSlugConfig } from "../../config/attribute-slug.config";
 import { ExtendedAttributeConfig } from "../../config/extended-attribute.config";
-import { DataType } from "@prisma/client";
 import { ExportablesService } from "../exportables/exportables.service";
 import { searchableFields } from "../../config/submodule_searchableFields";
 import { ToggleJudicialProcessDto } from "../judicial_process/dto/toggle-judicial-process.dto";
@@ -561,61 +560,36 @@ export class SupervisionService {
       },
     });
 
-    const headers = [
-      ...processExcelHeaders,
-      { key: "authority.name", header: "Autoridad" },
-      { key: "situation.name", header: "Situación" },
-    ];
+    const headers: { key: string; header: string }[] = [...processExcelHeaders];
+    const seenSlugs = new Set<string>();
 
     for (const item of supervisions) {
-      item.globalAttributeValues?.forEach((attribute, index) => {
-        if (attribute.attribute.slug === AttributeSlugConfig.startDate) {
-          return;
-        }
-
-        const findIndex = attribute.attribute.options.findIndex(
-          (option) => option.optionValue === attribute.value,
-        );
+      item.globalAttributeValues?.forEach((attribute) => {
+        const slug = attribute.attribute.slug;
+        const label = attribute.attribute.label;
 
         if (
-          attribute.attribute.dataType === DataType.LIST &&
-          findIndex !== -1
-        ) {
-          headers.push({
-            key: `globalAttributeValues[${index}].attribute.options[${findIndex}].optionLabel`,
-            header: `${attribute.attribute.label}`,
-          });
-        } else {
-          headers.push({
-            key: `globalAttributeValues[${index}].value`,
-            header: `${attribute.attribute.label}`,
-          });
-        }
+          slug === AttributeSlugConfig.startDate ||
+          seenSlugs.has(`global-${slug}`)
+        )
+          return;
+
+        seenSlugs.add(`global-${slug}`);
+        headers.push({ key: `global-${slug}`, header: label });
       });
 
-      item.sectionAttributeValues?.forEach((attribute, index) => {
-        if (attribute.attribute.slug === AttributeSlugConfig.startDate) {
-          return;
-        }
-
-        const findIndex = attribute.attribute.options.findIndex(
-          (option) => option.optionValue === attribute.value,
-        );
+      item.sectionAttributeValues?.forEach((attribute) => {
+        const slug = attribute.attribute.slug;
+        const label = attribute.attribute.label;
 
         if (
-          attribute.attribute.dataType === DataType.LIST &&
-          findIndex !== -1
-        ) {
-          headers.push({
-            key: `sectionAttributeValues[${index}].attribute.options[${findIndex}].optionLabel`,
-            header: `${attribute.attribute.label}`,
-          });
-        } else {
-          headers.push({
-            key: `sectionAttributeValues[${index}].value`,
-            header: `${attribute.attribute.label}`,
-          });
-        }
+          slug === AttributeSlugConfig.startDate ||
+          seenSlugs.has(`section-${slug}`)
+        )
+          return;
+
+        seenSlugs.add(`section-${slug}`);
+        headers.push({ key: `section-${slug}`, header: label });
       });
     }
 
@@ -630,10 +604,45 @@ export class SupervisionService {
     );
 
     const flattenedProcesses = supervisions.map((process) => {
-      const flattened = headers.reduce((acc, { key }) => {
-        acc[key] = UtilsService.getNestedValue(process, key);
-        return acc;
-      }, {});
+      const flattened: Record<string, any> = {};
+
+      for (const { key } of processExcelHeaders) {
+        flattened[key] = UtilsService.getNestedValue(process, key) ?? "";
+      }
+
+      for (const { key } of headers) {
+        if (key.startsWith("global-")) {
+          const slug = key.replace("global-", "");
+          const attribute = process.globalAttributeValues.find(
+            (attr) => attr.attribute.slug === slug,
+          );
+          flattened[key] = attribute
+            ? UtilsService.resolveAttributeValue(attribute)
+            : "";
+        }
+
+        if (key.startsWith("section-")) {
+          const slug = key.replace("section-", "");
+          const attribute = process.sectionAttributeValues.find(
+            (attr) => attr.attribute.slug === slug,
+          );
+          flattened[key] = attribute
+            ? UtilsService.resolveAttributeValue(attribute)
+            : "";
+        }
+      }
+
+      // Totales
+      flattened["posibleAmount"] =
+        totalPosibleAmount[process.entityReference] ?? 0;
+
+      flattened["remoteAmount"] =
+        totalRemoteAmount[process.entityReference] ?? 0;
+
+      // Fechas adicionales
+      const findAttributeStartDate = process.sectionAttributeValues.find(
+        (value) => value.attribute.slug === AttributeSlugConfig.startDate,
+      );
 
       const findAttributeLastSituation = process.sectionAttributeValues.find(
         (value) => value.attribute.slug === AttributeSlugConfig.lastSituation,
@@ -643,30 +652,20 @@ export class SupervisionService {
         (value) => value.attribute.slug === AttributeSlugConfig.nextSituation,
       );
 
-      const findAttributeStartDate = process.sectionAttributeValues.find(
-        (value) => value.attribute.slug === AttributeSlugConfig.startDate,
-      );
-
-      flattened["posibleAmount"] =
-        totalPosibleAmount[process.entityReference] || 0;
-
-      flattened["remoteAmount"] =
-        totalRemoteAmount[process.entityReference] || 0;
+      flattened["startDate"] = findAttributeStartDate
+        ? format(findAttributeStartDate.value, DateFormat.normal)
+        : "";
 
       flattened["modifiedAt"] =
         findAttributeLastSituation || findAttributeNextSituation
           ? format(
               new Date(
-                findAttributeLastSituation?.modifiedAt.toString() ??
-                  findAttributeNextSituation?.modifiedAt.toString(),
+                findAttributeLastSituation?.modifiedAt?.toString() ??
+                  findAttributeNextSituation?.modifiedAt?.toString(),
               ),
               DateFormat.normal,
             )
           : "";
-
-      flattened["startDate"] = findAttributeStartDate
-        ? format(findAttributeStartDate.value, DateFormat.normal)
-        : "";
 
       return flattened;
     });

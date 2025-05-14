@@ -178,12 +178,17 @@ export class UtilsService {
 
   static getNestedValue(obj: any, key: string) {
     return key.split(".").reduce((o, k) => {
+      if (!o) return "";
+
       if (k.includes("[") && k.includes("]")) {
         const [arrayKey, index] = k.split(/[\[\]]/).filter(Boolean);
 
         if (arrayKey === "attribute" && o?.[arrayKey]?.options) {
+          const value = o?.value;
+          if (value === null || value === undefined || value === "") return "";
+
           const option = o[arrayKey].options.find(
-            (option: any) => option.optionValue === o?.value,
+            (option: any) => option.optionValue === value,
           );
 
           return option ? option.optionLabel : "";
@@ -353,5 +358,19 @@ export class UtilsService {
         slug: masterSlug,
       },
     });
+  }
+
+  static resolveAttributeValue(attribute: any): string {
+    if (
+      attribute.attribute?.dataType === DataType.LIST &&
+      Array.isArray(attribute.attribute.options)
+    ) {
+      const match = attribute.attribute.options.find(
+        (opt) => opt.optionValue === attribute.value,
+      );
+      return match?.optionLabel ?? "";
+    }
+
+    return attribute.value ?? "";
   }
 }
