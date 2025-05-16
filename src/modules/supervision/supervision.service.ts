@@ -28,7 +28,7 @@ import { MasterStatusConfig } from "../../config/master-status.config";
 import finishedJudicialProcessTemplate from "../judicial_process/templates/finished-judicial-process.tpl";
 import { processExcelHeaders } from "../../config/excel-headers.config";
 import processDate from "../../common/utils/convert_date_string";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { DateFormat } from "../../config/date-format.config";
 
 @Injectable()
@@ -655,19 +655,23 @@ export class SupervisionService {
           value.attribute.slug === AttributeSlugConfig.supervisionNextSituation,
       );
 
-      flattened["startDate"] = findAttributeStartDate
-        ? format(findAttributeStartDate.value, DateFormat.normal)
-        : "";
+      const rawStartDate = findAttributeStartDate?.value;
+      const parsedStartDate = rawStartDate ? new Date(rawStartDate) : null;
+
+      flattened["startDate"] =
+        parsedStartDate && isValid(parsedStartDate)
+          ? format(parsedStartDate, DateFormat.normal)
+          : "";
+
+      const rawDateString =
+        findAttributeLastSituation?.modifiedAt?.toString() ??
+        findAttributeNextSituation?.modifiedAt?.toString();
+
+      const parsedDate = rawDateString ? new Date(rawDateString) : null;
 
       flattened["modifiedAt"] =
-        findAttributeLastSituation || findAttributeNextSituation
-          ? format(
-              new Date(
-                findAttributeLastSituation?.modifiedAt?.toString() ??
-                  findAttributeNextSituation?.modifiedAt?.toString(),
-              ),
-              DateFormat.normal,
-            )
+        parsedDate && isValid(parsedDate)
+          ? format(parsedDate, DateFormat.normal)
           : "";
 
       return flattened;
