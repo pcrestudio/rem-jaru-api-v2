@@ -569,7 +569,7 @@ export class SupervisionService {
         const label = attribute.attribute.label;
 
         if (
-          slug === AttributeSlugConfig.startDate ||
+          slug === AttributeSlugConfig.supervisionStartDate ||
           seenSlugs.has(`global-${slug}`)
         )
           return;
@@ -583,7 +583,7 @@ export class SupervisionService {
         const label = attribute.attribute.label;
 
         if (
-          slug === AttributeSlugConfig.startDate ||
+          slug === AttributeSlugConfig.supervisionStartDate ||
           seenSlugs.has(`section-${slug}`)
         )
           return;
@@ -641,15 +641,18 @@ export class SupervisionService {
 
       // Fechas adicionales
       const findAttributeStartDate = process.sectionAttributeValues.find(
-        (value) => value.attribute.slug === AttributeSlugConfig.startDate,
+        (value) =>
+          value.attribute.slug === AttributeSlugConfig.supervisionStartDate,
       );
 
       const findAttributeLastSituation = process.sectionAttributeValues.find(
-        (value) => value.attribute.slug === AttributeSlugConfig.lastSituation,
+        (value) =>
+          value.attribute.slug === AttributeSlugConfig.supervisionLastSituation,
       );
 
       const findAttributeNextSituation = process.sectionAttributeValues.find(
-        (value) => value.attribute.slug === AttributeSlugConfig.nextSituation,
+        (value) =>
+          value.attribute.slug === AttributeSlugConfig.supervisionNextSituation,
       );
 
       flattened["startDate"] = findAttributeStartDate
